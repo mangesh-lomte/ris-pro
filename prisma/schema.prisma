@@ -1,0 +1,343 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ==========================================
+// DOMAIN ENUMS
+// ==========================================
+
+enum UserRole {
+  ADMIN
+  RECEPTION
+  TECHNOLOGIST
+  RADIOLOGIST
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  UNSPECIFIED
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  ARRIVED
+  CANCELLED
+  NO_SHOW
+  COMPLETED
+}
+
+enum OrderStatus {
+  CREATED
+  SCHEDULED
+  ARRIVED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum StudyStatus {
+  PENDING
+  ACQUIRING
+  ACQUIRED
+  SENT_TO_PACS
+  READY_FOR_REPORTING
+  REPORTED
+}
+
+enum PacsStatus {
+  NOT_SENT
+  SENDING
+  SENT
+  FAILED
+}
+
+enum ReportStatus {
+  DRAFT
+  PRELIMINARY
+  FINAL
+  ADDENDUM
+}
+
+enum Priority {
+  ROUTINE
+  URGENT
+  STAT
+}
+
+enum ModalityType {
+  CT
+  MRI
+  XRAY
+  ULTRASOUND
+  MAMMOGRAPHY
+}
+
+enum InvoiceStatus {
+  PENDING
+  PARTIALLY_PAID
+  PAID
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CASH
+  CREDIT_CARD
+  DEBIT_CARD
+  INSURANCE
+  ONLINE
+}
+
+enum EquipmentStatus {
+  OPERATIONAL
+  MAINTENANCE
+  OUT_OF_SERVICE
+}
+
+// ==========================================
+// DOMAIN ENTITIES
+// ==========================================
+
+model User {
+  id           String    @id @default(cuid())
+  firstName    String
+  lastName     String
+  email        String    @unique
+  passwordHash String
+  role         UserRole
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  reports   Report[]
+  auditLogs AuditLog[]
+
+  @@map("users")
+}
+
+model Patient {
+  id               String   @id @default(cuid())
+  patientId        String   @unique // Master Patient Index / Persistent Medical Record Number (e.g. PAT-2026-0001)
+  firstName        String
+  lastName         String
+  dateOfBirth      DateTime
+  gender           Gender
+  phone            String
+  email            String?
+  address          String?
+  emergencyContact String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  appointments  Appointment[]
+  imagingOrders ImagingOrder[]
+  studies       Study[]
+  invoices      Invoice[]
+
+  @@index([lastName, firstName])
+  @@index([phone])
+  @@map("patients")
+}
+
+model Appointment {
+  id                String            @id @default(cuid())
+  appointmentNumber String            @unique // e.g. APT-2026-0001
+  patientId         String
+  patient           Patient           @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  examination       String // e.g. "Chest CT with IV Contrast"
+  modality          ModalityType
+  scheduledStartTime DateTime
+  scheduledEndTime   DateTime
+  status            AppointmentStatus @default(SCHEDULED)
+  priority          Priority          @default(ROUTINE)
+  location          String? // e.g. "Scanner Suite 2 - CT"
+  notes             String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  imagingOrder ImagingOrder?
+
+  @@index([patientId])
+  @@index([scheduledStartTime])
+  @@map("appointments")
+}
+
+model ImagingOrder {
+  id                 String       @id @default(cuid())
+  accessionNumber    String       @unique // Unique Accession Number: single source of truth throughout radiology workflow
+  patientId          String
+  patient            Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  appointmentId      String?      @unique
+  appointment        Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  modality           ModalityType
+  bodyPart           String // e.g. "Chest", "Brain", "Abdomen", "Pelvis"
+  clinicalIndication String // e.g. "Suspected pulmonary embolism, acute dyspnea"
+  referringDoctor    String // e.g. "Dr. Sarah Mitchell, MD"
+  contrastRequirement Boolean      @default(false)
+  priority           Priority     @default(ROUTINE)
+  orderStatus        OrderStatus  @default(CREATED)
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  study   Study?
+  report  Report?
+  invoice Invoice?
+
+  @@index([patientId])
+  @@index([accessionNumber])
+  @@index([orderStatus])
+  @@map("imaging_orders")
+}
+
+model Study {
+  id               String       @id @default(cuid())
+  studyInstanceUid String?      @unique // Conceptual DICOM Study Instance UID for future PACS integration
+  accessionNumber  String // Matched with order accession number
+  orderId          String       @unique
+  order            ImagingOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  patientId        String
+  patient          Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  modality         ModalityType
+  studyStatus      StudyStatus  @default(PENDING)
+  pacsStatus       PacsStatus   @default(NOT_SENT)
+  seriesCount      Int          @default(0)
+  instanceCount    Int          @default(0)
+  startedAt        DateTime?
+  completedAt      DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  report Report?
+
+  @@index([patientId])
+  @@index([accessionNumber])
+  @@map("studies")
+}
+
+model Report {
+  id           String       @id @default(cuid())
+  studyId      String       @unique
+  study        Study        @relation(fields: [studyId], references: [id], onDelete: Cascade)
+  orderId      String       @unique
+  order        ImagingOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  radiologistId String?
+  radiologist  User?        @relation(fields: [radiologistId], references: [id], onDelete: SetNull)
+  status       ReportStatus @default(DRAFT)
+  draftContent String?      @db.Text
+  findings     String?      @db.Text
+  impression   String?      @db.Text
+  finalizedAt  DateTime?
+  version      Int          @default(1)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@index([radiologistId])
+  @@index([status])
+  @@map("reports")
+}
+
+model Invoice {
+  id                String        @id @default(cuid())
+  invoiceNumber     String        @unique // e.g. INV-2026-0001
+  patientId         String
+  patient           Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  orderId           String?       @unique
+  order             ImagingOrder? @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  total             Decimal       @db.Decimal(10, 2)
+  discount          Decimal       @default(0.00) @db.Decimal(10, 2)
+  paidAmount        Decimal       @default(0.00) @db.Decimal(10, 2)
+  outstandingAmount Decimal       @db.Decimal(10, 2)
+  status            InvoiceStatus @default(PENDING)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  payments Payment[]
+
+  @@index([patientId])
+  @@map("invoices")
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  invoiceId     String
+  invoice       Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  amount        Decimal       @db.Decimal(10, 2)
+  paymentMethod PaymentMethod @default(CASH)
+  reference     String? // Transaction ID, Cheque number, Auth code
+  paymentStatus PaymentStatus @default(COMPLETED)
+  paidAt        DateTime      @default(now())
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([invoiceId])
+  @@map("payments")
+}
+
+model InventoryItem {
+  id           String    @id @default(cuid())
+  name         String // e.g. "Iohexol (Omnipaque 350) 100mL"
+  category     String // e.g. "Contrast Media", "Syringes", "Radiation Shielding"
+  sku          String    @unique // e.g. "INV-MED-001"
+  quantity     Int       @default(0)
+  reorderLevel Int       @default(10)
+  batchNumber  String?
+  lotNumber    String?
+  expiryDate   DateTime?
+  unitPrice    Decimal?  @db.Decimal(10, 2)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([category])
+  @@map("inventory_items")
+}
+
+model Equipment {
+  id                  String          @id @default(cuid())
+  name                String // e.g. "GE Revolution CT 128-Slice"
+  modality            ModalityType
+  manufacturer        String // e.g. "GE Healthcare"
+  model               String // e.g. "Revolution EVO"
+  serialNumber        String          @unique
+  status              EquipmentStatus @default(OPERATIONAL)
+  location            String // e.g. "Room CT-01, Ground Floor"
+  lastMaintenanceDate DateTime?
+  nextMaintenanceDate DateTime?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  @@index([modality])
+  @@map("equipment")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action     String // e.g. "USER_LOGIN", "PATIENT_REGISTERED", "ACCESSION_GENERATED"
+  entityType String // e.g. "User", "Patient", "ImagingOrder", "Study"
+  entityId   String
+  details    Json?
+  ipAddress  String?
+  userAgent  String?
+  timestamp  DateTime @default(now())
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([timestamp])
+  @@map("audit_logs")
+}
