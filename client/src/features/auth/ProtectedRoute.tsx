@@ -39,10 +39,13 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-rose-100 text-rose-600 mb-2">
               <ShieldAlert className="h-6 w-6" />
             </div>
-            <CardTitle className="text-rose-900">Restricted Clinical Area</CardTitle>
+            <CardTitle className="text-rose-900 text-base font-bold">Access Denied</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-center">
-            <p className="text-sm text-slate-600">
+            <p className="text-sm font-semibold text-slate-800">
+              You do not have permission to access this page.
+            </p>
+            <p className="text-xs text-slate-500 leading-relaxed">
               Your current active role is not authorized to access this section of the RIS.
             </p>
             <div className="flex items-center justify-center gap-2 py-2">
@@ -68,3 +71,4 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
 
   return <>{children}</>;
 }
+

@@ -7,7 +7,11 @@ import { DashboardPage } from '../pages/DashboardPage';
 import { WorkflowPage } from '../pages/WorkflowPage';
 import { HealthPage } from '../pages/HealthPage';
 import { PatientsPage } from '../pages/PatientsPage';
+import { PatientDetailPage } from '../pages/PatientDetailPage';
 import { OrdersPage } from '../pages/OrdersPage';
+import { AppointmentsPage } from '../pages/AppointmentsPage';
+import { ReceptionQueuePage } from '../pages/ReceptionQueuePage';
+import { TechnologistWorklistPage } from '../pages/TechnologistWorklistPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
 import { PhasePlaceholderPage } from '../pages/PhasePlaceholderPage';
 
@@ -48,64 +52,72 @@ export const router = createBrowserRouter([
         element: <PatientsPage />,
       },
       {
+        path: '/patients/:id',
+        element: <PatientDetailPage />,
+      },
+      {
         path: '/orders',
         element: <OrdersPage />,
+      },
+      {
+        path: '/appointments',
+        element: (
+          <ProtectedRoute allowedRoles={['RECEPTION', 'ADMIN']}>
+            <AppointmentsPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/reception',
+        element: (
+          <ProtectedRoute allowedRoles={['RECEPTION', 'ADMIN']}>
+            <ReceptionQueuePage />
+          </ProtectedRoute>
+        ),
       },
       {
         path: '/health',
         element: <HealthPage />,
       },
 
-      // Future Phase Pipeline Pages
+      // Technologist Worklist (Phases 3.1 - 3.7)
       {
-        path: '/appointments',
+        path: '/technologist',
         element: (
-          <PhasePlaceholderPage
-            title="Scheduling & Multi-Modality Calendar"
-            phase="Phase 2"
-            role="RECEPTION"
-            description="Dynamic appointment booking, room and scanner allocation, double-booking prevention, and patient arrival check-in."
-            plannedFeatures={[
-              'Multi-modality scanner calendar (CT, MRI, X-Ray)',
-              'Slot double-booking prevention at database transaction level',
-              'Patient arrival marking & automated status change to ARRIVED',
-              'Pre-scan checklist verification (fasting, prep instructions)',
-            ]}
-          />
+          <ProtectedRoute allowedRoles={['TECHNOLOGIST', 'ADMIN']}>
+            <TechnologistWorklistPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/technologist/worklist',
+        element: (
+          <ProtectedRoute allowedRoles={['TECHNOLOGIST', 'ADMIN']}>
+            <TechnologistWorklistPage />
+          </ProtectedRoute>
         ),
       },
       {
         path: '/worklist',
-        element: (
-          <PhasePlaceholderPage
-            title="Technologist Console & Modality Worklist (MWL)"
-            phase="Phase 2"
-            role="TECHNOLOGIST"
-            description="Real-time exam worklist, patient identity safety verification, contrast media tracking, and PACS dispatch."
-            plannedFeatures={[
-              'Patient identity double-verification at scanner bedside',
-              'Clinical safety screening (pacemakers, implants, eGFR / creatinine)',
-              'Contrast administration telemetry (agent, lot, volume, adverse events)',
-              'Acquisition start/finish timestamps & DICOM C-STORE push trigger',
-            ]}
-          />
-        ),
+        element: <Navigate to="/technologist/worklist" replace />,
       },
       {
         path: '/reporting',
         element: (
-          <PhasePlaceholderPage
-            title="Diagnostic Reporting & Radiologist Locker"
-            phase="Phase 3"
-            role="RADIOLOGIST"
-            description="Structured diagnostic reporting with findings, impression, electronic attestation, and versioned addendums."
-            plannedFeatures={[
-              'Radiologist claiming lock preventing dual dictation',
-              'Structured clinical reporting (technique, findings, impression)',
-              'Electronic signature attestation with SHA-256 integrity hash',
-              'Historical revision tracking & addendum support',
-            ]}
-          />
+          <ProtectedRoute allowedRoles={['RADIOLOGIST', 'ADMIN']}>
+            <PhasePlaceholderPage
+              title="Diagnostic Reporting & Radiologist Locker"
+              phase="Phase 3"
+              role="RADIOLOGIST"
+              description="Structured diagnostic reporting with findings, impression, electronic attestation, and versioned addendums."
+              plannedFeatures={[
+                'Radiologist claiming lock preventing dual dictation',
+                'Structured clinical reporting (technique, findings, impression)',
+                'Electronic signature attestation with SHA-256 integrity hash',
+                'Historical revision tracking & addendum support',
+              ]}
+            />
+          </ProtectedRoute>
         ),
       },
       {
@@ -151,3 +163,4 @@ export const router = createBrowserRouter([
     ],
   },
 ]);
+
