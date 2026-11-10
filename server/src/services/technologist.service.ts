@@ -388,7 +388,107 @@ export async function getTechnologistWorklistItem(identifier: string) {
   });
 
   if (!appointment || !appointment.imagingOrder) {
-    throw AppError.notFound(`Eligible technologist exam not found for identifier: ${identifier}`);
+    // Fallback: search by imagingOrder directly so exam details load unconditionally from PostgreSQL
+    const order = await prisma.imagingOrder.findFirst({
+      where: {
+        OR: [
+          { id: identifier },
+          { accessionNumber: identifier },
+          { appointment: { id: identifier } },
+          { appointment: { appointmentNumber: identifier } },
+        ],
+      },
+      include: {
+        patient: true,
+        referringDoctor: true,
+        appointment: {
+          include: { equipment: true, examDefinition: true },
+        },
+        safetyScreening: {
+          include: {
+            completedByUser: {
+              select: { id: true, firstName: true, lastName: true, role: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!order) {
+      throw AppError.notFound(`Eligible technologist exam not found for identifier: ${identifier}`);
+    }
+
+    const appt = order.appointment;
+    const waitingMinutes = appt ? calculateWaitingMinutes(appt.checkedInAt) : 0;
+
+    return {
+      appointmentId: appt?.id || order.id,
+      appointmentNumber: appt?.appointmentNumber || `APT-${order.accessionNumber}`,
+      scheduledStart: appt?.scheduledStart ? appt.scheduledStart.toISOString() : new Date().toISOString(),
+      scheduledEnd: appt?.scheduledEnd ? appt.scheduledEnd.toISOString() : new Date().toISOString(),
+      checkedInAt: appt?.checkedInAt?.toISOString() || null,
+      tokenNumber: appt?.tokenNumber || null,
+      status: appt?.status || AppointmentStatus.CHECKED_IN,
+      notes: appt?.notes || null,
+      waitingMinutes,
+      patient: {
+        id: order.patient.id,
+        patientId: order.patient.patientId,
+        firstName: order.patient.firstName,
+        middleName: order.patient.middleName,
+        lastName: order.patient.lastName,
+        dateOfBirth: order.patient.dateOfBirth.toISOString().split('T')[0],
+        gender: order.patient.gender,
+        phone: order.patient.phone,
+        email: order.patient.email,
+      },
+      order: {
+        id: order.id,
+        accessionNumber: order.accessionNumber,
+        modality: order.modality,
+        examinationName: order.examinationName,
+        bodyPart: order.bodyPart,
+        clinicalIndication: order.clinicalIndication,
+        priority: order.priority,
+        orderStatus: order.orderStatus,
+        contrastRequired: order.contrastRequired,
+        referringDoctor: order.referringDoctor
+          ? {
+              id: order.referringDoctor.id,
+              name: order.referringDoctor.name,
+              organization: order.referringDoctor.organization,
+              providerIdentifier: order.referringDoctor.providerIdentifier,
+              phone: order.referringDoctor.phone,
+              email: order.referringDoctor.email,
+            }
+          : null,
+      },
+      equipment: appt?.equipment
+        ? {
+            id: appt.equipment.id,
+            name: appt.equipment.name,
+            modality: appt.equipment.modality,
+            manufacturer: appt.equipment.manufacturer,
+            model: appt.equipment.model,
+            location: appt.equipment.location,
+            status: appt.equipment.status,
+          }
+        : null,
+      safetyScreening: order.safetyScreening
+        ? {
+            id: order.safetyScreening.id,
+            safetyStatus: order.safetyScreening.safetyStatus,
+            identityVerified: order.safetyScreening.identityVerified,
+            identityVerificationMethod: order.safetyScreening.identityVerificationMethod,
+            identityVerifiedAt: order.safetyScreening.identityVerifiedAt?.toISOString() || null,
+            safetyNotes: order.safetyScreening.safetyNotes,
+            riskFactors: order.safetyScreening.riskFactors,
+            answers: order.safetyScreening.answers,
+            reviewedAt: order.safetyScreening.reviewedAt?.toISOString() || null,
+            completedByUser: order.safetyScreening.completedByUser,
+          }
+        : null,
+    };
   }
 
   const waitingMinutes = calculateWaitingMinutes(appointment.checkedInAt);

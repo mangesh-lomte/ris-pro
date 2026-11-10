@@ -24,6 +24,10 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
       throw AppError.unauthorized('Invalid or expired authentication token', 'TOKEN_EXPIRED');
     }
 
+    if (!decoded || !decoded.userId) {
+      throw AppError.unauthorized('Invalid authentication token: missing user identity', 'INVALID_TOKEN');
+    }
+
     // Verify user exists and is active
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
@@ -51,3 +55,81 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
     next(error);
   }
 }
+
+export async function authenticatePatient(req: Request, _res: Response, next: NextFunction): Promise<void> {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw AppError.unauthorized('Missing or invalid Authorization header');
+    }
+
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+      throw AppError.unauthorized('Bearer token not provided');
+    }
+
+    let decoded: any;
+    try {
+      decoded = jwt.verify(token, env.JWT_SECRET);
+    } catch {
+      throw AppError.unauthorized('Invalid or expired authentication token', 'TOKEN_EXPIRED');
+    }
+
+    if (decoded.role !== 'PATIENT' || !decoded.patientId) {
+      throw AppError.forbidden('Access denied. Token is not authorized for patient portal.', 'FORBIDDEN_ROLE');
+    }
+
+    const patient = await prisma.patient.findUnique({
+      where: { patientId: decoded.patientId },
+    });
+
+    if (!patient || !patient.isActive) {
+      throw AppError.unauthorized('Patient account not found or inactive', 'PATIENT_NOT_FOUND');
+    }
+
+    req.patient = patient;
+    next();
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function authenticateReferringDoctor(req: Request, _res: Response, next: NextFunction): Promise<void> {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw AppError.unauthorized('Missing or invalid Authorization header');
+    }
+
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+      throw AppError.unauthorized('Bearer token not provided');
+    }
+
+    let decoded: any;
+    try {
+      decoded = jwt.verify(token, env.JWT_SECRET);
+    } catch {
+      throw AppError.unauthorized('Invalid or expired authentication token', 'TOKEN_EXPIRED');
+    }
+
+    if (decoded.role !== 'REFERRING_DOCTOR' || !decoded.doctorId) {
+      throw AppError.forbidden('Access denied. Token is not authorized for referring doctor portal.', 'FORBIDDEN_ROLE');
+    }
+
+    const doctor = await prisma.referringDoctor.findUnique({
+      where: { id: decoded.doctorId },
+    });
+
+    if (!doctor || !doctor.isActive) {
+      throw AppError.unauthorized('Referring doctor account not found or inactive', 'DOCTOR_NOT_FOUND');
+    }
+
+    req.referringDoctor = doctor;
+    next();
+  } catch (error) {
+    next(error);
+  }
+}
+
+

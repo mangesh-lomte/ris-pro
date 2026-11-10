@@ -25,7 +25,7 @@ export interface HealthCheckResult {
 
 export async function checkSystemHealth(): Promise<HealthCheckResult> {
   const startDbCheck = Date.now();
-  let dbConnected = false;
+  let dbConnected: boolean;
   let dbResponseTimeMs: number | undefined;
   let dbError: string | undefined;
 
@@ -62,3 +62,4 @@ export async function checkSystemHealth(): Promise<HealthCheckResult> {
     },
   };
 }
+

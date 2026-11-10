@@ -7,3 +7,4 @@ export async function getHealth(_req: Request, res: Response): Promise<Response>
   const statusCode = healthData.status === 'healthy' ? 200 : 503;
   return sendSuccess(res, healthData, 'System health check completed successfully', statusCode);
 }
+

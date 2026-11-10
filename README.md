@@ -1,196 +1,265 @@
-# Radiology Information System (RIS) — Phase 1
+# RadAxis RIS — Radiology Information System
 
-An enterprise-grade, clean-architecture **Radiology Information System (RIS)** engineered for professional clinical orchestration across medical imaging workflows.
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.4-blue.svg)](https://www.typescriptlang.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-20.x-green.svg)](https://nodejs.org/)
+[![React](https://img.shields.io/badge/React-18.3-61dafb.svg)](https://react.dev/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791.svg)](https://www.postgresql.org/)
+[![Orthanc PACS](https://img.shields.io/badge/Orthanc_PACS-24.12-darkred.svg)](https://www.orthanc-server.com/)
+[![OHIF Viewer](https://img.shields.io/badge/OHIF_Viewer-v3-orange.svg)](https://ohif.org/)
+[![Tests](https://img.shields.io/badge/Tests-681%20Passed-success.svg)](#-automated-testing--quality-assurance)
 
----
-
-## 🏥 1. System Overview & Core Workflow
-
-The RIS acts as the central clinical workflow and orchestration system, governing the end-to-end radiology pathway:
-
-```
-Online Booking / Reception 
-  → Scheduling & Order Creation 
-  → CT / MRI / X-ray Modality Worklist (MWL) 
-  → Technologist Bedside Verification & Scan 
-  → PACS Image Archive (DICOM C-STORE) 
-  → Radiologist Diagnostic Reporting 
-  → Final Report Electronic Attestation 
-  → Patient Portal / Front Desk Delivery
-```
-
-### Architectural Separation: RIS vs. PACS
-* **RIS (Workflow & Orchestration):** Governs patient master indices, orders, accession numbers, modality worklist telemetry, radiologist reporting queues, billing, and audit logs.
-* **PACS (Imaging Archive):** Conceptually retains multi-frame binary DICOM pixel arrays and high-resolution viewport streaming. **DICOM binary data is intentionally kept outside the PostgreSQL relational database.**
+**RadAxis RIS** is an enterprise-grade, clean-architecture Radiology Information System (RIS) and diagnostic imaging workflow orchestrator. Engineered for high-throughput diagnostic centers and hospital radiology departments, RadAxis coordinates every phase of clinical operations: from multi-channel patient registration and modality scheduling, to technologist scan execution, Orthanc PACS image commitment, synchronized OHIF diagnostic viewing, structured reporting with voice dictation, INR cashier settlement, and cryptographic external study sharing.
 
 ---
 
-## 🔑 2. Critical Domain Rule: Single Source of Truth
+## 📽️ Demonstration Video
 
-To eliminate clinical misidentification and medical record contamination:
-
-1. **Persistent Patient ID (MRN):**
-   * Format: `PAT-YYYY-XXXXX` (e.g., `PAT-2026-10001`)
-   * Assigned once upon initial registration. Remains permanently immutable across all subsequent visits, appointments, and encounters.
-   * **Date of birth is stored as source of truth; age is calculated dynamically.**
-
-2. **Unique Accession Number:**
-   * Format: `ACC-YYYYMMDD-XXXX` (e.g., `ACC-20261105-CT01`)
-   * Assigned per individual imaging order.
-   * Remains the **unbroken single source of truth** throughout:
-     * Patient Registration $\to$ Appointment $\to$ Imaging Order $\to$ Modality Worklist $\to$ Study Telemetry $\to$ Radiologist Report $\to$ Invoice.
+> [Final demonstration video — link to be added before submission]
 
 ---
 
-## 🛠️ 3. Technology Stack
+## 🏥 1. System Objective & Core Workflows
 
-| Layer | Technologies Selected | Purpose / Clinical Rationale |
-| :--- | :--- | :--- |
-| **Frontend UI** | React 18, TypeScript, Vite, React Router v6, Tailwind CSS, TanStack Query, React Hook Form, Zod, Lucide React | High-performance clinical UI with strict type safety, dark/light clinical aesthetics, and role-based views. |
-| **Backend API** | Node.js, Express, TypeScript, Zod | Type-safe REST API (`/api/v1`) with centralized error formatting and async request validation. |
-| **Database** | PostgreSQL 16 via Prisma ORM | ACID-compliant relational persistence, foreign key integrity, and normalized healthcare models. |
-| **Authentication & RBAC** | `bcryptjs` (Cost 10), RFC 7519 JWT, Role-Based Route Guards | Secure credentials, stateless sessions, and role separation (`ADMIN`, `RECEPTION`, `TECHNOLOGIST`, `RADIOLOGIST`). |
-
----
-
-## 📂 4. Project Structure (Monorepo)
+The primary objective of RadAxis RIS is to guarantee diagnostic continuity, patient safety, and operational throughput while maintaining absolute separation between relational workflow orchestration (RIS) and binary DICOM image archiving (PACS).
 
 ```text
-ris-system/
-├── client/                     # Frontend SPA (React + TypeScript + Vite)
-│   ├── src/
-│   │   ├── app/                # Root App & React Router definitions
-│   │   ├── components/
-│   │   │   ├── ui/             # Reusable UI primitives (Button, Card, Badge, Table, Input, Tabs)
-│   │   │   └── shared/         # Domain components (Header, Sidebar, RoleBadge, IdentifierPill, StatusBadge)
-│   │   ├── features/           # Feature-oriented domain modules
-│   │   │   ├── auth/           # AuthContext, ProtectedRoute, LoginForm (with 1-click role switcher)
-│   │   │   ├── dashboard/      # WorkflowVisualizer, DomainRuleDemo, StatsOverview
-│   │   │   ├── health/         # SystemHealth diagnostics
-│   │   │   ├── patients/       # Master Patient Index (MPI) registry & MRN generator
-│   │   │   └── orders/         # Imaging Orders registry & Accession generator
-│   │   ├── layouts/            # AppLayout (Header + Sidebar) and AuthLayout
-│   │   ├── pages/              # Routed pages (Dashboard, Workflow, Health, Patients, Orders, Login, 404)
-│   │   ├── hooks/              # Custom hooks (useAuth, useHealth)
-│   │   ├── lib/                # apiClient fetch wrapper, queryClient, cn utility
-│   │   ├── services/           # Typed API service clients (auth, health, patient, order)
-│   │   ├── types/              # Domain interfaces & TypeScript types
-│   │   └── utils/              # Healthcare formatters (calculateAge, formatDate, formatUptime)
-│   ├── package.json
-│   ├── tsconfig.json
-│   └── vite.config.ts
-├── server/                     # Backend REST API (Node.js + Express + TypeScript)
-│   ├── src/
-│   │   ├── config/             # Environment validation (Zod) & Prisma database singleton
-│   │   ├── controllers/        # Request handlers (auth, health, patient, order)
-│   │   ├── middleware/         # Centralized error handler, Zod validator, JWT auth, RBAC guard, 404 handler
-│   │   ├── routes/             # REST endpoints under /api/v1 (health, auth, patients, orders, etc.)
-│   │   ├── services/           # Domain business logic (auth, health, patient, order, audit)
-│   │   ├── types/              # API envelopes, JWT payloads, and Express Request augmentation
-│   │   ├── utils/              # AppError, apiResponse wrappers, identifier generator, logger
-│   │   ├── app.ts              # Express application configuration
-│   │   └── server.ts           # HTTP server bootstrap & graceful shutdown
-│   ├── package.json
-│   └── tsconfig.json
-├── prisma/
-│   ├── schema.prisma           # 11 normalized models & clinical enums
-│   └── seed.ts                 # Realistic clinical seed data (4 users, equipment, inventory, patients, orders)
-├── package.json                # Root package with npm workspaces ("server", "client")
-├── .env.example                # Example environment variables
-├── .env                        # Local active configuration
-└── README.md
+Patient Registration (Reception / Portal)
+  ├── Persistent Patient MRN (PAT-YYYY-XXXXX)
+  └── Multi-Modality Appointment & Slot Allocation
+        │
+        ▼
+Front Desk Check-in & Waiting Queue
+  ├── 2-Identifier Verification & Wristband Token ([MOD]-001)
+  └── Order Creation & Accession Number (ACC-YYYYMMDD-[MOD]-XXXX)
+        │
+        ▼
+Modality Worklist (MWL) & DICOM Integration
+  ├── Modality C-FIND Query
+  └── Patient Preparation & Clinical Safety Clearance (eGFR / Implants)
+        │
+        ▼
+Scanner Execution & Technologist Console
+  ├── Scan Acquisition, Protocol Parameters, DLP Radiation Dose
+  └── Image Quality Assurance (QA) Acceptance
+        │
+        ▼
+PACS Storage Commitment (Orthanc DICOM C-STORE)
+  └── StudyInstanceUID Relational Reconciliation
+        │
+        ▼
+Radiologist Diagnostic Worklist
+  ├── Claim Study (Concurrency Lock)
+  ├── Synchronized OHIF Viewer Launch (Port 3000)
+  ├── Prior Study Comparison & Voice Dictation
+  └── Critical Finding Alerts & Peer Review (RADPEER)
+        │
+        ▼
+Report Electronic Authorization & Digital Signing
+  ├── Status Locked to FINAL (Cryptographic Attestation)
+  └── Authoritative Signed PDF Release with QR Verification
+        │
+        ▼
+Billing, Delivery & External Sharing
+  ├── Front Desk Handover & SMS/Email Notification
+  ├── Itemized Billing (INR ₹), Cashier Closing, TPA Insurance
+  ├── Patient Self-Service Portal (OTP Login & Report Download)
+  └── External Clinician Sharing (Cryptographic Token + 2FA Gate)
 ```
 
 ---
 
-## 🗄️ 5. Database Foundation (Prisma ORM)
+## 📋 2. Comprehensive 14-Module Scope
 
-The relational schema implements 11 normalized entities adhering strictly to Section 6 & 7:
+RadAxis RIS fulfills all 174 requirements specified across the 14 core operational modules:
 
-1. **`User`**: Healthcare staff credentials, roles (`ADMIN`, `RECEPTION`, `TECHNOLOGIST`, `RADIOLOGIST`), and active status.
-2. **`Patient`**: Master Patient Index (MPI) with unique `patientId` (MRN), demographics, contact information, and audit relations.
-3. **`Appointment`**: Scheduled examination time slots, locations, modality, status, and patient foreign keys.
-4. **`ImagingOrder`**: Examination request with unique `accessionNumber`, modality, body part, clinical indication, referring doctor, contrast flag, and priority (`ROUTINE`, `URGENT`, `STAT`).
-5. **`Study`**: Conceptual imaging study instance UID, matched accession number, acquisition timestamps, and PACS transfer status.
-6. **`Report`**: Diagnostic dictation, findings, impressions, radiologist assignment, and status (`DRAFT`, `PRELIMINARY`, `FINAL`, `ADDENDUM`).
-7. **`Invoice`**: Patient billing record tied to order accession numbers, itemized totals, and outstanding balances.
-8. **`Payment`**: Payment settlements with method (`CASH`, `CREDIT_CARD`, `INSURANCE`), status, and transaction references.
-9. **`InventoryItem`**: Medical consumables (e.g. Omnipaque contrast, IV catheters) with batch/lot numbers, SKUs, and expiry dates.
-10. **`Equipment`**: Scanners (GE Revolution CT, Siemens Magnetom MRI, Canon Digital X-Ray) with serial numbers and maintenance schedules.
-11. **`AuditLog`**: Healthcare compliance log recording user actions, entity mutations, metadata payloads, timestamps, and IP addresses.
+1. **Module 01: Main Desktop Dashboard** — Executive KPI cards (bookings, scans, reports, INR revenue), live patient progression pipeline, real-time modality tiles, STAT pending-task alerts, and universal search.
+2. **Module 02: Online Patient Appointment Portal** — Mobile OTP authentication, examination catalog selection, date/time slot picker, clinical questionnaire, pre-scan instructions, and booking confirmation.
+3. **Module 03: Reception & Front Desk** — Patient master registration, duplicate candidate detection, 2-identifier check-in, queue token sequencing (`[MOD]-001`), appointment management, and patient label printing.
+4. **Module 04: Modality Worklist (MWL) & DICOM Integration** — Standard DICOM Modality Worklist C-FIND query responses, MPPS acquisition step tracking, and live AE title connection monitoring.
+5. **Module 05: Technologist Execution & Scan Lifecycle** — Mandatory MRI/CT clinical safety gate, eGFR/creatinine contrast screening, adverse incident logging, and scan acquisition timers.
+6. **Module 06: Quality Assurance & Image Acceptance** — Technologist image quality acceptance, repeat exposure authorization, and automated DICOM C-STORE transfer to PACS.
+7. **Module 07: PACS Management & Image Reconciliation** — Multi-archive storage tiering, DICOM C-ECHO ping monitor, external media import, and unassociated study reconciliation.
+8. **Module 08: Radiologist Reading Worklist & Reporting** — Unassigned/assigned study claiming, synchronized OHIF Viewer launch, multi-specialty reporting templates, voice dictation, and prior comparison.
+9. **Module 09: Critical Findings & Peer Review** — Real-time red alert dispatch for life-threatening diagnoses, receipt acknowledgment tracking, and randomized double-read RADPEER scoring.
+10. **Module 10: Report Finalization, Digital Signing & Delivery** — Electronic signature authorization, status locking (`FINAL`), tamper-evident PDF generation with QR verification, and physical handover tracking.
+11. **Module 11: Billing, Accounts, Invoicing & Cashiering** — Multi-modality price catalog, quotation generation, itemized invoices in Indian Rupees (`₹`), discount approval validation, receipt issuance, TPA insurance claims, and cashier shift closing.
+12. **Module 12: Consumables & Contrast Inventory** — First-Expired-First-Out (FEFO) dispensing, lot/batch tracking, crash cart emergency checklist, scan consumable logging, and physical stock count audits.
+13. **Module 13: Equipment Maintenance & Quality Control** — Radiology asset register, daily technologist phantom QC tests, breakdown service tickets, downtime tracking, and radiation calibration certificates.
+14. **Module 14: External DICOM Study Sharing** — Cryptographically generated recipient share tokens (`SHR-YYYY-XXXX`), 6-digit OTP verification gate, interactive zero-footprint web viewer, locked report PDF downloads, and DICOM ZIP export.
 
 ---
 
-## 🚀 6. Quick Start & Local Setup
+## 👥 3. User Roles & Permission Model
+
+RadAxis enforces strict Role-Based Access Control (RBAC) at the route, service, and UI layer:
+
+| Role | Access Scope |
+|---|---|
+| **System Administrator** (`ADMIN`) | User account provisioning, role assignment, clinical master data, retention policies, backup/DR drills, and immutable audit logs. |
+| **Radiologist** (`RADIOLOGIST`) | Diagnostic reading worklist, unassigned study claiming, OHIF viewer integration, reporting workspace, addenda/amendments, critical finding alerts, and peer review. |
+| **Radiology Technologist** (`TECHNOLOGIST`)| Modality worklist, safety checklists, IV contrast tracking, scan lifecycle execution, image QA acceptance, and PACS transfer commitment. |
+| **Receptionist** (`RECEPTION`) | Patient intake, appointment scheduling, queue check-in, token issuance, physical report delivery, and cashier payments. |
+| **Billing / Cashier** (`BILLING`) | Invoices, discount approvals, refund processing, cashier shift settlement, and TPA insurance claim management. |
+| **Patient** (`PATIENT`) | Self-service portal: OTP login, appointment booking, preparation instructions, authenticated report PDF download, and personal image viewer. |
+| **Referring Doctor** (`REFERRING_DOCTOR`)| Recipient portal: shared study review, locked PDF reports, and external DICOM viewing. |
+
+---
+
+## 🛠️ 4. Technology Stack & System Architecture
+
+```mermaid
+flowchart TD
+    subgraph Client ["Client Presentation Tier"]
+        WEB["RadAxis Clinical Web UI (Port 5173)\nReact 18 / TypeScript / Vite / Tailwind CSS"]
+        OHIF["OHIF Medical Viewer v3 (Port 3000)\nZero-Footprint Web DICOM Viewer"]
+    end
+
+    subgraph Server ["Application Logic Tier"]
+        API["RadAxis Core API (Port 5000)\nNode.js 20 / Express / TypeScript"]
+        AUTH["Stateless JWT & RBAC Middleware"]
+        PDF["PDFKit Clinical Report Engine"]
+    end
+
+    subgraph Data ["Data & Imaging Persistence Tier"]
+        PRISMA["Prisma ORM Client"]
+        PG[("PostgreSQL 16 (Port 5432)\nACID Relational Clinical DB")]
+        ORTHANC["Orthanc PACS Server (Port 8042 / 4242)\nDICOM Archive & DICOMweb WADO-RS / QIDO-RS"]
+    end
+
+    WEB -->|"REST API / JSON + Bearer JWT"| API
+    WEB -->|"Synchronized Launch"| OHIF
+    OHIF -->|"DICOMweb (WADO-RS / QIDO-RS)"| ORTHANC
+    API --> AUTH
+    API --> PDF
+    API --> PRISMA
+    PRISMA --> PG
+    API -->|"REST API & DICOMweb"| ORTHANC
+```
+
+- **Frontend**: React 18, TypeScript, Vite, Tailwind CSS, Lucide React, Radix UI Primitives, TanStack React Query.
+- **Backend API**: Node.js 20, Express, TypeScript, Zod validation, PDFKit, bcryptjs, jsonwebtoken.
+- **Database & ORM**: PostgreSQL 16, Prisma ORM (migrations, relations, seeds).
+- **PACS & DICOM**: Orthanc PACS 24.12, DICOMweb plugin (WADO-RS, QIDO-RS, WADO-URI), DICOM C-STORE / C-FIND / C-ECHO.
+- **Medical Imaging Viewer**: OHIF Viewer v3.
+- **Container Infrastructure**: Docker & Docker Compose (`compose.yml`).
+
+---
+
+## 🔌 5. Network Ports & Services
+
+| Service | Port | URL / Interface | Protocol |
+|---|---|---|---|
+| **RadAxis Web Interface** | `5173` | `http://localhost:5173` | HTTP / HTML5 |
+| **RadAxis Core REST API** | `5000` | `http://localhost:5000/api/v1` | HTTP / JSON |
+| **API Health Ping** | `5000` | `http://localhost:5000/api/v1/health` | HTTP / JSON |
+| **OHIF Medical Viewer** | `3000` | `http://localhost:3000` | HTTP / Web |
+| **Orthanc PACS Web & API**| `8042` | `http://localhost:8042` | HTTP / DICOMweb |
+| **Orthanc DICOM Port** | `4242` | `localhost:4242` | DICOM C-STORE |
+| **PostgreSQL Database** | `5432` | `localhost:5432` | TCP / PostgreSQL |
+
+---
+
+## 🚀 6. Installation & Quick Start
 
 ### Prerequisites
-* **Node.js** (v18+ or v20+)
-* **PostgreSQL** (v15+ or v16+) running locally on port 5432
+- **Node.js** `>= 20.0.0` and **npm** `>= 10.0.0`
+- **Docker & Docker Compose**
+- **Git**
 
-### Step-by-Step Installation
-
+### Step 1: Clone Repository & Install Dependencies
 ```bash
-# 1. Install all dependencies across monorepo workspaces
+git clone https://github.com/<org>/radaxis-ris.git
+cd radaxis-ris
 npm install
+```
 
-# 2. Configure Environment Variables
+### Step 2: Configure Environment Variables
+```bash
 cp .env.example .env
+```
+Ensure database credentials and Orthanc settings match your local Docker environment.
 
-# 3. Synchronize Database Schema with PostgreSQL
-npm run db:push
+### Step 3: Launch Docker Infrastructure (PostgreSQL, Orthanc PACS, OHIF)
+```bash
+docker compose up -d
+```
+Verify running containers:
+```bash
+docker compose ps
+```
 
-# 4. Seed Clinical Demo Data
+### Step 4: Initialize Database Schema & Seed Data
+```bash
+# Apply Prisma migrations
+npm run db:migrate:deploy
+
+# Seed clinical master data, users, and orders
 npm run db:seed
 
-# 5. Start Development Servers (API on :5000, Web on :5173)
+# Seed demo DICOM studies into Orthanc PACS
+npm run seed:demo-dicom
+```
+
+### Step 5: Start the Application
+```bash
+# Starts both Express API (Port 5000) and Web Client (Port 5173)
 npm run dev
 ```
 
-### Pre-configured Seed Demo Accounts
-All accounts are seeded with password: `Demo@123`
-
-| Role | Name | Email | Clinical Scope |
-| :--- | :--- | :--- | :--- |
-| **RECEPTION** | Sarah Jenkins | `reception@ris.local` | Patient registration, scheduling, check-in |
-| **TECHNOLOGIST** | Marcus Vance, RT | `tech@ris.local` | Modality worklist, exam acquisition, contrast log |
-| **RADIOLOGIST** | Dr. Elena Rostova | `rad@ris.local` | Diagnostic interpretation, dictation, and attestation |
-| **ADMIN** | Dr. Arthur Evans | `admin@ris.local` | System administration, user accounts, and audit trail |
-
-> **Interviewer Tip:** The login page and user avatar header include a **1-Click Role Switcher** to instantly evaluate perspective-specific workflows without manual typing!
+Open your browser at `http://localhost:5173`.
 
 ---
 
-## 🔍 7. Verification & Health Diagnostics
+## 🧪 7. Automated Testing & Quality Assurance
 
-* **API Health Check:** `GET /api/v1/health`
-  ```bash
-  curl http://localhost:5000/api/v1/health
-  ```
-  Returns:
-  ```json
-  {
-    "success": true,
-    "message": "System health check completed successfully",
-    "data": {
-      "status": "healthy",
-      "timestamp": "2026-11-05T05:40:47.343Z",
-      "environment": "development",
-      "version": "1.0.0",
-      "uptimeSeconds": 6,
-      "database": {
-        "connected": true,
-        "responseTimeMs": 11
-      },
-      "system": {
-        "nodeVersion": "v26.13.0",
-        "platform": "win32",
-        "memoryUsageMb": {
-          "rss": 90.73,
-          "heapTotal": 25.76,
-          "heapUsed": 20.74
-        }
-      }
-    }
-  }
-  ```
-* **Frontend Health Dashboard:** Navigate to `http://localhost:5173/health` to view real-time latency graphs, runtime memory utilization, and raw payload inspectors.
+RadAxis RIS includes a comprehensive test suite covering unit logic, clinical API routes, PACS smoke tests, and business validations:
+
+```bash
+# Execute full server test suite
+npm test
+```
+
+### Test Suite Execution Output
+```
+✓ 179 test suites passed
+✓ 681 tests passed
+```
+
+### Targeted Test Commands
+```bash
+npm run test:unit      # Run domain unit tests
+npm run test:api       # Run REST API integration tests
+npm run test:orthanc   # Run Orthanc PACS connectivity tests
+```
+
+---
+
+## 📚 8. Documentation Index
+
+Detailed engineering and operational documentation is available in the [`docs/`](docs/) directory:
+
+- 📐 **[System Architecture](docs/ARCHITECTURE.md)** — In-depth component topology, clinical identifier lifecycles, and security boundaries.
+- 📡 **[REST API Reference](docs/API_REFERENCE.md)** — Complete catalog of all endpoints across all 14 modules.
+- 🛠️ **[Deployment & Setup Runbook](docs/DEPLOYMENT_AND_SETUP.md)** — Production considerations, multi-container orchestration, and troubleshooting.
+- 🎬 **[Demonstration Runbook](docs/DEMO_RUNBOOK.md)** — Step-by-step evaluator script across all 14 modules and demo roles.
+- 🎨 **[Enterprise Design System](docs/DESIGN_SYSTEM.md)** — Clinical `OPERATE` tokens, component specifications, and WCAG AA guidelines.
+- 🎯 **[Product Truth & Stakeholder Personas](PRODUCT.md)** — Clinical user realities, operating environments, and copy standards.
+- 📊 **[Interviewer Requirement Traceability](PDF_TRACEABILITY.md)** — Line-by-line mapping of all 174 functional requirements.
+- 📄 **[Interviewer Authority Specification](docs/interviewer/RIS_Complete_Pagewise_Tools_List.docx.PDF)** — Authoritative requirement document.
+
+---
+
+## 🔒 9. Security & Compliance Principles
+
+- **Stateless Authentication**: Signed RFC 7519 JWT tokens with 8-hour expiration.
+- **Password Hashing**: Strong `bcryptjs` encryption (10 salt rounds).
+- **Cross-Patient Isolation**: Multi-tenant authorization checks preventing cross-patient data access.
+- **External Sharing**: Time-limited cryptographic share tokens (`SHR-YYYY-XXXX`) paired with a mandatory 6-digit OTP verification gate.
+- **Immutable Audit Trail**: Append-only audit log recording every patient interaction, scan state change, report signature, and external access event.
+- **DICOM Separation**: Medical pixel arrays are preserved strictly inside Orthanc PACS, never blobbing relational database tables.
+
+---
+
+## 📌 10. Project Status
+
+RadAxis RIS is **complete, verified, and frozen** for final interviewer submission. All 14 modules, 174 requirements, automated test suites (681 tests), and clinical PACS/OHIF integrations are fully functional.

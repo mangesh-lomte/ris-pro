@@ -1,6 +1,8 @@
 import { Router } from 'express';
+import { UserRole } from '@prisma/client';
 import { prisma } from '../config/db';
 import { authenticate } from '../middleware/auth.middleware';
+import { requireRole } from '../middleware/rbac.middleware';
 import { sendSuccess } from '../utils/apiResponse';
 import { asyncHandler } from '../utils/asyncHandler';
 
@@ -11,6 +13,7 @@ router.use(authenticate);
 // GET /api/v1/studies - List studies
 router.get(
   '/',
+  requireRole(UserRole.ADMIN, UserRole.RADIOLOGIST, UserRole.TECHNOLOGIST),
   asyncHandler(async (_req, res) => {
     const studies = await prisma.study.findMany({
       take: 20,
@@ -38,3 +41,4 @@ router.get(
 );
 
 export default router;
+

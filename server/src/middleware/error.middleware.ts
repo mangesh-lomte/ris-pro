@@ -9,7 +9,6 @@ export function errorHandler(
   err: Error | AppError,
   req: Request,
   res: Response,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _next: NextFunction
 ): Response {
   logger.error(`Error processing ${req.method} ${req.originalUrl}: ${err.message}`, {
@@ -72,3 +71,4 @@ export function errorHandler(
     'INTERNAL_SERVER_ERROR'
   );
 }
+

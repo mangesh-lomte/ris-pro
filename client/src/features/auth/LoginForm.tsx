@@ -79,7 +79,7 @@ export function LoginForm() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl bg-white p-6 sm:p-8 shadow-xl border border-slate-800/10">
+      <div className="rounded-2xl bg-white p-6 sm:p-8 shadow-card border border-[#DCE2EC]">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {errorMessage && (
             <Alert variant="destructive">
@@ -89,7 +89,7 @@ export function LoginForm() {
           )}
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-bold text-[#15233B] uppercase tracking-wider mb-1.5">
               Hospital Email
             </label>
             <Input
@@ -102,10 +102,10 @@ export function LoginForm() {
 
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
+              <label className="block text-xs font-bold text-[#15233B] uppercase tracking-wider">
                 Password
               </label>
-              <span className="text-[11px] text-slate-400">Demo: Demo@123</span>
+              <span className="text-[11px] text-[#64748B] font-mono">Demo: Demo@123</span>
             </div>
             <Input
               type="password"
@@ -117,44 +117,43 @@ export function LoginForm() {
 
           <Button
             type="submit"
-            variant="clinical"
-            className="w-full h-10 text-sm font-semibold"
+            className="w-full h-11 text-sm font-semibold shadow-xs"
             isLoading={isSubmitting}
           >
-            <span>Sign In to RIS Portal</span>
+            <span>Sign In to RadAxis Portal</span>
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </form>
 
         {/* Quick 1-Click Role Switcher for Interviewers */}
-        <div className="mt-6 pt-6 border-t border-slate-100">
-          <div className="flex items-center gap-1.5 mb-3 text-xs font-bold text-slate-900 uppercase tracking-wider">
-            <Sparkles className="w-3.5 h-3.5 text-cyan-600" />
+        <div className="mt-6 pt-6 border-t border-[#F3F6FC]">
+          <div className="flex items-center gap-1.5 mb-2 text-xs font-bold text-[#15233B] uppercase tracking-wider">
+            <Sparkles className="w-3.5 h-3.5 text-[#F4B629]" />
             <span>1-Click Role Evaluation Demo</span>
           </div>
-          <p className="text-[11px] text-slate-500 mb-3">
+          <p className="text-[11px] text-[#64748B] mb-3">
             Select any role below to instantly authenticate and evaluate role-specific workflows:
           </p>
 
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-2.5">
             {demoAccounts.map((acc) => (
               <button
                 key={acc.role}
                 type="button"
                 onClick={() => handleQuickLogin(acc.role)}
                 disabled={loadingRole !== null || isSubmitting}
-                className="flex flex-col items-start p-2.5 rounded-lg border border-slate-200 bg-slate-50/70 hover:bg-cyan-50/50 hover:border-cyan-300 transition-all text-left cursor-pointer group"
+                className="flex flex-col items-start p-3 rounded-xl border border-[#DCE2EC] bg-[#F3F6FC] hover:bg-[#E8EDF9] hover:border-[#33398A]/30 transition-all text-left cursor-pointer group shadow-2xs"
               >
-                <div className="flex items-center justify-between w-full mb-1">
+                <div className="flex items-center justify-between w-full mb-1.5">
                   <RoleBadge role={acc.role} />
                   {loadingRole === acc.role && (
-                    <span className="h-3 w-3 animate-spin rounded-full border-2 border-cyan-600 border-t-transparent" />
+                    <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[#33398A] border-t-transparent" />
                   )}
                 </div>
-                <span className="text-xs font-semibold text-slate-900 group-hover:text-cyan-900 leading-tight">
+                <span className="text-xs font-semibold text-[#15233B] group-hover:text-[#33398A] leading-tight">
                   {acc.name}
                 </span>
-                <span className="text-[10px] text-slate-500 font-mono mt-0.5 truncate w-full">
+                <span className="text-[10px] text-[#64748B] font-mono mt-0.5 truncate w-full">
                   {acc.email}
                 </span>
               </button>

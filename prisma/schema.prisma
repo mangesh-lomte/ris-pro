@@ -16,12 +16,14 @@ enum UserRole {
   RECEPTION
   TECHNOLOGIST
   RADIOLOGIST
+  ENGINEER
 }
 
 enum Gender {
   MALE
   FEMALE
   OTHER
+  UNKNOWN
   UNSPECIFIED
 }
 
@@ -29,6 +31,7 @@ enum AppointmentStatus {
   SCHEDULED
   CONFIRMED
   ARRIVED
+  CHECKED_IN
   CANCELLED
   NO_SHOW
   COMPLETED
@@ -38,9 +41,140 @@ enum OrderStatus {
   CREATED
   SCHEDULED
   ARRIVED
+  READY_FOR_TECH
+  SAFETY_REVIEW
+  SAFETY_CLEARED
+  PREPARATION_IN_PROGRESS
+  PREPARED
+  READY_FOR_SCAN
+  SCAN_IN_PROGRESS
+  SCAN_INTERRUPTED
+  SCAN_COMPLETED
+  IMAGE_QA_PENDING
+  IMAGE_ACCEPTED
+  REPEAT_REQUIRED
+  IMAGE_REJECTED
+  PACS_READY
+  PACS_HANDOFF_PENDING
+  PACS_HANDOFF_COMPLETE
+  PACS_HANDOFF_FAILED
+  SCAN_CANCELLED
   IN_PROGRESS
   COMPLETED
   CANCELLED
+}
+
+enum ImageQualityStatus {
+  PENDING
+  ACCEPTED
+  REPEAT_REQUIRED
+  REJECTED
+}
+
+enum ImageQualityReason {
+  PATIENT_MOTION
+  POSITIONING
+  COVERAGE_INCOMPLETE
+  TECHNICAL_ARTIFACT
+  PROTOCOL_DEVIATION
+  OTHER
+}
+
+enum PacsHandoffStatus {
+  READY
+  PENDING
+  COMPLETE
+  FAILED
+}
+
+enum PacsHandoffOutcome {
+  SUCCESS
+  FAILURE
+}
+
+enum PacsStudyLinkStatus {
+  LINKED
+  UNLINKED
+}
+
+enum RadiologistAssignmentStatus {
+  ASSIGNED
+  RELEASED
+}
+
+enum ScanState {
+  NOT_STARTED
+  IN_PROGRESS
+  INTERRUPTED
+  COMPLETED
+  CANCELLED
+}
+
+enum ScanLifecycleAction {
+  STARTED
+  INTERRUPTED
+  RESUMED
+  COMPLETED
+  CANCELLED
+}
+
+enum ContrastRoute {
+  IV
+  ORAL
+  OTHER
+}
+
+enum IncidentCategory {
+  CONTRAST_REACTION
+  EXTRAVASATION
+  PATIENT_DISTRESS
+  PATIENT_REQUEST
+  EQUIPMENT_RELATED
+  WORKFLOW_EVENT
+  OTHER
+}
+
+enum IncidentWorkflowAction {
+  SCAN_INTERRUPTED
+  SCAN_STOPPED
+  CLINICIAN_NOTIFIED
+  PATIENT_MONITORED
+  OTHER
+}
+
+enum SafetyStatus {
+  NOT_STARTED
+  IN_REVIEW
+  CLEARED
+  REQUIRES_REVIEW
+  BLOCKED
+}
+
+enum PreparationStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETE
+}
+
+enum FastingStatus {
+  NOT_REQUIRED
+  CONFIRMED
+  NOT_CONFIRMED
+  UNKNOWN
+}
+
+enum ConsentStatus {
+  NOT_REQUIRED
+  CONFIRMED
+  NOT_CONFIRMED
+}
+
+enum DocumentCategory {
+  REFERRAL
+  LAB_RESULT
+  CONSENT
+  PREVIOUS_REPORT
+  OTHER
 }
 
 enum StudyStatus {
@@ -99,14 +233,66 @@ enum PaymentMethod {
   CASH
   CREDIT_CARD
   DEBIT_CARD
+  UPI
   INSURANCE
   ONLINE
 }
 
 enum EquipmentStatus {
+  AVAILABLE
   OPERATIONAL
+  BUSY
   MAINTENANCE
+  UNDER_PM
   OUT_OF_SERVICE
+}
+
+enum AuthorizationStatus {
+  NOT_REQUIRED
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PayerType {
+  SELF_PAY
+  INSURANCE
+  CORPORATE
+}
+
+enum PeerReviewStatus {
+  PENDING
+  IN_REVIEW
+  COMPLETED
+  CANCELLED
+}
+
+enum CriticalFindingStatus {
+  PENDING
+  ACKNOWLEDGED
+}
+
+enum ReportAmendmentType {
+  CORRECTION
+  ADDENDUM
+}
+
+enum ReportDeliveryMethod {
+  RECEPTION_HANDOVER
+  PATIENT_PORTAL
+  REFERRING_PHYSICIAN
+  PRINT
+}
+
+enum NotificationChannel {
+  SMS
+  EMAIL
+}
+
+enum NotificationStatus {
+  SENT
+  DELIVERED
+  FAILED
 }
 
 // ==========================================
@@ -114,94 +300,626 @@ enum EquipmentStatus {
 // ==========================================
 
 model User {
-  id           String    @id @default(cuid())
+  id           String   @id @default(cuid())
   firstName    String
   lastName     String
-  email        String    @unique
+  email        String   @unique
   passwordHash String
   role         UserRole
-  isActive     Boolean   @default(true)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  reports   Report[]
-  auditLogs AuditLog[]
+  reports                      Report[]
+  auditLogs                    AuditLog[]
+  createdOrders                ImagingOrder[]                @relation("OrderCreatedBy")
+  createdAppointments          Appointment[]                 @relation("AppointmentCreatedBy")
+  safetyScreenings             TechnologistSafetyScreening[] @relation("SafetyScreeningCompletedBy")
+  completedPreparations        TechnologistPreparation[]     @relation("PreparationCompletedBy")
+  confirmedProtocols           ImagingOrder[]                @relation("ProtocolConfirmedBy")
+  startedScans                 ScanLifecycle[]               @relation("ScanStartedBy")
+  interruptedScans             ScanLifecycle[]               @relation("ScanInterruptedBy")
+  resumedScans                 ScanLifecycle[]               @relation("ScanResumedBy")
+  completedScans               ScanLifecycle[]               @relation("ScanCompletedBy")
+  cancelledScans               ScanLifecycle[]               @relation("ScanCancelledBy")
+  scanLifecycleEvents          ScanLifecycleEvent[]          @relation("ScanEventUser")
+  administeredContrasts        ContrastAdministration[]      @relation("ContrastAdministeredBy")
+  recordedIncidents            TechnologistIncident[]        @relation("IncidentRecordedBy")
+  startedImageQAs              ImageQualityReview[]          @relation("QAStartedBy")
+  reviewedImageQAs             ImageQualityReview[]          @relation("QAReviewedBy")
+  repeatAuthorizedQAs          ImageQualityReview[]          @relation("QARepeatAuthorizedBy")
+  initiatedPacsHandoffs        PacsHandoff[]                 @relation("PacsInitiatedBy")
+  pacsHandoffAttempts          PacsHandoffAttempt[]          @relation("PacsAttemptInitiatedBy")
+  verifiedStudyLinks           PacsStudyLink[]               @relation("StudyLinkVerifiedBy")
+  radiologistAssignments       RadiologistAssignment[]       @relation("RadiologistAssignedUser")
+  assignmentsCreated           RadiologistAssignment[]       @relation("RadiologistAssignedBy")
+  assignmentsReleased          RadiologistAssignment[]       @relation("RadiologistReleasedBy")
+  authoredDrafts               ReportDraft[]                 @relation("ReportDraftAuthor")
+  peerReviewsRequested         PeerReviewRequest[]           @relation("PeerReviewRequester")
+  peerReviewsAssigned          PeerReviewRequest[]           @relation("PeerReviewReviewer")
+  criticalFindingsCreated      CriticalFinding[]             @relation("CriticalFindingCreatedBy")
+  criticalFindingsReceived     CriticalFinding[]             @relation("CriticalFindingRecipient")
+  criticalFindingsAcknowledged CriticalFinding[]             @relation("CriticalFindingAcknowledgedBy")
+  reportAmendmentsCreated      ReportAmendment[]             @relation("ReportAmendmentCreatedBy")
+  signedReports                Report[]                      @relation("ReportSignedBy")
+  reportsReadied               Report[]                      @relation("ReportReadyBy")
+  reportDeliveriesRecorded     ReportDelivery[]              @relation("DeliveryRecordedBy")
+  reportNotificationsSent      ReportNotification[]          @relation("NotificationSentBy")
+  reportReprintsRecorded       ReportReprint[]               @relation("ReportPrintedBy")
+  externalShares               ExternalShare[]               @relation("ExternalShareCreatedBy")
+  transfers                    LargeFileTransfer[]           @relation("TransferCreatedBy")
+  outsideImportsCreated        OutsideStudyImport[]          @relation("OutsideImportCreatedBy")
+  outsideImportsReconciled     OutsideStudyImport[]          @relation("ImportReconciledBy")
+  uploadedDocuments            OrderDocument[]               @relation("DocumentUploadedBy")
 
   @@map("users")
 }
 
 model Patient {
-  id               String   @id @default(cuid())
-  patientId        String   @unique // Master Patient Index / Persistent Medical Record Number (e.g. PAT-2026-0001)
-  firstName        String
-  lastName         String
-  dateOfBirth      DateTime
-  gender           Gender
-  phone            String
-  email            String?
-  address          String?
-  emergencyContact String?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id                       String   @id @default(cuid())
+  patientId                String   @unique // Master Patient Index / Persistent Medical Record Number (PAT-YYYY-XXXXX)
+  firstName                String
+  middleName               String?
+  lastName                 String
+  dateOfBirth              DateTime
+  gender                   Gender
+  phone                    String
+  alternatePhone           String?
+  email                    String?
+  addressLine1             String?
+  addressLine2             String?
+  city                     String?
+  state                    String?
+  postalCode               String?
+  emergencyContactName     String?
+  emergencyContactPhone    String?
+  emergencyContactRelation String?
+  address                  String? // Legacy backward-compatibility representation
+  emergencyContact         String? // Legacy backward-compatibility representation
+  isActive                 Boolean  @default(true)
+  isMerged                 Boolean  @default(false)
+  mergedIntoId             String?
+  mergedInto               Patient? @relation("PatientMergeHistory", fields: [mergedIntoId], references: [id])
+  mergedPatients           Patient[] @relation("PatientMergeHistory")
+  mergedAt                 DateTime?
+  mergedById               String?
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
 
-  appointments  Appointment[]
-  imagingOrders ImagingOrder[]
-  studies       Study[]
-  invoices      Invoice[]
+  appointments        Appointment[]
+  imagingOrders       ImagingOrder[]
+  studies             Study[]
+  invoices            Invoice[]
+  quotations          Quotation[]
+  safetyScreenings    TechnologistSafetyScreening[]
+  preparations        TechnologistPreparation[]
+  externalShares      ExternalShare[]
+  shareConsents       ShareConsent[]
+  outsideStudyImports OutsideStudyImport[]
+  orderDocuments      OrderDocument[]
 
   @@index([lastName, firstName])
   @@index([phone])
+  @@index([patientId])
+  @@index([dateOfBirth])
+  @@index([isMerged])
   @@map("patients")
 }
 
-model Appointment {
-  id                String            @id @default(cuid())
-  appointmentNumber String            @unique // e.g. APT-2026-0001
-  patientId         String
-  patient           Patient           @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  examination       String // e.g. "Chest CT with IV Contrast"
-  modality          ModalityType
-  scheduledStartTime DateTime
-  scheduledEndTime   DateTime
-  status            AppointmentStatus @default(SCHEDULED)
-  priority          Priority          @default(ROUTINE)
-  location          String? // e.g. "Scanner Suite 2 - CT"
-  notes             String?
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
+model ReferringDoctor {
+  id                 String   @id @default(cuid())
+  name               String
+  organization       String?
+  phone              String?
+  email              String?
+  registrationNumber String? // Generic national/state medical board registration identifier
+  providerIdentifier String? // Generic provider / institution identifier
+  npi                String? // Optional legacy/US-specific NPI field (optional only)
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
-  imagingOrder ImagingOrder?
+  imagingOrders ImagingOrder[]
 
-  @@index([patientId])
-  @@index([scheduledStartTime])
-  @@map("appointments")
+  @@index([name])
+  @@map("referring_doctors")
+}
+
+model ExamDefinition {
+  id                                String       @id @default(cuid())
+  code                              String       @unique // e.g. "CT-HEAD", "MRI-BRAIN"
+  name                              String // e.g. "CT Head / Brain without Contrast"
+  modality                          ModalityType
+  bodyPart                          String
+  defaultDurationMinutes            Int          @default(30)
+  bufferMinutes                     Int          @default(5)
+  contrastSupported                 Boolean      @default(false)
+  fastingRequired                   Boolean      @default(false)
+  ivRequired                        Boolean      @default(false)
+  consentRequired                   Boolean      @default(false)
+  contrastPreparationRequired       Boolean      @default(false)
+  additionalPreparationInstructions String?
+  isActive                          Boolean      @default(true)
+  createdAt                         DateTime     @default(now())
+  updatedAt                         DateTime     @updatedAt
+
+  appointments Appointment[]
+  protocols    ImagingProtocol[]
+
+  @@index([modality])
+  @@index([code])
+  @@map("exam_definitions")
+}
+
+model Equipment {
+  id                  String          @id @default(cuid())
+  assetTag            String?         @unique // e.g. "EQ-CT-001", "EQ-MRI-001", "EQ-CHILLER-001", "EQ-UPS-001"
+  name                String // e.g. "GE Revolution CT 128-Slice"
+  modality            ModalityType
+  assetCategory       String          @default("SCANNER") // "SCANNER", "INJECTOR", "CHILLER", "UPS", "ANCILLARY"
+  manufacturer        String // e.g. "GE Healthcare"
+  model               String // e.g. "Revolution EVO"
+  serialNumber        String          @unique
+  status              EquipmentStatus @default(AVAILABLE)
+  location            String // e.g. "Room CT-01, Ground Floor"
+  roomNumber          String?
+  department          String?         @default("Radiology")
+  installationDate    DateTime?
+  warrantyExpiryDate  DateTime?
+  powerRatingKva      Decimal?        @db.Decimal(8, 2)
+  operatingTempMin    Decimal?        @db.Decimal(5, 2)
+  operatingTempMax    Decimal?        @db.Decimal(5, 2)
+  notes               String?         @db.Text
+  active              Boolean         @default(true)
+  lastMaintenanceDate DateTime?
+  nextMaintenanceDate DateTime?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  appointments   Appointment[]
+  scanLifecycles ScanLifecycle[]
+  pmSchedules    MaintenanceSchedule[]
+  qcChecks       EquipmentQcCheck[]
+  serviceTickets ServiceTicket[]
+  downtimes      EquipmentDowntime[]
+  partsUsages    MaintenancePartUsage[]
+  serviceRecords ServiceRecord[]
+  certificates   CalibrationCertificate[]
+  contracts      MaintenanceContract[]
+
+  @@index([modality])
+  @@index([status])
+  @@index([assetCategory])
+  @@map("equipment")
 }
 
 model ImagingOrder {
-  id                 String       @id @default(cuid())
-  accessionNumber    String       @unique // Unique Accession Number: single source of truth throughout radiology workflow
-  patientId          String
-  patient            Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  appointmentId      String?      @unique
-  appointment        Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
-  modality           ModalityType
-  bodyPart           String // e.g. "Chest", "Brain", "Abdomen", "Pelvis"
-  clinicalIndication String // e.g. "Suspected pulmonary embolism, acute dyspnea"
-  referringDoctor    String // e.g. "Dr. Sarah Mitchell, MD"
-  contrastRequirement Boolean      @default(false)
-  priority           Priority     @default(ROUTINE)
-  orderStatus        OrderStatus  @default(CREATED)
-  createdAt          DateTime     @default(now())
-  updatedAt          DateTime     @updatedAt
+  id                    String              @id @default(cuid())
+  accessionNumber       String              @unique // Unique Accession Number: single source of truth across all workflows
+  patientId             String
+  patient               Patient             @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  modality              ModalityType
+  bodyPart              String // e.g. "Chest", "Brain", "Abdomen", "Right Knee"
+  examinationName       String // e.g. "MRI Brain without Contrast"
+  clinicalIndication    String              @db.Text
+  referringDoctorId     String?
+  referringDoctor       ReferringDoctor?    @relation(fields: [referringDoctorId], references: [id], onDelete: SetNull)
+  referringDoctorText   String? // Free-text fallback if doctor is external or unregistered
+  contrastRequired      Boolean             @default(false)
+  priority              Priority            @default(ROUTINE)
+  orderStatus           OrderStatus         @default(CREATED)
+  authorizationStatus   AuthorizationStatus @default(NOT_REQUIRED)
+  payerType             PayerType?          @default(SELF_PAY)
+  payerName             String?
+  memberId              String?
+  authorizationRequired Boolean             @default(false)
+  authorizationCode     String?
+  insuranceNotes        String?             @db.Text
+  createdById           String?
+  createdBy             User?               @relation("OrderCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
 
-  study   Study?
-  report  Report?
-  invoice Invoice?
+  appointment             Appointment?
+  study                   Study?
+  report                  Report?
+  invoice                 Invoice?
+  safetyScreening         TechnologistSafetyScreening?
+  preparation             TechnologistPreparation?
+  confirmedProtocolId     String?
+  confirmedProtocol       ImagingProtocol?             @relation(fields: [confirmedProtocolId], references: [id], onDelete: SetNull)
+  protocolConfirmedAt     DateTime?
+  protocolConfirmedById   String?
+  protocolConfirmedBy     User?                        @relation("ProtocolConfirmedBy", fields: [protocolConfirmedById], references: [id], onDelete: SetNull)
+  scanLifecycles          ScanLifecycle[]
+  contrastAdministrations ContrastAdministration[]
+  incidents               TechnologistIncident[]
+  imageQualityReviews     ImageQualityReview[]
+  pacsHandoffs            PacsHandoff[]
+  pacsStudyLink           PacsStudyLink?
+  radiologistAssignments  RadiologistAssignment[]
+  reportDraft             ReportDraft?
+  peerReviewRequests      PeerReviewRequest[]
+  criticalFindings        CriticalFinding[]
+  externalShares          ExternalShare[]
+  transfers               LargeFileTransfer[]
+  outsideStudyImports     OutsideStudyImport[]
+  documents               OrderDocument[]
 
   @@index([patientId])
   @@index([accessionNumber])
   @@index([orderStatus])
+  @@index([modality])
+  @@index([confirmedProtocolId])
+  @@index([createdAt])
   @@map("imaging_orders")
+}
+
+model Appointment {
+  id                 String            @id @default(cuid())
+  appointmentNumber  String            @unique // e.g. APT-2026-0001
+  patientId          String
+  patient            Patient           @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  imagingOrderId     String?           @unique
+  imagingOrder       ImagingOrder?     @relation(fields: [imagingOrderId], references: [id], onDelete: SetNull)
+  modality           ModalityType
+  equipmentId        String?
+  equipment          Equipment?        @relation(fields: [equipmentId], references: [id], onDelete: SetNull)
+  examDefinitionId   String?
+  examDefinition     ExamDefinition?   @relation(fields: [examDefinitionId], references: [id], onDelete: SetNull)
+  examination        String // Descriptive examination name
+  scheduledStart     DateTime
+  scheduledEnd       DateTime
+  durationMinutes    Int               @default(30)
+  status             AppointmentStatus @default(SCHEDULED)
+  priority           Priority          @default(ROUTINE)
+  location           String? // e.g. "Scanner Suite 2 - CT"
+  notes              String?           @db.Text
+  cancellationReason String?           @db.Text
+  noShowReason       String?           @db.Text
+  rescheduleReason   String?           @db.Text
+  tokenNumber        String? // Daily queue token e.g. "MRI-001" or "A001"
+  checkedInAt        DateTime?
+  checkedInById      String?
+  cancelledAt        DateTime?
+  createdById        String?
+  createdBy          User?             @relation("AppointmentCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  safetyScreening TechnologistSafetyScreening?
+  preparation     TechnologistPreparation?
+
+  @@index([patientId])
+  @@index([imagingOrderId])
+  @@index([equipmentId])
+  @@index([scheduledStart, scheduledEnd])
+  @@index([status])
+  @@index([createdAt])
+  @@map("appointments")
+}
+
+model TechnologistSafetyScreening {
+  id                         String       @id @default(cuid())
+  imagingOrderId             String       @unique
+  imagingOrder               ImagingOrder @relation(fields: [imagingOrderId], references: [id], onDelete: Cascade)
+  patientId                  String
+  patient                    Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  appointmentId              String?      @unique
+  appointment                Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  completedByUserId          String
+  completedByUser            User         @relation("SafetyScreeningCompletedBy", fields: [completedByUserId], references: [id])
+  modality                   ModalityType
+  identityVerified           Boolean      @default(false)
+  identityVerificationMethod String?
+  identityVerifiedAt         DateTime?
+  safetyStatus               SafetyStatus @default(NOT_STARTED)
+  safetyNotes                String?      @db.Text
+  answers                    Json
+  riskFactors                String[]     @default([])
+  reviewedAt                 DateTime?
+  createdAt                  DateTime     @default(now())
+  updatedAt                  DateTime     @updatedAt
+
+  @@index([imagingOrderId])
+  @@index([patientId])
+  @@index([safetyStatus])
+  @@map("technologist_safety_screenings")
+}
+
+model TechnologistPreparation {
+  id                                String            @id @default(cuid())
+  imagingOrderId                    String            @unique
+  imagingOrder                      ImagingOrder      @relation(fields: [imagingOrderId], references: [id], onDelete: Cascade)
+  patientId                         String
+  patient                           Patient           @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  appointmentId                     String?           @unique
+  appointment                       Appointment?      @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  completedByUserId                 String?
+  completedByUser                   User?             @relation("PreparationCompletedBy", fields: [completedByUserId], references: [id], onDelete: SetNull)
+  fastingRequired                   Boolean           @default(false)
+  fastingStatus                     FastingStatus     @default(NOT_REQUIRED)
+  ivRequired                        Boolean           @default(false)
+  ivReady                           Boolean           @default(false)
+  contrastPreparationRequired       Boolean           @default(false)
+  contrastReady                     Boolean           @default(false)
+  consentRequired                   Boolean           @default(false)
+  consentStatus                     ConsentStatus     @default(NOT_REQUIRED)
+  additionalPreparationRequired     Boolean           @default(false)
+  additionalPreparationComplete     Boolean           @default(false)
+  additionalPreparationInstructions String?
+  preparationNotes                  String?           @db.Text
+  preparationStatus                 PreparationStatus @default(NOT_STARTED)
+  preparedAt                        DateTime?
+  createdAt                         DateTime          @default(now())
+  updatedAt                         DateTime          @updatedAt
+
+  @@index([imagingOrderId])
+  @@index([patientId])
+  @@index([preparationStatus])
+  @@map("technologist_preparations")
+}
+
+model ImagingProtocol {
+  id               String          @id @default(cuid())
+  code             String          @unique // e.g. "MRI-BRAIN-ROUTINE", "CT-HEAD-NONCONTRAST"
+  name             String // e.g. "MRI Brain Routine Diagnostic"
+  modality         ModalityType
+  examDefinitionId String?
+  examDefinition   ExamDefinition? @relation(fields: [examDefinitionId], references: [id], onDelete: SetNull)
+  bodyPart         String?
+  description      String?         @db.Text
+  isActive         Boolean         @default(true)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  confirmedOrders ImagingOrder[]
+
+  @@index([modality])
+  @@index([code])
+  @@index([isActive])
+  @@map("imaging_protocols")
+}
+
+model ScanLifecycle {
+  id                  String       @id @default(cuid())
+  imagingOrderId      String
+  imagingOrder        ImagingOrder @relation(fields: [imagingOrderId], references: [id], onDelete: Cascade)
+  attemptNumber       Int          @default(1)
+  equipmentId         String?
+  equipment           Equipment?   @relation(fields: [equipmentId], references: [id], onDelete: SetNull)
+  startedByUserId     String?
+  startedByUser       User?        @relation("ScanStartedBy", fields: [startedByUserId], references: [id], onDelete: SetNull)
+  startedAt           DateTime     @default(now())
+  interruptedByUserId String?
+  interruptedByUser   User?        @relation("ScanInterruptedBy", fields: [interruptedByUserId], references: [id], onDelete: SetNull)
+  interruptedAt       DateTime?
+  interruptionReason  String?
+  interruptionNotes   String?      @db.Text
+  resumedByUserId     String?
+  resumedByUser       User?        @relation("ScanResumedBy", fields: [resumedByUserId], references: [id], onDelete: SetNull)
+  resumedAt           DateTime?
+  completedByUserId   String?
+  completedByUser     User?        @relation("ScanCompletedBy", fields: [completedByUserId], references: [id], onDelete: SetNull)
+  completedAt         DateTime?
+  cancelledByUserId   String?
+  cancelledByUser     User?        @relation("ScanCancelledBy", fields: [cancelledByUserId], references: [id], onDelete: SetNull)
+  cancelledAt         DateTime?
+  cancellationReason  String?
+  cancellationNotes   String?      @db.Text
+  state               ScanState    @default(IN_PROGRESS)
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  events                  ScanLifecycleEvent[]
+  contrastAdministrations ContrastAdministration[]
+  incidents               TechnologistIncident[]
+  imageQualityReview      ImageQualityReview?
+  pacsHandoff             PacsHandoff?
+
+  @@unique([imagingOrderId, attemptNumber])
+  @@index([imagingOrderId])
+  @@index([equipmentId])
+  @@index([state])
+  @@map("scan_lifecycles")
+}
+
+model ScanLifecycleEvent {
+  id              String              @id @default(cuid())
+  scanLifecycleId String
+  scanLifecycle   ScanLifecycle       @relation(fields: [scanLifecycleId], references: [id], onDelete: Cascade)
+  action          ScanLifecycleAction
+  userId          String?
+  user            User?               @relation("ScanEventUser", fields: [userId], references: [id], onDelete: SetNull)
+  timestamp       DateTime            @default(now())
+  reason          String?
+  notes           String?             @db.Text
+  metadata        Json?
+
+  @@index([scanLifecycleId])
+  @@index([action])
+  @@index([timestamp])
+  @@map("scan_lifecycle_events")
+}
+
+model ContrastAdministration {
+  id                   String         @id @default(cuid())
+  imagingOrderId       String
+  imagingOrder         ImagingOrder   @relation(fields: [imagingOrderId], references: [id], onDelete: Cascade)
+  scanLifecycleId      String?
+  scanLifecycle        ScanLifecycle? @relation(fields: [scanLifecycleId], references: [id], onDelete: SetNull)
+  contrastAgentName    String
+  concentration        String?
+  volume               Decimal        @db.Decimal(8, 2)
+  volumeUnit           String         @default("mL")
+  route                ContrastRoute  @default(IV)
+  routeNotes           String?
+  batchLotNumber       String?
+  expirationDate       DateTime?
+  administeredAt       DateTime       @default(now())
+  administeredByUserId String
+  administeredByUser   User           @relation("ContrastAdministeredBy", fields: [administeredByUserId], references: [id])
+  administrationNotes  String?        @db.Text
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+
+  incidents TechnologistIncident[]
+
+  @@index([imagingOrderId])
+  @@index([scanLifecycleId])
+  @@index([administeredByUserId])
+  @@index([administeredAt])
+  @@map("contrast_administrations")
+}
+
+model TechnologistIncident {
+  id                       String                  @id @default(cuid())
+  imagingOrderId           String
+  imagingOrder             ImagingOrder            @relation(fields: [imagingOrderId], references: [id], onDelete: Cascade)
+  scanLifecycleId          String?
+  scanLifecycle            ScanLifecycle?          @relation(fields: [scanLifecycleId], references: [id], onDelete: SetNull)
+  contrastAdministrationId String?
+  contrastAdministration   ContrastAdministration? @relation(fields: [contrastAdministrationId], references: [id], onDelete: SetNull)
+  category                 IncidentCategory
+  description              String                  @db.Text
+  occurredAt               DateTime                @default(now())
+  recordedAt               DateTime                @default(now())
+  recordedByUserId         String
+  recordedByUser           User                    @relation("IncidentRecordedBy", fields: [recordedByUserId], references: [id])
+  clinicianNotified        Boolean                 @default(false)
+  clinicianNotifiedAt      DateTime?
+  notificationNotes        String?                 @db.Text
+  workflowActionTaken      IncidentWorkflowAction?
+  workflowActionNotes      String?
+  createdAt                DateTime                @default(now())
+  updatedAt                DateTime                @updatedAt
+
+  @@index([imagingOrderId])
+  @@index([scanLifecycleId])
+  @@index([contrastAdministrationId])
+  @@index([recordedByUserId])
+  @@index([category])
+  @@index([recordedAt])
+  @@map("technologist_incidents")
+}
+
+model ImageQualityReview {
+  id                       String              @id @default(cuid())
+  imagingOrderId           String
+  imagingOrder             ImagingOrder        @relation(fields: [imagingOrderId], references: [id], onDelete: Cascade)
+  scanLifecycleId          String              @unique
+  scanLifecycle            ScanLifecycle       @relation(fields: [scanLifecycleId], references: [id], onDelete: Cascade)
+  status                   ImageQualityStatus  @default(PENDING)
+  startedByUserId          String
+  startedByUser            User                @relation("QAStartedBy", fields: [startedByUserId], references: [id])
+  startedAt                DateTime            @default(now())
+  reviewedByUserId         String?
+  reviewedByUser           User?               @relation("QAReviewedBy", fields: [reviewedByUserId], references: [id])
+  reviewedAt               DateTime?
+  reasonCode               ImageQualityReason?
+  notes                    String?             @db.Text
+  repeatAuthorizedByUserId String?
+  repeatAuthorizedByUser   User?               @relation("QARepeatAuthorizedBy", fields: [repeatAuthorizedByUserId], references: [id])
+  repeatAuthorizedAt       DateTime?
+  createdAt                DateTime            @default(now())
+  updatedAt                DateTime            @updatedAt
+
+  pacsHandoff PacsHandoff?
+
+  @@index([imagingOrderId])
+  @@index([scanLifecycleId])
+  @@index([status])
+  @@index([startedAt])
+  @@map("image_quality_reviews")
+}
+
+model PacsHandoff {
+  id                   String             @id @default(cuid())
+  imagingOrderId       String
+  imagingOrder         ImagingOrder       @relation(fields: [imagingOrderId], references: [id], onDelete: Cascade)
+  scanLifecycleId      String             @unique
+  scanLifecycle        ScanLifecycle      @relation(fields: [scanLifecycleId], references: [id], onDelete: Cascade)
+  imageQualityReviewId String             @unique
+  imageQualityReview   ImageQualityReview @relation(fields: [imageQualityReviewId], references: [id], onDelete: Cascade)
+  status               PacsHandoffStatus  @default(READY)
+  attemptCount         Int                @default(0)
+  initiatedByUserId    String?
+  initiatedByUser      User?              @relation("PacsInitiatedBy", fields: [initiatedByUserId], references: [id])
+  initiatedAt          DateTime?
+  lastAttemptAt        DateTime?
+  completedAt          DateTime?
+  lastErrorCode        String?
+  lastErrorMessage     String?            @db.Text
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  attempts PacsHandoffAttempt[]
+
+  @@index([imagingOrderId])
+  @@index([scanLifecycleId])
+  @@index([imageQualityReviewId])
+  @@index([status])
+  @@map("pacs_handoffs")
+}
+
+model PacsHandoffAttempt {
+  id                String             @id @default(cuid())
+  pacsHandoffId     String
+  pacsHandoff       PacsHandoff        @relation(fields: [pacsHandoffId], references: [id], onDelete: Cascade)
+  attemptNumber     Int
+  startedAt         DateTime           @default(now())
+  completedAt       DateTime?
+  outcome           PacsHandoffOutcome
+  errorCode         String?
+  errorMessage      String?            @db.Text
+  initiatedByUserId String
+  initiatedByUser   User               @relation("PacsAttemptInitiatedBy", fields: [initiatedByUserId], references: [id])
+  createdAt         DateTime           @default(now())
+
+  @@unique([pacsHandoffId, attemptNumber])
+  @@index([pacsHandoffId])
+  @@index([outcome])
+  @@map("pacs_handoff_attempts")
+}
+
+model PacsStudyLink {
+  id               String              @id @default(cuid())
+  imagingOrderId   String              @unique
+  imagingOrder     ImagingOrder        @relation(fields: [imagingOrderId], references: [id], onDelete: Cascade)
+  orthancStudyId   String              @unique
+  studyInstanceUid String?             @unique
+  status           PacsStudyLinkStatus @default(LINKED)
+  verifiedAt       DateTime            @default(now())
+  verifiedByUserId String
+  verifiedByUser   User                @relation("StudyLinkVerifiedBy", fields: [verifiedByUserId], references: [id])
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  @@index([orthancStudyId])
+  @@index([imagingOrderId])
+  @@map("pacs_study_links")
+}
+
+model RadiologistAssignment {
+  id                String                      @id @default(cuid())
+  imagingOrderId    String
+  imagingOrder      ImagingOrder                @relation(fields: [imagingOrderId], references: [id], onDelete: Cascade)
+  radiologistUserId String
+  radiologistUser   User                        @relation("RadiologistAssignedUser", fields: [radiologistUserId], references: [id])
+  assignedByUserId  String
+  assignedByUser    User                        @relation("RadiologistAssignedBy", fields: [assignedByUserId], references: [id])
+  assignedAt        DateTime                    @default(now())
+  releasedAt        DateTime?
+  releasedByUserId  String?
+  releasedByUser    User?                       @relation("RadiologistReleasedBy", fields: [releasedByUserId], references: [id])
+  status            RadiologistAssignmentStatus @default(ASSIGNED)
+  createdAt         DateTime                    @default(now())
+  updatedAt         DateTime                    @updatedAt
+
+  @@index([imagingOrderId])
+  @@index([radiologistUserId])
+  @@index([status])
+  @@map("radiologist_assignments")
 }
 
 model Study {
@@ -230,106 +948,521 @@ model Study {
 }
 
 model Report {
-  id           String       @id @default(cuid())
-  studyId      String       @unique
-  study        Study        @relation(fields: [studyId], references: [id], onDelete: Cascade)
-  orderId      String       @unique
-  order        ImagingOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  radiologistId String?
-  radiologist  User?        @relation(fields: [radiologistId], references: [id], onDelete: SetNull)
-  status       ReportStatus @default(DRAFT)
-  draftContent String?      @db.Text
-  findings     String?      @db.Text
-  impression   String?      @db.Text
-  finalizedAt  DateTime?
-  version      Int          @default(1)
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  id                    String       @id @default(cuid())
+  studyId               String       @unique
+  study                 Study        @relation(fields: [studyId], references: [id], onDelete: Cascade)
+  orderId               String       @unique
+  order                 ImagingOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  radiologistId         String?
+  radiologist           User?        @relation(fields: [radiologistId], references: [id], onDelete: SetNull)
+  status                ReportStatus @default(DRAFT)
+  draftContent          String?      @db.Text
+  findings              String?      @db.Text
+  impression            String?      @db.Text
+  finalizedAt           DateTime?
+  version               Int          @default(1)
+  signedAt              DateTime?
+  signedById            String?
+  signedBy              User?        @relation("ReportSignedBy", fields: [signedById], references: [id], onDelete: SetNull)
+  isSigned              Boolean      @default(false)
+  isLocked              Boolean      @default(false)
+  digitalSignature      Json?
+  signatureHash         String?
+  pdfGeneratedAt        DateTime?
+  pdfArtifactPath       String?
+  pdfFileSizeBytes      Int?
+  pdfVersion            Int?
+  isReadyForReception   Boolean      @default(false)
+  readyForReceptionAt   DateTime?
+  readyForReceptionById String?
+  readyForReceptionBy   User?        @relation("ReportReadyBy", fields: [readyForReceptionById], references: [id], onDelete: SetNull)
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+
+  amendments     ReportAmendment[]
+  deliveries     ReportDelivery[]
+  notifications  ReportNotification[]
+  reprints       ReportReprint[]
+  externalShares ExternalShare[]
 
   @@index([radiologistId])
+  @@index([signedById])
+  @@index([readyForReceptionById])
+  @@index([isReadyForReception])
   @@index([status])
   @@map("reports")
 }
 
 model Invoice {
-  id                String        @id @default(cuid())
-  invoiceNumber     String        @unique // e.g. INV-2026-0001
-  patientId         String
-  patient           Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  orderId           String?       @unique
-  order             ImagingOrder? @relation(fields: [orderId], references: [id], onDelete: SetNull)
-  total             Decimal       @db.Decimal(10, 2)
-  discount          Decimal       @default(0.00) @db.Decimal(10, 2)
-  paidAmount        Decimal       @default(0.00) @db.Decimal(10, 2)
-  outstandingAmount Decimal       @db.Decimal(10, 2)
-  status            InvoiceStatus @default(PENDING)
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
+  id                   String        @id @default(cuid())
+  invoiceNumber        String        @unique // e.g. INV-2026-0001
+  patientId            String
+  patient              Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  orderId              String?       @unique
+  order                ImagingOrder? @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  grossAmount          Decimal       @default(0.00) @db.Decimal(10, 2)
+  discount             Decimal       @default(0.00) @db.Decimal(10, 2)
+  taxAmount            Decimal       @default(0.00) @db.Decimal(10, 2)
+  total                Decimal       @db.Decimal(10, 2) // Net payable = grossAmount - discount + taxAmount
+  paidAmount           Decimal       @default(0.00) @db.Decimal(10, 2)
+  outstandingAmount    Decimal       @db.Decimal(10, 2)
+  status               InvoiceStatus @default(PENDING)
+  discountReason       String?
+  discountApprovedById String?
+  discountApprovedAt   DateTime?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
 
   payments Payment[]
+  items    InvoiceItem[]
+  receipts Receipt[]
+  refunds  Refund[]
+  claims   InsuranceClaim[]
 
   @@index([patientId])
   @@map("invoices")
 }
 
 model Payment {
-  id            String        @id @default(cuid())
-  invoiceId     String
-  invoice       Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  amount        Decimal       @db.Decimal(10, 2)
-  paymentMethod PaymentMethod @default(CASH)
-  reference     String? // Transaction ID, Cheque number, Auth code
-  paymentStatus PaymentStatus @default(COMPLETED)
-  paidAt        DateTime      @default(now())
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id             String        @id @default(cuid())
+  invoiceId      String
+  invoice        Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  amount         Decimal       @db.Decimal(10, 2)
+  paymentMethod  PaymentMethod @default(CASH)
+  reference      String? // Transaction ID, Cheque number, Auth code
+  paymentStatus  PaymentStatus @default(COMPLETED)
+  paidAt         DateTime      @default(now())
+  recordedById   String?
+  idempotencyKey String?       @unique
+  notes          String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  receipt Receipt?
+  refunds Refund[]
 
   @@index([invoiceId])
   @@map("payments")
 }
 
-model InventoryItem {
-  id           String    @id @default(cuid())
-  name         String // e.g. "Iohexol (Omnipaque 350) 100mL"
-  category     String // e.g. "Contrast Media", "Syringes", "Radiation Shielding"
-  sku          String    @unique // e.g. "INV-MED-001"
-  quantity     Int       @default(0)
-  reorderLevel Int       @default(10)
-  batchNumber  String?
-  lotNumber    String?
-  expiryDate   DateTime?
-  unitPrice    Decimal?  @db.Decimal(10, 2)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+model PriceMasterItem {
+  id        String        @id @default(cuid())
+  code      String        @unique // e.g. "SRV-CT-HEAD", "SRV-MRI-BRAIN", "SRV-CONTRAST-IV", "SRV-FILM-14X17"
+  name      String
+  modality  ModalityType?
+  category  String // "EXAMINATION", "CONTRAST", "FILM", "PACKAGE", "SERVICE"
+  basePrice Decimal       @db.Decimal(10, 2)
+  taxRate   Decimal       @default(0.00) @db.Decimal(5, 2)
+  isActive  Boolean       @default(true)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 
   @@index([category])
+  @@index([modality])
+  @@map("price_master_items")
+}
+
+model Quotation {
+  id              String   @id @default(cuid())
+  quotationNumber String   @unique // e.g. "QTE-2026-0001"
+  patientId       String
+  patient         Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  orderId         String?
+  grossAmount     Decimal  @db.Decimal(10, 2)
+  discount        Decimal  @default(0.00) @db.Decimal(10, 2)
+  discountReason  String?
+  taxAmount       Decimal  @default(0.00) @db.Decimal(10, 2)
+  netAmount       Decimal  @db.Decimal(10, 2)
+  status          String   @default("ISSUED") // "ISSUED", "ACCEPTED", "EXPIRED", "CONVERTED"
+  validUntil      DateTime
+  notes           String?
+  createdById     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  items QuotationItem[]
+
+  @@index([patientId])
+  @@index([orderId])
+  @@map("quotations")
+}
+
+model QuotationItem {
+  id          String    @id @default(cuid())
+  quotationId String
+  quotation   Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  serviceCode String
+  description String
+  quantity    Int       @default(1)
+  unitPrice   Decimal   @db.Decimal(10, 2)
+  totalPrice  Decimal   @db.Decimal(10, 2)
+
+  @@index([quotationId])
+  @@map("quotation_items")
+}
+
+model InvoiceItem {
+  id          String  @id @default(cuid())
+  invoiceId   String
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  serviceCode String
+  description String
+  quantity    Int     @default(1)
+  unitPrice   Decimal @db.Decimal(10, 2)
+  totalPrice  Decimal @db.Decimal(10, 2)
+  itemType    String  @default("EXAM") // "EXAM", "CONTRAST", "FILM", "PROCEDURE", "PACKAGE"
+
+  @@index([invoiceId])
+  @@map("invoice_items")
+}
+
+model Receipt {
+  id            String        @id @default(cuid())
+  receiptNumber String        @unique // e.g. RCP-2026-0001
+  invoiceId     String
+  invoice       Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  paymentId     String        @unique
+  payment       Payment       @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  patientId     String
+  amount        Decimal       @db.Decimal(10, 2)
+  paymentMethod PaymentMethod
+  reference     String?
+  issuedById    String?
+  issuedAt      DateTime      @default(now())
+  receiptData   Json?
+
+  @@index([invoiceId])
+  @@index([patientId])
+  @@map("receipts")
+}
+
+model Refund {
+  id            String        @id @default(cuid())
+  refundNumber  String        @unique // e.g. REF-2026-0001
+  invoiceId     String
+  invoice       Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  paymentId     String?
+  payment       Payment?      @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  amount        Decimal       @db.Decimal(10, 2)
+  reason        String
+  refundMethod  PaymentMethod @default(CASH)
+  reference     String?
+  processedById String
+  createdAt     DateTime      @default(now())
+
+  @@index([invoiceId])
+  @@index([paymentId])
+  @@map("refunds")
+}
+
+model InsuranceClaim {
+  id                  String    @id @default(cuid())
+  claimNumber         String    @unique // e.g. CLM-2026-0001
+  invoiceId           String?
+  invoice             Invoice?  @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  orderId             String?
+  patientId           String
+  payerName           String
+  policyNumber        String
+  preAuthCode         String?
+  claimAmount         Decimal   @db.Decimal(10, 2)
+  approvedAmount      Decimal   @default(0.00) @db.Decimal(10, 2)
+  copayAmount         Decimal   @default(0.00) @db.Decimal(10, 2)
+  status              String    @default("SUBMITTED") // SUBMITTED, UNDER_REVIEW, APPROVED, REJECTED, SETTLED
+  settlementReference String?
+  settledAt           DateTime?
+  documents           Json?
+  notes               String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([invoiceId])
+  @@index([patientId])
+  @@index([orderId])
+  @@map("insurance_claims")
+}
+
+model CashierClosing {
+  id              String   @id @default(cuid())
+  closingNumber   String   @unique // e.g. CLS-2026-0001
+  cashierId       String
+  cashierName     String
+  closingDate     DateTime @default(now())
+  openingFloat    Decimal  @default(0.00) @db.Decimal(10, 2)
+  cashCollected   Decimal  @default(0.00) @db.Decimal(10, 2)
+  cardCollected   Decimal  @default(0.00) @db.Decimal(10, 2)
+  upiCollected    Decimal  @default(0.00) @db.Decimal(10, 2)
+  onlineCollected Decimal  @default(0.00) @db.Decimal(10, 2)
+  refundsTotal    Decimal  @default(0.00) @db.Decimal(10, 2)
+  expectedCash    Decimal  @db.Decimal(10, 2)
+  actualCash      Decimal  @db.Decimal(10, 2)
+  variance        Decimal  @db.Decimal(10, 2)
+  notes           String?
+  status          String   @default("CLOSED")
+  closedAt        DateTime @default(now())
+
+  @@index([cashierId])
+  @@index([closingDate])
+  @@map("cashier_closings")
+}
+
+model InventoryItem {
+  id             String    @id @default(cuid())
+  itemCode       String    @unique // e.g. "INV-CONTRAST-OMNI350", "ITEM-CON-001"
+  name           String // e.g. "Omnipaque 350 mg I/mL (100 mL)"
+  category       String // "CONTRAST", "MEDICINE", "FILM", "CONSUMABLE", "EMERGENCY_KIT"
+  subCategory    String? // "IODINATED", "GADOLINIUM", "XRAY_FILM", "SYRINGE", "IV_CANNULA", "TUBING"
+  unit           String    @default("PIECE") // "VIAL", "BOX", "SHEET", "PIECE", "ML", "PACK"
+  barcode        String?   @unique // for Barcode / QR scanner resolution
+  sku            String? // legacy/alias SKU
+  quantity       Int       @default(0) // total available stock cached/aggregate
+  reorderLevel   Int       @default(10)
+  unitPrice      Decimal   @default(0.00) @db.Decimal(10, 2)
+  contrastType   String? // "IODINATED", "GADOLINIUM"
+  concentration  String? // "350 mg/mL", "1.0 mmol/mL"
+  packSize       String? // "100 mL", "15 mL", "14x17 inch"
+  filmSize       String? // "8x10", "10x12", "14x17"
+  isEmergencyKit Boolean   @default(false)
+  active         Boolean   @default(true)
+  batchNumber    String? // legacy field
+  lotNumber      String? // legacy field
+  expiryDate     DateTime? // legacy field
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  batches                 InventoryBatch[]
+  locationStocks          LocationStock[]
+  transactions            StockTransaction[]
+  wastageLogs             WastageLog[]
+  orderUsages             OrderConsumableUsage[]
+  auditItems              StockAuditItem[]
+  emergencyChecklistItems EmergencyChecklistItem[]
+  maintenanceUsages       MaintenancePartUsage[]
+
+  @@index([category])
+  @@index([contrastType])
   @@map("inventory_items")
 }
 
-model Equipment {
-  id                  String          @id @default(cuid())
-  name                String // e.g. "GE Revolution CT 128-Slice"
-  modality            ModalityType
-  manufacturer        String // e.g. "GE Healthcare"
-  model               String // e.g. "Revolution EVO"
-  serialNumber        String          @unique
-  status              EquipmentStatus @default(OPERATIONAL)
-  location            String // e.g. "Room CT-01, Ground Floor"
-  lastMaintenanceDate DateTime?
-  nextMaintenanceDate DateTime?
-  createdAt           DateTime        @default(now())
-  updatedAt           DateTime        @updatedAt
+model InventoryBatch {
+  id              String        @id @default(cuid())
+  batchNumber     String // e.g. "LOT-2026-001"
+  itemId          String
+  item            InventoryItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  supplierName    String? // e.g. "GE Healthcare", "Bayer Pharma", "Carestream"
+  purchaseInvoice String? // e.g. "PI-2026-9901"
+  expiryDate      DateTime // Expiry date for alerts & FEFO
+  receivedDate    DateTime      @default(now())
+  initialQuantity Int
+  currentQuantity Int           @default(0)
+  unitCost        Decimal       @default(0.00) @db.Decimal(10, 2)
+  isBlocked       Boolean       @default(false) // e.g. recalled or quarantined
+  blockReason     String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
-  @@index([modality])
-  @@map("equipment")
+  locationStocks    LocationStock[]
+  transactions      StockTransaction[]
+  wastageLogs       WastageLog[]
+  orderUsages       OrderConsumableUsage[]
+  auditItems        StockAuditItem[]
+  maintenanceUsages MaintenancePartUsage[]
+
+  @@unique([itemId, batchNumber])
+  @@index([itemId])
+  @@index([expiryDate])
+  @@map("inventory_batches")
+}
+
+model LocationStock {
+  id        String         @id @default(cuid())
+  location  String // "CT_SCANNER", "MRI_SCANNER", "XRAY_ROOM", "PHARMACY", "GENERAL_STORE"
+  itemId    String
+  item      InventoryItem  @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  batchId   String
+  batch     InventoryBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  quantity  Int            @default(0)
+  updatedAt DateTime       @updatedAt
+
+  @@unique([location, itemId, batchId])
+  @@index([location])
+  @@index([itemId])
+  @@index([batchId])
+  @@map("location_stocks")
+}
+
+model StockTransaction {
+  id                String          @id @default(cuid())
+  transactionNumber String          @unique // e.g. "TXN-2026-0001"
+  type              String // "PURCHASE_RECEIPT", "ISSUE_CLINICAL", "TRANSFER", "WASTAGE", "ADJUSTMENT_DAMAGE", "ADJUSTMENT_RETURN", "ADJUSTMENT_CORRECTION", "AUDIT_RECONCILIATION", "FILM_PRINT", "FILM_SPOIL"
+  itemId            String
+  item              InventoryItem   @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  batchId           String?
+  batch             InventoryBatch? @relation(fields: [batchId], references: [id], onDelete: SetNull)
+  sourceLocation    String? // null on purchase receipt
+  targetLocation    String? // null on usage/consumption/wastage
+  quantity          Int // moved quantity
+  balanceBefore     Int
+  balanceAfter      Int
+  orderId           String? // linked ImagingOrder ID
+  patientId         String? // linked Patient ID
+  unitCost          Decimal?        @db.Decimal(10, 2)
+  totalValue        Decimal?        @db.Decimal(10, 2)
+  reference         String? // PO, invoice, accession, or credit note
+  reason            String?
+  performedById     String
+  performedByName   String?
+  createdAt         DateTime        @default(now())
+
+  maintenanceUsages MaintenancePartUsage[]
+
+  @@index([itemId])
+  @@index([batchId])
+  @@index([orderId])
+  @@index([patientId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("stock_transactions")
+}
+
+model WastageLog {
+  id             String          @id @default(cuid())
+  wastageNumber  String          @unique // e.g. "WST-2026-0001"
+  itemId         String
+  item           InventoryItem   @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  batchId        String?
+  batch          InventoryBatch? @relation(fields: [batchId], references: [id], onDelete: SetNull)
+  location       String // e.g. "CT_SCANNER", "MRI_SCANNER"
+  quantity       Int             @default(1) // vials or units
+  volumeUsedMl   Decimal?        @db.Decimal(8, 2)
+  volumeWastedMl Decimal?        @db.Decimal(8, 2)
+  reason         String // "PARTIAL_VIAL_REMAINDER", "CONTAMINATION", "EXPIRED", "SPILLAGE"
+  orderId        String?
+  patientId      String?
+  recordedById   String
+  recordedByName String?
+  recordedAt     DateTime        @default(now())
+
+  @@index([itemId])
+  @@index([batchId])
+  @@index([orderId])
+  @@map("wastage_logs")
+}
+
+model OrderConsumableUsage {
+  id             String          @id @default(cuid())
+  orderId        String // Accession / order linkage
+  patientId      String // Patient linkage
+  itemId         String
+  item           InventoryItem   @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  batchId        String?
+  batch          InventoryBatch? @relation(fields: [batchId], references: [id], onDelete: SetNull)
+  quantity       Int             @default(1)
+  location       String
+  recordedById   String
+  recordedByName String?
+  notes          String?
+  recordedAt     DateTime        @default(now())
+
+  @@index([orderId])
+  @@index([patientId])
+  @@index([itemId])
+  @@map("order_consumable_usages")
+}
+
+model EmergencyChecklist {
+  id              String                   @id @default(cuid())
+  checklistNumber String                   @unique // e.g. "CHK-2026-0001"
+  location        String // e.g. "CT_SCANNER", "MRI_SCANNER", "CRASH_CART"
+  status          String                   @default("COMPLETED") // "COMPLETED", "ACTION_REQUIRED"
+  checkedById     String
+  checkedByName   String
+  checkedAt       DateTime                 @default(now())
+  notes           String?
+  items           EmergencyChecklistItem[]
+
+  @@index([location])
+  @@index([checkedAt])
+  @@map("emergency_checklists")
+}
+
+model EmergencyChecklistItem {
+  id               String             @id @default(cuid())
+  checklistId      String
+  checklist        EmergencyChecklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+  itemId           String
+  item             InventoryItem      @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  batchId          String?
+  status           String // "ACCEPTABLE", "EXPIRED", "LOW_STOCK", "REPLACED", "MISSING"
+  currentStock     Int
+  expiryDate       DateTime?
+  replacementDone  Boolean            @default(false)
+  replacementBatch String?
+  remarks          String?
+
+  @@index([checklistId])
+  @@index([itemId])
+  @@map("emergency_checklist_items")
+}
+
+model StockAudit {
+  id            String           @id @default(cuid())
+  auditNumber   String           @unique // e.g. "AUD-2026-0001"
+  location      String
+  status        String           @default("COMPLETED") // "IN_PROGRESS", "COMPLETED", "RECONCILED"
+  auditedById   String
+  auditedByName String
+  auditedAt     DateTime         @default(now())
+  totalVariance Int              @default(0)
+  notes         String?
+  items         StockAuditItem[]
+
+  @@index([location])
+  @@index([auditedAt])
+  @@map("stock_audits")
+}
+
+model StockAuditItem {
+  id                String          @id @default(cuid())
+  auditId           String
+  audit             StockAudit      @relation(fields: [auditId], references: [id], onDelete: Cascade)
+  itemId            String
+  item              InventoryItem   @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  batchId           String?
+  batch             InventoryBatch? @relation(fields: [batchId], references: [id], onDelete: SetNull)
+  expectedQty       Int
+  countedQty        Int
+  variance          Int // countedQty - expectedQty
+  discrepancyReason String?
+  reconciled        Boolean         @default(false)
+
+  @@index([auditId])
+  @@index([itemId])
+  @@map("stock_audit_items")
+}
+
+model SupplierPurchase {
+  id            String    @id @default(cuid())
+  poNumber      String    @unique // e.g. "PO-2026-0001"
+  supplierName  String
+  invoiceNumber String?
+  invoiceDate   DateTime?
+  totalAmount   Decimal   @default(0.00) @db.Decimal(10, 2)
+  status        String    @default("RECEIVED")
+  receivedById  String
+  receivedAt    DateTime  @default(now())
+
+  @@index([supplierName])
+  @@index([receivedAt])
+  @@map("supplier_purchases")
 }
 
 model AuditLog {
   id         String   @id @default(cuid())
   userId     String?
   user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  action     String // e.g. "USER_LOGIN", "PATIENT_REGISTERED", "ACCESSION_GENERATED"
-  entityType String // e.g. "User", "Patient", "ImagingOrder", "Study"
+  action     String // e.g. "USER_LOGIN", "PATIENT_CREATED", "ORDER_CREATED", "APPOINTMENT_SCHEDULED", "PATIENT_CHECKED_IN"
+  entityType String // e.g. "User", "Patient", "ImagingOrder", "Appointment", "Study"
   entityId   String
   details    Json?
   ipAddress  String?
@@ -340,4 +1473,718 @@ model AuditLog {
   @@index([entityType, entityId])
   @@index([timestamp])
   @@map("audit_logs")
+}
+
+model ReportingTemplate {
+  id          String       @id @default(cuid())
+  name        String
+  modality    ModalityType
+  bodyPart    String // e.g. "Chest", "Brain", "Head", "Spine"
+  description String?
+  language    String       @default("en")
+  sections    Json // e.g. ["Clinical Indication", "Comparison", "Findings", "Impression"]
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  drafts ReportDraft[]
+
+  @@index([modality, bodyPart])
+  @@map("reporting_templates")
+}
+
+model ReportDraft {
+  id              String             @id @default(cuid())
+  imagingOrderId  String             @unique
+  imagingOrder    ImagingOrder       @relation(fields: [imagingOrderId], references: [id], onDelete: Cascade)
+  authorId        String
+  author          User               @relation("ReportDraftAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  templateId      String?
+  template        ReportingTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  templateName    String?
+  content         Json // Structured content: { clinicalIndication: string, comparison: string, findings: string, impression: string }
+  version         Int                @default(1)
+  lastAutosavedAt DateTime?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@index([imagingOrderId])
+  @@index([authorId])
+  @@map("report_drafts")
+}
+
+model PeerReviewRequest {
+  id             String           @id @default(cuid())
+  imagingOrderId String
+  imagingOrder   ImagingOrder     @relation(fields: [imagingOrderId], references: [id], onDelete: Cascade)
+  requesterId    String
+  requester      User             @relation("PeerReviewRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  reviewerId     String
+  reviewer       User             @relation("PeerReviewReviewer", fields: [reviewerId], references: [id], onDelete: Cascade)
+  status         PeerReviewStatus @default(PENDING)
+  reason         String?
+  reviewComment  String?
+  decision       String? // e.g. "CONCUR", "DISCREPANT", "SECOND_OPINION"
+  requestedAt    DateTime         @default(now())
+  startedAt      DateTime?
+  completedAt    DateTime?
+  cancelledAt    DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([imagingOrderId])
+  @@index([requesterId])
+  @@index([reviewerId])
+  @@index([status])
+  @@map("peer_review_requests")
+}
+
+model CriticalFinding {
+  id                  String                @id @default(cuid())
+  imagingOrderId      String
+  imagingOrder        ImagingOrder          @relation(fields: [imagingOrderId], references: [id], onDelete: Cascade)
+  createdById         String
+  createdBy           User                  @relation("CriticalFindingCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  recipientId         String
+  recipient           User                  @relation("CriticalFindingRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  findingText         String                @db.Text
+  status              CriticalFindingStatus @default(PENDING)
+  severity            String                @default("CRITICAL")
+  sentAt              DateTime              @default(now())
+  acknowledgedAt      DateTime?
+  acknowledgedById    String?
+  acknowledgedBy      User?                 @relation("CriticalFindingAcknowledgedBy", fields: [acknowledgedById], references: [id], onDelete: SetNull)
+  acknowledgmentNotes String?               @db.Text
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+
+  @@index([imagingOrderId])
+  @@index([recipientId])
+  @@index([createdById])
+  @@index([status])
+  @@map("critical_findings")
+}
+
+model ReportAmendment {
+  id              String              @id @default(cuid())
+  reportId        String
+  report          Report              @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  versionNumber   Int
+  amendmentType   ReportAmendmentType
+  reason          String              @db.Text
+  findings        String?             @db.Text
+  impression      String?             @db.Text
+  contentSnapshot Json?
+  createdById     String
+  createdBy       User                @relation("ReportAmendmentCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  createdAt       DateTime            @default(now())
+
+  @@unique([reportId, versionNumber])
+  @@index([reportId])
+  @@index([createdById])
+  @@index([amendmentType])
+  @@map("report_amendments")
+}
+
+model ReportDelivery {
+  id              String               @id @default(cuid())
+  reportId        String
+  report          Report               @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  version         Int                  @default(1)
+  deliveryMethod  ReportDeliveryMethod
+  recipientName   String
+  recipientRole   String? // e.g. "PATIENT", "REFERRING_PHYSICIAN", "FAMILY_MEMBER", "COURIER"
+  deliveredAt     DateTime             @default(now())
+  deliveredById   String?
+  deliveredByUser User?                @relation("DeliveryRecordedBy", fields: [deliveredById], references: [id], onDelete: SetNull)
+  status          String               @default("ACKNOWLEDGED")
+  notes           String?              @db.Text
+  createdAt       DateTime             @default(now())
+
+  @@index([reportId])
+  @@index([deliveryMethod])
+  @@index([deliveredAt])
+  @@map("report_deliveries")
+}
+
+model ReportNotification {
+  id               String              @id @default(cuid())
+  reportId         String
+  report           Report              @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  channel          NotificationChannel
+  recipientContact String
+  messageBody      String              @db.Text
+  status           NotificationStatus  @default(SENT)
+  provider         String              @default("LOCAL_DEMO_ADAPTER")
+  sentAt           DateTime            @default(now())
+  sentById         String?
+  sentByUser       User?               @relation("NotificationSentBy", fields: [sentById], references: [id], onDelete: SetNull)
+  createdAt        DateTime            @default(now())
+
+  @@index([reportId])
+  @@index([channel])
+  @@index([sentAt])
+  @@map("report_notifications")
+}
+
+model ReportReprint {
+  id            String   @id @default(cuid())
+  reportId      String
+  report        Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  version       Int      @default(1)
+  printedAt     DateTime @default(now())
+  printedById   String
+  printedByUser User     @relation("ReportPrintedBy", fields: [printedById], references: [id], onDelete: Cascade)
+  reason        String?
+  copiesCount   Int      @default(1)
+  createdAt     DateTime @default(now())
+
+  @@index([reportId])
+  @@index([printedById])
+  @@index([printedAt])
+  @@map("report_reprints")
+}
+
+// ============================================================================
+// MODULE 12: EQUIPMENT MAINTENANCE & PREVENTIVE MAINTENANCE MODELS
+// ============================================================================
+
+model MaintenanceSchedule {
+  id                  String               @id @default(cuid())
+  scheduleNumber      String               @unique // e.g. "PM-2026-0001"
+  equipmentId         String
+  equipment           Equipment            @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  title               String // e.g. "Quarterly Gantry, RF Coil & Chiller PM"
+  maintenanceType     String               @default("PREVENTIVE_MAINTENANCE") // "PREVENTIVE_MAINTENANCE", "CALIBRATION", "SAFETY_INSPECTION", "ELECTRICAL_SAFETY"
+  frequency           String               @default("QUARTERLY") // "DAILY", "WEEKLY", "MONTHLY", "QUARTERLY", "BIANNUAL", "ANNUAL"
+  intervalDays        Int                  @default(90)
+  contractType        String?              @default("AMC") // "AMC", "CMC", "WARRANTY", "IN_HOUSE"
+  contractId          String?
+  contract            MaintenanceContract? @relation(fields: [contractId], references: [id], onDelete: SetNull)
+  lastCompletedDate   DateTime?
+  scheduledDate       DateTime
+  nextDueDate         DateTime
+  assignedEngineer    String?
+  vendorName          String?
+  status              String               @default("SCHEDULED") // "SCHEDULED", "DUE", "OVERDUE", "IN_PROGRESS", "COMPLETED", "CANCELLED"
+  notes               String?              @db.Text
+  checklistTemplateId String?
+  checklistTemplate   PmChecklistTemplate? @relation(fields: [checklistTemplateId], references: [id], onDelete: SetNull)
+  completedChecklist  Json?
+  completedById       String?
+  completedByName     String?
+  completedAt         DateTime?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+
+  serviceRecords ServiceRecord[]
+  partsUsages    MaintenancePartUsage[]
+
+  @@index([equipmentId])
+  @@index([scheduledDate])
+  @@index([nextDueDate])
+  @@index([status])
+  @@map("maintenance_schedules")
+}
+
+model PmChecklistTemplate {
+  id              String   @id @default(cuid())
+  code            String   @unique // e.g. "PM-TMPL-CT-Q", "PM-TMPL-MRI-M"
+  title           String
+  modality        String // "CT", "MRI", "XRAY", "INJECTOR", "CHILLER", "UPS", "ALL"
+  frequency       String // "MONTHLY", "QUARTERLY", "ANNUAL"
+  oemManufacturer String? // "GE Healthcare", "Siemens Healthineers", "Universal OEM Standard"
+  version         String   @default("1.0")
+  sections        Json // Array of checklist sections with tests, tolerances and inspection steps
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  schedules MaintenanceSchedule[]
+
+  @@index([modality])
+  @@index([frequency])
+  @@map("pm_checklist_templates")
+}
+
+model EquipmentQcCheck {
+  id                 String    @id @default(cuid())
+  checkNumber        String    @unique // e.g. "QC-2026-0001"
+  equipmentId        String
+  equipment          Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  frequency          String    @default("DAILY") // "DAILY", "WEEKLY"
+  checkDate          DateTime  @default(now())
+  performedById      String
+  performedByName    String
+  performedByRole    String    @default("TECHNOLOGIST") // "TECHNOLOGIST", "ENGINEER", "ADMIN"
+  overallResult      String    @default("PASS") // "PASS", "FAIL", "WARNING"
+  temperatureC       Decimal?  @db.Decimal(5, 2)
+  humidityPercent    Decimal?  @db.Decimal(5, 2)
+  chillerTempC       Decimal?  @db.Decimal(5, 2)
+  heliumLevelPercent Decimal?  @db.Decimal(5, 2)
+  ctNumberWaterHu    Decimal?  @db.Decimal(6, 2)
+  noiseVariance      Decimal?  @db.Decimal(6, 3)
+  checklistData      Json // Items array: { item, expected, actual, status, remarks }
+  notes              String?   @db.Text
+  createdAt          DateTime  @default(now())
+
+  @@index([equipmentId])
+  @@index([checkDate])
+  @@index([overallResult])
+  @@map("equipment_qc_checks")
+}
+
+model ServiceTicket {
+  id               String    @id @default(cuid())
+  ticketNumber     String    @unique // e.g. "TKT-2026-0001"
+  equipmentId      String
+  equipment        Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  title            String
+  description      String    @db.Text
+  errorCodes       String?
+  priority         String    @default("MEDIUM") // "LOW", "MEDIUM", "HIGH", "CRITICAL"
+  status           String    @default("OPEN") // "OPEN", "ASSIGNED", "IN_PROGRESS", "AWAITING_PARTS", "RESOLVED", "CLOSED"
+  reportedById     String
+  reportedByName   String
+  assignedEngineer String?
+  vendorName       String?
+  isDowntimeCaused Boolean   @default(false)
+  downtimeId       String?
+  openedAt         DateTime  @default(now())
+  assignedAt       DateTime?
+  resolvedAt       DateTime?
+  closedAt         DateTime?
+  resolutionNotes  String?   @db.Text
+  rootCause        String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  downtimes      EquipmentDowntime[]
+  partsUsages    MaintenancePartUsage[]
+  serviceRecords ServiceRecord[]
+
+  @@index([equipmentId])
+  @@index([status])
+  @@index([priority])
+  @@index([openedAt])
+  @@map("service_tickets")
+}
+
+model EquipmentDowntime {
+  id                        String         @id @default(cuid())
+  downtimeNumber            String         @unique // e.g. "DWN-2026-0001"
+  equipmentId               String
+  equipment                 Equipment      @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  serviceTicketId           String?
+  serviceTicket             ServiceTicket? @relation(fields: [serviceTicketId], references: [id], onDelete: SetNull)
+  startTime                 DateTime
+  endTime                   DateTime?
+  durationMinutes           Int?
+  causeCategory             String         @default("HARDWARE_FAILURE") // "HARDWARE_FAILURE", "SOFTWARE_CRASH", "SCHEDULED_PM", "POWER_OUTAGE", "CHILLER_FAULT", "TUBE_OVERHEAT"
+  cause                     String         @db.Text
+  impactLevel               String         @default("FULL_STOP") // "FULL_STOP", "PARTIAL_DEGRADATION", "NO_CLINICAL_IMPACT"
+  affectedAppointmentsCount Int            @default(0)
+  affectedAppointmentIds    Json?
+  rescheduledCount          Int            @default(0)
+  resolutionSummary         String?        @db.Text
+  recordedById              String
+  recordedByName            String
+  createdAt                 DateTime       @default(now())
+  updatedAt                 DateTime       @updatedAt
+
+  @@index([equipmentId])
+  @@index([startTime])
+  @@index([causeCategory])
+  @@map("equipment_downtimes")
+}
+
+model MaintenancePartUsage {
+  id                 String               @id @default(cuid())
+  equipmentId        String
+  equipment          Equipment            @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  serviceTicketId    String?
+  serviceTicket      ServiceTicket?       @relation(fields: [serviceTicketId], references: [id], onDelete: SetNull)
+  pmScheduleId       String?
+  pmSchedule         MaintenanceSchedule? @relation(fields: [pmScheduleId], references: [id], onDelete: SetNull)
+  inventoryItemId    String
+  inventoryItem      InventoryItem        @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+  batchId            String?
+  batch              InventoryBatch?      @relation(fields: [batchId], references: [id], onDelete: SetNull)
+  stockTransactionId String?
+  stockTransaction   StockTransaction?    @relation(fields: [stockTransactionId], references: [id], onDelete: SetNull)
+  location           String               @default("GENERAL_STORE")
+  quantityUsed       Int                  @default(1)
+  unitCost           Decimal              @default(0.00) @db.Decimal(10, 2)
+  totalCost          Decimal              @default(0.00) @db.Decimal(10, 2)
+  reason             String
+  installedById      String
+  installedByName    String
+  installedAt        DateTime             @default(now())
+
+  @@index([equipmentId])
+  @@index([inventoryItemId])
+  @@index([serviceTicketId])
+  @@index([pmScheduleId])
+  @@map("maintenance_part_usages")
+}
+
+model ServiceRecord {
+  id                         String               @id @default(cuid())
+  recordNumber               String               @unique // e.g. "SRV-2026-0001"
+  equipmentId                String
+  equipment                  Equipment            @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  serviceType                String               @default("PREVENTIVE_MAINTENANCE") // "PREVENTIVE_MAINTENANCE", "BREAKDOWN_REPAIR", "CALIBRATION", "PARTS_REPLACEMENT"
+  serviceDate                DateTime
+  serviceProvider            String
+  engineerName               String
+  engineerContact            String?
+  workDescription            String               @db.Text
+  partsReplaced              String?
+  findingsAndRecommendations String?              @db.Text
+  statusBefore               EquipmentStatus      @default(OUT_OF_SERVICE)
+  statusAfter                EquipmentStatus      @default(AVAILABLE)
+  customerSignOffBy          String?
+  serviceReportUrl           String?
+  cost                       Decimal?             @db.Decimal(10, 2)
+  serviceTicketId            String?
+  serviceTicket              ServiceTicket?       @relation(fields: [serviceTicketId], references: [id], onDelete: SetNull)
+  pmScheduleId               String?
+  pmSchedule                 MaintenanceSchedule? @relation(fields: [pmScheduleId], references: [id], onDelete: SetNull)
+  createdAt                  DateTime             @default(now())
+
+  @@index([equipmentId])
+  @@index([serviceDate])
+  @@index([serviceType])
+  @@map("service_records")
+}
+
+model CalibrationCertificate {
+  id                String    @id @default(cuid())
+  certificateNumber String    @unique // e.g. "CAL-2026-0001"
+  equipmentId       String
+  equipment         Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  certificationType String // "RADIATION_SAFETY_AERB", "DOSIMETRY_CALIBRATION", "ELECTRICAL_SAFETY", "QA_PHANTOM_ALIGNMENT"
+  issuingAuthority  String
+  issueDate         DateTime
+  expiryDate        DateTime // next due date
+  status            String    @default("VALID") // "VALID", "EXPIRING_SOON", "EXPIRED"
+  documentReference String?
+  measuredValues    Json?
+  passed            Boolean   @default(true)
+  certifiedByName   String
+  remarks           String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([equipmentId])
+  @@index([expiryDate])
+  @@index([status])
+  @@map("calibration_certificates")
+}
+
+model MaintenanceContract {
+  id                String    @id @default(cuid())
+  contractNumber    String    @unique // e.g. "AMC-2026-0001"
+  equipmentId       String
+  equipment         Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  contractType      String    @default("AMC_COMPREHENSIVE") // "WARRANTY", "AMC_COMPREHENSIVE", "CMC", "ON_DEMAND"
+  vendorName        String
+  vendorContact     String?
+  startDate         DateTime
+  endDate           DateTime
+  coverageDetails   String    @db.Text
+  annualCost        Decimal?  @db.Decimal(10, 2)
+  responseSlaHours  Int       @default(4)
+  status            String    @default("ACTIVE") // "ACTIVE", "EXPIRING_SOON", "EXPIRED"
+  contactPerson     String?
+  escalationContact String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  schedules MaintenanceSchedule[]
+
+  @@index([equipmentId])
+  @@index([endDate])
+  @@index([status])
+  @@map("maintenance_contracts")
+}
+
+model ServiceContact {
+  id                 String   @id @default(cuid())
+  vendorName         String
+  contactName        String
+  role               String // "Field Engineer", "Service Manager", "OEM Technical Support"
+  email              String
+  phone              String
+  emergencyPhone     String?
+  escalationLevel    Int      @default(1) // 1=Field, 2=Regional, 3=Executive
+  equipmentSpecialty String?
+  vendorAddress      String?
+  equipmentIds       Json? // array of supported equipment IDs
+  active             Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([vendorName])
+  @@index([role])
+  @@map("service_contacts")
+}
+
+// ============================================================================
+// MODULE 13: EXTERNAL SCAN / DICOM & REPORT SHARING
+// ============================================================================
+
+model ExternalShare {
+  id               String       @id @default(cuid())
+  shareNumber      String       @unique // e.g. "SHR-2026-0001"
+  shareToken       String       @unique // Cryptographically secure 64-char hex string
+  orderId          String
+  order            ImagingOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  patientId        String
+  patient          Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  reportId         String?
+  report           Report?      @relation(fields: [reportId], references: [id], onDelete: SetNull)
+  pacsStudyLinkId  String?
+  studyInstanceUid String?
+  accessionNumber  String
+  patientMrn       String
+  shareType        String       @default("PATIENT_LINK") // "PATIENT_LINK", "DOCTOR_SHARE", "OUTSIDE_HOSPITAL"
+  recipientName    String
+  recipientEmail   String?
+  recipientPhone   String?
+  recipientRole    String       @default("PATIENT") // "PATIENT", "REFERRING_PHYSICIAN", "OUTSIDE_HOSPITAL", "SPECIALIST"
+  institutionName  String?
+  includeDicom     Boolean      @default(true)
+  includeReportPdf Boolean      @default(true)
+  includeWebViewer Boolean      @default(true)
+  requiresOtp      Boolean      @default(true)
+  otpCode          String? // 6-digit verification code (honest local adapter)
+  otpExpiresAt     DateTime?
+  otpVerified      Boolean      @default(false)
+  expiresAt        DateTime
+  status           String       @default("ACTIVE") // "ACTIVE", "REVOKED", "EXPIRED", "ACCESSED"
+  revokedAt        DateTime?
+  revokedById      String?
+  revokeReason     String?
+  viewCount        Int          @default(0)
+  lastAccessedAt   DateTime?
+  createdById      String
+  createdByUser    User         @relation("ExternalShareCreatedBy", fields: [createdById], references: [id])
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  consent    ShareConsent?
+  transfers  LargeFileTransfer[]
+  accessLogs ShareAccessLog[]
+
+  @@index([orderId])
+  @@index([patientId])
+  @@index([shareToken])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("external_shares")
+}
+
+model ShareConsent {
+  id                  String        @id @default(cuid())
+  shareId             String        @unique
+  share               ExternalShare @relation(fields: [shareId], references: [id], onDelete: Cascade)
+  patientId           String
+  patient             Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  purpose             String // "SECOND_OPINION", "TRANSFER_OF_CARE", "PATIENT_PERSONAL_COPY", "REFERRAL_CONSULT", "LEGAL", "INSURANCE"
+  consentedBy         String
+  consentedByRelation String        @default("SELF") // "SELF", "PARENT", "LEGAL_GUARDIAN", "AUTHORIZED_REPRESENTATIVE"
+  consentMethod       String        @default("DIGITAL_SIGNATURE") // "DIGITAL_SIGNATURE", "VERBAL_CONFIRMED", "SIGNED_FORM_ON_FILE"
+  consentDate         DateTime      @default(now())
+  validUntil          DateTime?
+  notes               String?       @db.Text
+  status              String        @default("ACTIVE") // "ACTIVE", "REVOKED"
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  @@index([patientId])
+  @@map("share_consents")
+}
+
+model LargeFileTransfer {
+  id               String         @id @default(cuid())
+  transferNumber   String         @unique // e.g. "TRF-2026-0001"
+  shareId          String?
+  share            ExternalShare? @relation(fields: [shareId], references: [id], onDelete: SetNull)
+  orderId          String
+  order            ImagingOrder   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  studyInstanceUid String
+  accessionNumber  String
+  destination      String // e.g. "Outside Hospital PACS", "ZIP Download Package", "DICOMweb STOW-RS"
+  packageType      String         @default("DICOM_ZIP") // "DICOM_ZIP", "RAW_DICOM", "DICOM_ISO", "PDF_REPORT_BUNDLE"
+  totalFiles       Int            @default(1)
+  totalBytes       BigInt?
+  transferredBytes BigInt?
+  status           String         @default("QUEUED") // "QUEUED", "IN_PROGRESS", "COMPLETED", "FAILED", "RETRYING"
+  progressPercent  Int            @default(0)
+  startedAt        DateTime?
+  completedAt      DateTime?
+  retryCount       Int            @default(0)
+  maxRetries       Int            @default(3)
+  errorMessage     String?
+  downloadUrl      String?
+  createdById      String?
+  createdByUser    User?          @relation("TransferCreatedBy", fields: [createdById], references: [id])
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@index([orderId])
+  @@index([status])
+  @@map("large_file_transfers")
+}
+
+model OutsideStudyImport {
+  id                  String        @id @default(cuid())
+  importNumber        String        @unique // e.g. "IMP-2026-0001"
+  sourceInstitution   String // e.g. "City General Hospital", "Apex Diagnostics"
+  modality            ModalityType
+  studyDate           DateTime?
+  studyDescription    String?
+  patientNameRaw      String
+  patientIdRaw        String?
+  patientDobRaw       DateTime?
+  patientGenderRaw    String?
+  accessionRaw        String?
+  studyInstanceUid    String        @unique
+  numberOfInstances   Int           @default(0)
+  fileSize            BigInt?
+  storagePath         String?
+  status              String        @default("PENDING_VERIFICATION") // "PENDING_VERIFICATION", "MATCHED", "RECONCILED", "REJECTED"
+  matchedPatientId    String?
+  matchedPatient      Patient?      @relation(fields: [matchedPatientId], references: [id], onDelete: SetNull)
+  matchedOrderId      String?
+  matchedOrder        ImagingOrder? @relation(fields: [matchedOrderId], references: [id], onDelete: SetNull)
+  reconciliationNotes String?       @db.Text
+  reconciledById      String?
+  reconciledByUser    User?         @relation("ImportReconciledBy", fields: [reconciledById], references: [id])
+  reconciledAt        DateTime?
+  importedById        String
+  importedByUser      User          @relation("OutsideImportCreatedBy", fields: [importedById], references: [id])
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  @@index([studyInstanceUid])
+  @@index([status])
+  @@index([matchedPatientId])
+  @@map("outside_study_imports")
+}
+
+model ShareAccessLog {
+  id            String        @id @default(cuid())
+  shareId       String
+  share         ExternalShare @relation(fields: [shareId], references: [id], onDelete: Cascade)
+  action        String // "SHARE_OPENED", "OTP_REQUESTED", "OTP_VERIFIED", "REPORT_VIEWED", "IMAGES_VIEWED", "DICOM_DOWNLOADED", "PDF_DOWNLOADED"
+  ipAddress     String?
+  userAgent     String?
+  success       Boolean       @default(true)
+  failureReason String?
+  createdAt     DateTime      @default(now())
+
+  @@index([shareId])
+  @@map("share_access_logs")
+}
+
+// ============================================================================
+// MODULE 14: ADMINISTRATION, SAFETY & REPORTS MODELS
+// ============================================================================
+
+model PatientMergeRecord {
+  id               String   @id @default(cuid())
+  sourcePatientId  String
+  sourceMrn        String
+  targetPatientId  String
+  targetMrn        String
+  reason           String   @db.Text
+  reassignedCounts Json
+  performedById    String
+  performedByName  String
+  createdAt        DateTime @default(now())
+
+  @@index([sourceMrn])
+  @@index([targetMrn])
+  @@map("patient_merge_records")
+}
+
+model DataRetentionRule {
+  id             String   @id @default(cuid())
+  dataCategory   String   @unique // e.g. "DIAGNOSTIC_IMAGES_PACS", "FINAL_REPORTS", "PATIENT_DEMOGRAPHICS", "AUDIT_LOGS", "BILLING_INVOICES"
+  policyName     String
+  retentionYears Int
+  description    String?  @db.Text
+  legalBasis     String?
+  actionOnExpiry String   @default("REVIEW_REQUIRED")
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("data_retention_rules")
+}
+
+model BackupRecord {
+  id                  String    @id @default(cuid())
+  backupType          String    // "AUTOMATED_DAILY", "MANUAL_ADMIN", "PRE_UPGRADE"
+  status              String    // "IN_PROGRESS", "COMPLETED", "FAILED", "VERIFIED"
+  filename            String
+  filePath            String?
+  sizeBytes           BigInt?
+  checksumSha256      String?
+  startedAt           DateTime  @default(now())
+  completedAt         DateTime?
+  verifiedAt          DateTime?
+  verificationDetails Json?
+  errorMessage        String?   @db.Text
+  triggeredById       String?
+  triggeredByName     String?
+
+  @@index([status])
+  @@index([startedAt])
+  @@map("backup_records")
+}
+
+model DisasterRecoveryDrill {
+  id              String   @id @default(cuid())
+  drillName       String
+  drillType       String
+  status          String   // "PASSED", "WARNING", "FAILED"
+  executedAt      DateTime @default(now())
+  durationSec     Int
+  backupRecordId  String?
+  recoveryTarget  String
+  findings        String   @db.Text
+  signedOffById   String
+  signedOffByName String
+
+  @@index([executedAt])
+  @@map("disaster_recovery_drills")
+}
+
+model OrderDocument {
+  id               String           @id @default(cuid())
+  imagingOrderId   String
+  imagingOrder     ImagingOrder     @relation(fields: [imagingOrderId], references: [id], onDelete: Cascade)
+  patientId        String
+  patient          Patient          @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  accessionNumber  String
+  category         DocumentCategory @default(OTHER)
+  fileName         String
+  storedFilename   String
+  fileType         String
+  fileSize         Int
+  notes            String?          @db.Text
+  uploadedByUserId String?
+  uploadedByUser   User?            @relation("DocumentUploadedBy", fields: [uploadedByUserId], references: [id], onDelete: SetNull)
+  uploadedAt       DateTime         @default(now())
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@index([imagingOrderId])
+  @@index([patientId])
+  @@index([accessionNumber])
+  @@index([category])
+  @@map("order_documents")
 }

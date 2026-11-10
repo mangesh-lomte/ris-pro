@@ -27,3 +27,4 @@ export async function getMe(req: Request, res: Response): Promise<Response> {
 
   return sendSuccess(res, req.user, 'Current user profile retrieved');
 }
+

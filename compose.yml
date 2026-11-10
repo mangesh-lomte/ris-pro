@@ -1,0 +1,81 @@
+name: manrad
+
+services:
+  db:
+    image: postgres:16
+    container_name: manrad-db
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  orthanc:
+    image: orthancteam/orthanc:26.9.1
+    container_name: manrad-orthanc
+    restart: unless-stopped
+
+    ports:
+      - "8042:8042"
+      - "4242:4242"
+
+    environment:
+      ORTHANC__NAME: "Manrad RIS PACS"
+      ORTHANC__DICOM_AET: "MANRAD"
+
+      ORTHANC__REMOTE_ACCESS_ALLOWED: "true"
+      ORTHANC__AUTHENTICATION_ENABLED: "true"
+      ORTHANC__REGISTERED_USERS: "{\"${ORTHANC_USERNAME}\":\"${ORTHANC_PASSWORD}\"}"
+
+      DICOM_WEB_PLUGIN_ENABLED: "true"
+      ORTHANC__DICOM_WEB__ROOT: "/dicom-web/"
+
+    volumes:
+      - orthanc_data:/var/lib/orthanc/db
+
+  ohif:
+    image: ohif/app:latest
+    container_name: manrad-ohif
+    restart: unless-stopped
+
+    ports:
+      - "127.0.0.1:3000:80"
+
+    environment:
+      PORT: 80
+      PUBLIC_URL: "/"
+      ORTHANC_URL: http://orthanc:8042
+      ORTHANC_USERNAME: ${ORTHANC_USERNAME}
+      ORTHANC_PASSWORD: ${ORTHANC_PASSWORD}
+
+    volumes:
+      - ./docker/ohif/app-config.js:/usr/share/nginx/html/app-config.js:ro
+      - ./docker/ohif/default.conf.template:/usr/src/ohif-nginx.conf.template:ro
+      - ./docker/ohif/entrypoint.sh:/docker-entrypoint.d/custom-entrypoint.sh:ro
+
+    entrypoint: ["/bin/sh", "/docker-entrypoint.d/custom-entrypoint.sh"]
+    command: ["nginx", "-g", "daemon off;"]
+
+    depends_on:
+      - orthanc
+
+volumes:
+  postgres_data:
+  orthanc_data:

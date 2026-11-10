@@ -49,3 +49,30 @@ export function formatUptime(seconds: number): string {
 
   return parts.join(' ');
 }
+
+export function formatDuration(minutes: number): string {
+  if (minutes <= 0) return '< 1 min';
+  if (minutes < 60) return `${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  const remaining = minutes % 60;
+  if (remaining === 0) return `${hours} hr`;
+  return `${hours} hr ${remaining} min`;
+}
+
+export function formatWaitingDuration(minutes: number): string {
+  if (minutes <= 0) return 'Just now';
+  return `Waiting ${formatDuration(minutes)}`;
+}
+
+export function formatINR(amount: number | string | null | undefined): string {
+  const num = Number(amount ?? 0);
+  if (isNaN(num)) return '₹0.00';
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(num);
+}
+
+

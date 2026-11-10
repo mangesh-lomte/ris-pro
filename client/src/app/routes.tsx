@@ -12,8 +12,16 @@ import { OrdersPage } from '../pages/OrdersPage';
 import { AppointmentsPage } from '../pages/AppointmentsPage';
 import { ReceptionQueuePage } from '../pages/ReceptionQueuePage';
 import { TechnologistWorklistPage } from '../pages/TechnologistWorklistPage';
+import { RadiologistWorklistPage } from '../pages/RadiologistWorklistPage';
+import { ReportingPage } from '../pages/ReportingPage';
+import { BillingPage } from '../pages/BillingPage';
+import { InventoryPage } from '../pages/InventoryPage';
+import { MaintenancePage } from '../pages/MaintenancePage';
+import { ExternalSharePage } from '../pages/ExternalSharePage';
+import { AdminPage } from '../pages/AdminPage';
+import { SharedStudyRecipientPortal } from '../features/externalShare/SharedStudyRecipientPortal';
+import { PatientPortalPage } from '../pages/PatientPortalPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
-import { PhasePlaceholderPage } from '../pages/PhasePlaceholderPage';
 
 export const router = createBrowserRouter([
   // Public Auth Route
@@ -25,6 +33,37 @@ export const router = createBrowserRouter([
         element: <LoginPage />,
       },
     ],
+  },
+
+  // Public Recipient Diagnostic Share Route (Protected by cryptographic token + optional OTP)
+  {
+    path: '/share/:token',
+    element: <SharedStudyRecipientPortal />,
+  },
+
+  // Public Patient Portal Route (Self-service online booking & patient records)
+  {
+    path: '/patient-portal',
+    element: <PatientPortalPage />,
+  },
+
+  // Public Diagnostic Viewer Relay (Redirect to configured OHIF instance)
+  {
+    path: '/viewer/:studyInstanceUid',
+    loader: ({ params }) => {
+      const ohifBase = (((import.meta as any).env?.VITE_OHIF_BASE_URL as string) || 'http://localhost:3000').replace(/\/+$/, '');
+      const uid = params.studyInstanceUid || '';
+      window.location.replace(`${ohifBase}/viewer?StudyInstanceUIDs=${encodeURIComponent(uid)}`);
+      return null;
+    },
+    element: (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 text-white">
+        <div className="text-center space-y-3">
+          <div className="w-12 h-12 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-sm font-medium text-slate-300">Connecting to OHIF Diagnostic Viewer...</p>
+        </div>
+      </div>
+    ),
   },
 
   // Protected Clinical Application Routes
@@ -101,66 +140,101 @@ export const router = createBrowserRouter([
         path: '/worklist',
         element: <Navigate to="/technologist/worklist" replace />,
       },
+      // Radiologist Worklist (Phase 4.1)
+      {
+        path: '/radiologist',
+        element: (
+          <ProtectedRoute allowedRoles={['RADIOLOGIST', 'ADMIN']}>
+            <RadiologistWorklistPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/radiologist/worklist',
+        element: (
+          <ProtectedRoute allowedRoles={['RADIOLOGIST', 'ADMIN']}>
+            <RadiologistWorklistPage />
+          </ProtectedRoute>
+        ),
+      },
+      // Diagnostic Reporting Workspace (P0 Dedicated Route)
       {
         path: '/reporting',
         element: (
           <ProtectedRoute allowedRoles={['RADIOLOGIST', 'ADMIN']}>
-            <PhasePlaceholderPage
-              title="Diagnostic Reporting & Radiologist Locker"
-              phase="Phase 3"
-              role="RADIOLOGIST"
-              description="Structured diagnostic reporting with findings, impression, electronic attestation, and versioned addendums."
-              plannedFeatures={[
-                'Radiologist claiming lock preventing dual dictation',
-                'Structured clinical reporting (technique, findings, impression)',
-                'Electronic signature attestation with SHA-256 integrity hash',
-                'Historical revision tracking & addendum support',
-              ]}
-            />
+            <ReportingPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/reporting/:orderId',
+        element: (
+          <ProtectedRoute allowedRoles={['RADIOLOGIST', 'ADMIN']}>
+            <ReportingPage />
           </ProtectedRoute>
         ),
       },
       {
         path: '/billing',
         element: (
-          <PhasePlaceholderPage
-            title="OPD Billing & Payment Settlement"
-            phase="Phase 4"
-            role="RECEPTION / BILLING"
-            description="Automatic invoice generation linked to order accession number, itemized fee schedules, and receipt generation."
-            plannedFeatures={[
-              'Automated invoice generation per accession number',
-              'Copay, discount, and multi-tender payments (Cash, Card, Insurance)',
-              'Outstanding balance tracking and receipt printouts',
-              'Financial audit reconciliation reports',
-            ]}
-          />
+          <ProtectedRoute allowedRoles={['RECEPTION', 'ADMIN']}>
+            <BillingPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/inventory',
+        element: (
+          <ProtectedRoute allowedRoles={['ADMIN', 'TECHNOLOGIST', 'RECEPTION']}>
+            <InventoryPage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/maintenance',
+        element: (
+          <ProtectedRoute allowedRoles={['ADMIN', 'TECHNOLOGIST', 'RECEPTION']}>
+            <MaintenancePage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/external-shares',
+        element: (
+          <ProtectedRoute allowedRoles={['ADMIN', 'RADIOLOGIST', 'RECEPTION', 'TECHNOLOGIST']}>
+            <ExternalSharePage />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: '/admin',
+        element: (
+          <ProtectedRoute allowedRoles={['ADMIN']}>
+            <AdminPage />
+          </ProtectedRoute>
         ),
       },
       {
         path: '/audit-trail',
         element: (
-          <PhasePlaceholderPage
-            title="Security Audit & Compliance Trail"
-            phase="Phase 1 & 2"
-            role="ADMIN"
-            description="Tamper-evident record of all patient data access, authentication events, and clinical status changes."
-            plannedFeatures={[
-              'HIPAA-compliant read & mutation access logs',
-              'User ID, role, client IP address, and timestamp binding',
-              'Exportable compliance audit reports',
-              'System security alerts and threshold alarms',
-            ]}
-          />
+          <ProtectedRoute allowedRoles={['ADMIN']}>
+            <AdminPage />
+          </ProtectedRoute>
         ),
       },
 
-      // 404 Wildcard
+      // 404 Wildcard inside App Layout
       {
         path: '*',
         element: <NotFoundPage />,
       },
     ],
+  },
+
+  // 404 Catch-All outside App Layout
+  {
+    path: '*',
+    element: <NotFoundPage />,
   },
 ]);
 

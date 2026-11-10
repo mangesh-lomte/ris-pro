@@ -4,45 +4,52 @@ import { Copy, Check } from 'lucide-react';
 interface IdentifierPillProps {
   type: 'patient' | 'accession' | 'study';
   value: string;
+  className?: string;
 }
 
-export function IdentifierPill({ type, value }: IdentifierPillProps) {
+const styles = {
+  patient:   'bg-emerald-50/80 text-[#15966A] border-emerald-200 hover:bg-emerald-100/80',
+  accession: 'bg-sky-50/80 text-[#0284C7] border-sky-200 hover:bg-sky-100/80',
+  study:     'bg-[#E8EDF9] text-[#33398A] border-[#33398A]/25 hover:bg-[#D5E1F7]',
+};
+
+const labels = {
+  patient:   'MRN',
+  accession: 'ACC',
+  study:     'UID',
+};
+
+export function IdentifierPill({ type, value, className = '' }: IdentifierPillProps) {
   const [copied, setCopied] = React.useState(false);
 
-  const handleCopy = (e: React.MouseEvent) => {
+  const handleCopy = (e: React.MouseEvent | React.KeyboardEvent) => {
     e.stopPropagation();
-    navigator.clipboard.writeText(value);
+    if (!value) return;
+    navigator.clipboard?.writeText(value);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const colorStyles = {
-    patient: 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100',
-    accession: 'bg-cyan-50 text-cyan-800 border-cyan-300 hover:bg-cyan-100',
-    study: 'bg-indigo-50 text-indigo-800 border-indigo-300 hover:bg-indigo-100',
-  };
-
-  const labelPrefix = {
-    patient: 'MRN',
-    accession: 'ACC',
-    study: 'UID',
-  };
-
   return (
     <span
+      role="button"
+      tabIndex={0}
       onClick={handleCopy}
-      title="Click to copy identifier (Single Source of Truth)"
-      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded border text-xs font-mono font-medium transition-colors cursor-pointer select-none ${colorStyles[type]}`}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCopy(e); }
+      }}
+      title={`Copy ${labels[type]}: ${value}`}
+      aria-label={`Copy ${labels[type]}: ${value}`}
+      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md border text-[11px] font-mono font-semibold whitespace-nowrap transition-colors cursor-pointer select-none max-w-full ${styles[type]} ${className}`}
     >
-      <span className="text-[10px] uppercase font-sans font-bold opacity-70">
-        {labelPrefix[type]}:
+      <span className="text-[9px] uppercase font-sans font-bold opacity-75 tracking-wider shrink-0">
+        {labels[type]}
       </span>
-      <span>{value}</span>
-      {copied ? (
-        <Check className="w-3 h-3 text-emerald-600 animate-in fade-in" />
-      ) : (
-        <Copy className="w-3 h-3 opacity-40 hover:opacity-100" />
-      )}
+      <span className="tracking-tight truncate">{value}</span>
+      {copied
+        ? <Check className="w-3 h-3 text-[#15966A] fade-in shrink-0" />
+        : <Copy className="w-3 h-3 opacity-35 group-hover:opacity-80 shrink-0" />
+      }
     </span>
   );
 }

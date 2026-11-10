@@ -7,7 +7,15 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "lint": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src",
+    "test": "tsx --test test/unit.test.ts test/api.test.ts test/integration.qa.test.ts test/document-upload.test.ts test/pacs-authorization.test.ts",
+    "test:unit": "tsx --test test/unit.test.ts",
+    "test:api": "tsx --test test/api.test.ts",
+    "test:phase3": "tsx --test test/integration.qa.test.ts",
+    "test:docs": "tsx --test test/document-upload.test.ts",
+    "test:pacs": "tsx --test test/pacs-authorization.test.ts",
+    "test:orthanc": "tsx --test test/orthanc.smoke.test.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.14.0",
@@ -18,6 +26,7 @@
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
+    "pdfkit": "^0.20.2",
     "zod": "^3.23.8"
   },
   "devDependencies": {
@@ -27,6 +36,7 @@
     "@types/jsonwebtoken": "^9.0.6",
     "@types/morgan": "^1.9.9",
     "@types/node": "^20.12.12",
+    "@types/pdfkit": "^0.17.7",
     "tsx": "^4.10.5",
     "typescript": "^5.4.5"
   }

@@ -1,24 +1,25 @@
 import * as React from 'react';
 import { cn } from '../../lib/utils';
 
-export interface AlertProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: 'default' | 'destructive' | 'success' | 'warning' | 'info';
-}
-
-export function Alert({ className, variant = 'default', ...props }: AlertProps) {
+export function Alert({
+  className,
+  variant = 'default',
+  ...props
+}: React.HTMLAttributes<HTMLDivElement> & {
+  variant?: 'default' | 'destructive' | 'warning' | 'success' | 'info';
+}) {
   const variants = {
-    default: 'bg-slate-50 border-slate-200 text-slate-800',
-    destructive: 'bg-rose-50 border-rose-200 text-rose-800 [&>svg]:text-rose-600',
-    success: 'bg-emerald-50 border-emerald-200 text-emerald-800 [&>svg]:text-emerald-600',
-    warning: 'bg-amber-50 border-amber-200 text-amber-800 [&>svg]:text-amber-600',
-    info: 'bg-cyan-50 border-cyan-200 text-cyan-800 [&>svg]:text-cyan-600',
+    default:     'bg-[#F3F6FC] border-[#DCE2EC] text-[#15233B]',
+    destructive: 'bg-rose-50/80 border-rose-200 text-[#D92D4C]',
+    warning:     'bg-amber-50/80 border-amber-200 text-[#D97706]',
+    success:     'bg-emerald-50/80 border-emerald-200 text-[#15966A]',
+    info:        'bg-blue-50/80 border-blue-200 text-[#2563B8]',
   };
-
   return (
     <div
       role="alert"
       className={cn(
-        'relative w-full rounded-lg border p-4 text-sm [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg~*]:pl-7',
+        'relative w-full rounded-xl border px-4 py-3 text-xs shadow-2xs',
         variants[variant],
         className
       )}
@@ -27,10 +28,12 @@ export function Alert({ className, variant = 'default', ...props }: AlertProps) 
   );
 }
 
-export function AlertTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
-  return <h5 className={cn('mb-1 font-semibold leading-none tracking-tight', className)} {...props} />;
+export function AlertTitle({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
+  return (
+    <p className={cn('font-bold leading-none tracking-tight mb-1 text-sm', className)} {...props} />
+  );
 }
 
 export function AlertDescription({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
-  return <div className={cn('text-xs leading-relaxed opacity-90', className)} {...props} />;
+  return <p className={cn('text-xs opacity-90 leading-relaxed', className)} {...props} />;
 }

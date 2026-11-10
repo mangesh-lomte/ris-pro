@@ -4,41 +4,169 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
-    --foreground: 222.2 84% 4.9%;
+    /* RadAxis Surfaces */
+    --background: 220 20% 98%; /* #F7F8FB */
+    --foreground: 218 47% 16%; /* #15233B */
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%; /* #FFFFFF */
+    --card-foreground: 218 47% 16%;
 
-    --primary: 199 89% 48%;
-    --primary-foreground: 210 40% 98%;
+    /* RadAxis Primary: #33398A */
+    --primary: 236 46% 37%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* RadAxis Soft Blue: #F3F6FC */
+    --secondary: 220 50% 97%;
+    --secondary-foreground: 218 47% 16%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 220 50% 97%;
+    --muted-foreground: 215 16% 47%; /* #64748B */
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 220 50% 97%;
+    --accent-foreground: 236 46% 37%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    /* Semantic Critical / STAT: #D92D4C */
+    --destructive: 349 71% 51%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 199 89% 48%;
+    /* RadAxis Border: #DCE2EC */
+    --border: 218 31% 89%;
+    --input: 218 31% 89%;
+    --ring: 236 46% 37%;
 
     --radius: 0.5rem;
   }
+
+  /* Accessible focus ring in RadAxis Blue */
+  :focus-visible {
+    outline: 2px solid #33398A;
+    outline-offset: 2px;
+  }
+}
+
+/* ─── RadAxis Enterprise Typography ─────────────────────── */
+html {
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  color: #0f172a;
-  background-color: #f8fafc;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    Oxygen, Ubuntu, Cantarell, sans-serif;
+  color: #15233B;
+  background-color: #F7F8FB;
+  line-height: 1.5;
+}
+
+/* ─── Tabular numbers for clinical and telemetry data ──── */
+.tabular-nums,
+.font-mono {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
 }
 
 code, kbd, samp, pre {
-  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco,
+    Consolas, monospace;
+}
+
+/* ─── RadAxis Sidebar Navigation: visually hidden scrollbar, fully scrollable ─── */
+.sidebar-navigation,
+.custom-sidebar-scroll {
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.sidebar-navigation::-webkit-scrollbar,
+.custom-sidebar-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* ─── Global Enterprise Contained Scrollbars ───────────── */
+.table-scroll-container,
+.thin-scroll,
+.overflow-x-auto,
+[data-scroll-container] {
+  scrollbar-width: thin;
+  scrollbar-color: #CBD5E1 transparent;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-scroll-container:hover,
+.thin-scroll:hover,
+.overflow-x-auto:hover {
+  scrollbar-color: #94A3B8 transparent;
+}
+
+.table-scroll-container::-webkit-scrollbar,
+.thin-scroll::-webkit-scrollbar,
+.overflow-x-auto::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.table-scroll-container::-webkit-scrollbar-track,
+.thin-scroll::-webkit-scrollbar-track,
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.table-scroll-container::-webkit-scrollbar-thumb,
+.thin-scroll::-webkit-scrollbar-thumb,
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background-color: #CBD5E1;
+  border-radius: 9999px;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.table-scroll-container:hover::-webkit-scrollbar-thumb,
+.thin-scroll:hover::-webkit-scrollbar-thumb,
+.overflow-x-auto:hover::-webkit-scrollbar-thumb,
+.table-scroll-container::-webkit-scrollbar-thumb:hover,
+.thin-scroll::-webkit-scrollbar-thumb:hover,
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+  background-color: #94A3B8;
+}
+
+.table-scroll-container::-webkit-scrollbar-thumb:active,
+.thin-scroll::-webkit-scrollbar-thumb:active,
+.overflow-x-auto::-webkit-scrollbar-thumb:active {
+  background-color: #64748B;
+}
+
+/* ─── Table horizontal scroll container ─────────────── */
+.table-scroll-container {
+  overflow-x: auto;
+  overflow-y: visible;
+  position: relative;
+  max-width: 100%;
+}
+
+/* ─── Animate-in utilities ───────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-in {
+  animation: fadeIn 0.15s ease-out both;
+}
+
+.fade-in {
+  animation: fadeIn 0.15s ease-out both;
+}
+
+/* ─── Stat tile ──────────────────────────────────────── */
+.stat-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* ─── Print helpers ──────────────────────────────────── */
+@media print {
+  .no-print { display: none !important; }
+  body { background: white; }
 }

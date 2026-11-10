@@ -10,3 +10,4 @@ export function notFoundHandler(req: Request, res: Response): Response {
     'ROUTE_NOT_FOUND'
   );
 }
+

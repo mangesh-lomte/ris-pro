@@ -29,3 +29,4 @@ export async function getCurrentUser(): Promise<AuthUser> {
 export function logout(): void {
   removeAuthToken();
 }
+

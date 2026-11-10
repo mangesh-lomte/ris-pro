@@ -1964,4 +1964,258 @@ describe('PHASE 3.7 — Full Technologist Workflow Integration QA (Master Matrix
       }
     });
   });
+
+  // -------------------------------------------------------------------------
+  // SECTION 12: ORTHANC PACS OUTAGE RESILIENCE & RECOVERY (QA-055 - QA-058)
+  // -------------------------------------------------------------------------
+
+  describe('Section 12: Orthanc PACS Outage Resilience & Recovery', () => {
+    let outageOrder: any;
+    let outagePatient: any;
+    let unreachableGateway: OrthancPacsGateway;
+
+    before(async () => {
+      // Create and advance an exam to PACS_READY with complete clinical history
+      const { patient, order, protocol } = await createTestWorkflowFixture({ contrastRequired: true });
+      outageOrder = order;
+      outagePatient = patient;
+
+      // 1. Safety screening
+      await performSafetyScreening(outageOrder.id);
+
+      // 2. Preparation & protocol confirmation
+      await fetch(`${baseUrl}/technologist/worklist/${outageOrder.id}/preparation`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${techToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fastingStatus: 'CONFIRMED',
+          ivReady: true,
+          contrastReady: true,
+          consentStatus: 'CONFIRMED',
+          additionalPreparationComplete: true,
+          patientPositioned: true,
+          positioningNotes: 'Outage QA positioned',
+        }),
+      });
+
+      await fetch(`${baseUrl}/technologist/worklist/${outageOrder.id}/protocol`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${techToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ protocolId: protocol.id }),
+      });
+
+      // 3. Scan start & finish
+      await fetch(`${baseUrl}/technologist/worklist/${outageOrder.id}/scan/start`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${techToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+
+      // 4. Contrast administration (history)
+      await fetch(`${baseUrl}/technologist/worklist/${outageOrder.id}/contrast`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${techToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contrastAgentName: 'Isovue 370',
+          volume: 80,
+          volumeUnit: 'mL',
+          route: 'IV',
+          batchLotNumber: 'LOT-OUTAGE-2026',
+        }),
+      });
+
+      // 5. Incident recording (history)
+      await fetch(`${baseUrl}/technologist/worklist/${outageOrder.id}/incidents`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${techToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          category: 'EQUIPMENT_RELATED',
+          description: 'Minor scanner warning recorded during outage test',
+          clinicianNotified: true,
+          notificationNotes: 'Logged and monitored',
+        }),
+      });
+
+      // 6. Scan finish
+      await fetch(`${baseUrl}/technologist/worklist/${outageOrder.id}/scan/finish`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${techToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+
+      // 7. QA Start & Accept -> Reaches PACS_READY
+      await fetch(`${baseUrl}/technologist/worklist/${outageOrder.id}/image-quality/start`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${techToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+
+      await fetch(`${baseUrl}/technologist/worklist/${outageOrder.id}/image-quality/accept`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${techToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notes: 'Accepted for outage testing' }),
+      });
+
+      // Point OrthancPacsGateway to unreachable port (simulates manrad-orthanc stopped)
+      unreachableGateway = new OrthancPacsGateway({
+        baseUrl: 'http://127.0.0.1:19999',
+        username: process.env.ORTHANC_USERNAME || 'orthanc',
+        password: process.env.ORTHANC_PASSWORD || 'test-unreachable-password',
+        timeoutMs: 500,
+      });
+    });
+
+    after(() => {
+      // Always restore mock gateway for following test runs
+      setPacsGateway(mockGateway);
+    });
+
+    it('QA-055: ORTHANC OUTAGE DECOUPLING allows complete RIS exam details to load from PostgreSQL', async () => {
+      setPacsGateway(unreachableGateway);
+
+      // 1. Worklist exam detail endpoint loads patient demographics, accession, and order context
+      const detailRes = await fetch(`${baseUrl}/technologist/worklist/${outageOrder.id}`, {
+        headers: { Authorization: `Bearer ${techToken}` },
+      });
+      assert.strictEqual(detailRes.status, 200);
+      const detailBody = await detailRes.json();
+      assert.strictEqual(detailBody.success, true);
+      assert.strictEqual(detailBody.data.order.accessionNumber, outageOrder.accessionNumber);
+      assert.strictEqual(detailBody.data.order.orderStatus, OrderStatus.PACS_READY);
+      assert.strictEqual(detailBody.data.patient.patientId, outagePatient.patientId);
+
+      // 2. Image QA context loads scan lifecycle, QA status, and acquisition attempt history
+      const qaRes = await fetch(`${baseUrl}/technologist/worklist/${outageOrder.id}/image-quality`, {
+        headers: { Authorization: `Bearer ${techToken}` },
+      });
+      assert.strictEqual(qaRes.status, 200);
+      const qaBody = await qaRes.json();
+      assert.strictEqual(qaBody.success, true);
+      assert.strictEqual(qaBody.data.orderStatus, OrderStatus.PACS_READY);
+      assert.strictEqual(qaBody.data.imageQualityReview.status, ImageQualityStatus.ACCEPTED);
+      assert.ok(qaBody.data.attemptHistory.length >= 1);
+
+      // 3. Contrast administration history loads independently of PACS availability
+      const contrastRes = await fetch(`${baseUrl}/technologist/worklist/${outageOrder.id}/contrast`, {
+        headers: { Authorization: `Bearer ${techToken}` },
+      });
+      assert.strictEqual(contrastRes.status, 200);
+      const contrastBody = await contrastRes.json();
+      assert.strictEqual(contrastBody.success, true);
+      assert.ok(contrastBody.data.administrations.length >= 1);
+
+      // 4. Incident history loads independently of PACS availability
+      const incidentRes = await fetch(`${baseUrl}/technologist/worklist/${outageOrder.id}/incidents`, {
+        headers: { Authorization: `Bearer ${techToken}` },
+      });
+      assert.strictEqual(incidentRes.status, 200);
+      const incidentBody = await incidentRes.json();
+      assert.strictEqual(incidentBody.success, true);
+      assert.ok(incidentBody.data.length >= 1);
+    });
+
+    it('QA-056: ORTHANC OUTAGE STATUS reports safe unavailable state without raw network errors or credential leakage', async () => {
+      setPacsGateway(unreachableGateway);
+
+      // 1. PACS status reports disconnected with safe diagnostic details
+      const statusRes = await fetch(`${baseUrl}/technologist/pacs/status`, {
+        headers: { Authorization: `Bearer ${techToken}` },
+      });
+      assert.strictEqual(statusRes.status, 200);
+      const statusBody = await statusRes.json();
+      assert.strictEqual(statusBody.success, true);
+      assert.strictEqual(statusBody.data.connected, false);
+      assert.strictEqual(statusBody.data.adapter, 'orthanc');
+
+      const detailsStr = JSON.stringify(statusBody.data.details || '');
+      assert.ok(!detailsStr.includes('password'));
+      assert.ok(!detailsStr.includes('Bearer'));
+      assert.ok(!detailsStr.includes('ECONNREFUSED'));
+      assert.ok(!detailsStr.includes('Failed to fetch'));
+      assert.ok(!detailsStr.includes('at '));
+
+      // 2. Study lookup reports PACS_UNAVAILABLE without crashing or leaking secrets
+      const lookupRes = await fetch(`${baseUrl}/technologist/worklist/${outageOrder.id}/pacs-study`, {
+        headers: { Authorization: `Bearer ${techToken}` },
+      });
+      assert.strictEqual(lookupRes.status, 200);
+      const lookupBody = await lookupRes.json();
+      assert.strictEqual(lookupBody.success, true);
+      assert.strictEqual(lookupBody.data.outcome, PacsStudyLookupOutcome.PACS_UNAVAILABLE);
+      assert.strictEqual(lookupBody.data.metadata, null);
+      assert.ok(lookupBody.data.message.includes('unavailable'));
+    });
+
+    it('QA-057: ORTHANC OUTAGE IMMUTABILITY blocks mutations and preserves PostgreSQL exam state', async () => {
+      setPacsGateway(unreachableGateway);
+
+      // 1. Reconciliation is rejected (400 Bad Request) because study outcome is PACS_UNAVAILABLE
+      const recRes = await fetch(`${baseUrl}/technologist/worklist/${outageOrder.id}/pacs-study/reconcile`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${techToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      assert.strictEqual(recRes.status, 400);
+      const recBody = await recRes.json();
+      assert.strictEqual(recBody.error.code, 'PACS_RECONCILIATION_NOT_MATCHED');
+
+      // 2. Handoff initiation is rejected (409 Conflict)
+      const handoffRes = await fetch(`${baseUrl}/technologist/worklist/${outageOrder.id}/pacs-handoff/initiate`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${techToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      assert.strictEqual(handoffRes.status, 409);
+
+      // 3. PostgreSQL-backed order status remains strictly PACS_READY (unchanged)
+      const orderCheck = await prisma.imagingOrder.findUniqueOrThrow({ where: { id: outageOrder.id } });
+      assert.strictEqual(orderCheck.orderStatus, OrderStatus.PACS_READY);
+
+      // 4. No PacsStudyLink was created
+      const linkCheck = await prisma.pacsStudyLink.findUnique({ where: { imagingOrderId: outageOrder.id } });
+      assert.strictEqual(linkCheck, null);
+    });
+
+    it('QA-058: ORTHANC RECOVERY dynamically restores PACS availability without application restart', async () => {
+      // Simulate recovery: switch gateway to a responsive gateway with matching study
+      const recoveredGateway = new MockPacsGateway('success');
+      recoveredGateway.addMockStudy({
+        orthancStudyId: `recovered-${Date.now()}`,
+        accessionNumber: outageOrder.accessionNumber,
+        patientId: outagePatient.patientId,
+        studyInstanceUid: `1.2.840.113619.rec.${Date.now()}`,
+        modalitiesInStudy: ['CT'],
+      });
+      setPacsGateway(recoveredGateway);
+
+      // 1. PACS status dynamically reflects connection recovery
+      const statusRes = await fetch(`${baseUrl}/technologist/pacs/status`, {
+        headers: { Authorization: `Bearer ${techToken}` },
+      });
+      assert.strictEqual(statusRes.status, 200);
+      const statusBody = await statusRes.json();
+      assert.strictEqual(statusBody.data.connected, true);
+
+      // 2. Study lookup dynamically resolves to MATCHED
+      const lookupRes = await fetch(`${baseUrl}/technologist/worklist/${outageOrder.id}/pacs-study`, {
+        headers: { Authorization: `Bearer ${techToken}` },
+      });
+      assert.strictEqual(lookupRes.status, 200);
+      const lookupBody = await lookupRes.json();
+      assert.strictEqual(lookupBody.data.outcome, PacsStudyLookupOutcome.MATCHED);
+      assert.ok(lookupBody.data.metadata);
+
+      // 3. Reconcile succeeds and links order to study
+      const recRes = await fetch(`${baseUrl}/technologist/worklist/${outageOrder.id}/pacs-study/reconcile`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${techToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      assert.strictEqual(recRes.status, 200);
+
+      const dbLink = await prisma.pacsStudyLink.findUnique({ where: { imagingOrderId: outageOrder.id } });
+      assert.ok(dbLink);
+      assert.strictEqual(dbLink.status, 'LINKED');
+    });
+  });
 });

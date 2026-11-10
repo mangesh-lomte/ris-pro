@@ -12,3 +12,36 @@ Thumbs.db
 coverage/
 .turbo/
 .cache/
+.playwright-mcp/
+# Storage and uploads
+storage/
+server/storage/
+
+# Interviewer documents (keep authoritative requirements PDF tracked)
+!docs/interviewer/RIS_Complete_Pagewise_Tools_List.docx.PDF
+
+# Database dumps and backups
+backups/*.sql
+backups/*.dump
+backups/archive/
+
+# Internal development scratch & audit artifacts
+scratch/
+.agents/
+.claude/
+.codex/
+BILLING_BUG_BEFORE_AFTER.md
+BILLING_PAYMENT_FIX_REPORT.md
+temp_step.txt
+prisma-schema-gap.sql
+evidence_*.png
+current_modal_before.png
+
+# Local database backups
+server/backups/
+
+# Local sample DICOM files (~70MB)
+sample-dicom/
+
+# IDE configurations
+.vscode/

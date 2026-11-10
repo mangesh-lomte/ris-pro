@@ -1,19 +1,15 @@
 import { WorkflowVisualizer } from '../features/dashboard/WorkflowVisualizer';
 import { DomainRuleDemo } from '../features/dashboard/DomainRuleDemo';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/card';
-import { Badge } from '../components/ui/badge';
 import { Network, Database, ShieldAlert } from 'lucide-react';
 
 export function WorkflowPage() {
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-4 max-w-[1400px] mx-auto">
       <div>
-        <div className="flex items-center gap-2 mb-1">
-          <h1 className="text-xl font-bold tracking-tight text-slate-900">
-            Radiology Information System (RIS) Architecture
-          </h1>
-          <Badge variant="cyan">Healthcare Specification</Badge>
-        </div>
+        <h1 className="text-base font-bold tracking-tight text-slate-900 mb-1">
+          Radiology Information System (RIS) Architecture
+        </h1>
         <p className="text-xs text-slate-500">
           Core orchestration workflow, single source of truth rules, and system boundaries
         </p>
@@ -65,7 +61,7 @@ export function WorkflowPage() {
               <li>Indexes study metadata matching the RIS Accession Number & Study UID.</li>
               <li>Provides DICOMweb WADO-RS streaming to high-resolution diagnostic viewers (e.g. OHIF Viewer).</li>
               <li>Manages hierarchical storage lifecycle (hot SSD cache to cold optical archive).</li>
-              <li>Kept strictly separated from RIS relational database in Phase 1.</li>
+              <li>Kept strictly separated from RIS relational database architecture.</li>
             </ul>
           </CardContent>
         </Card>

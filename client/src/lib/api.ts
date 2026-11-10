@@ -28,25 +28,62 @@ export function removeAuthToken(): void {
   localStorage.removeItem('ris_auth_token');
 }
 
+export function formatSafeErrorMessage(err: unknown, fallback = 'Unable to connect to service.'): string {
+  if (!err) return fallback;
+  const raw =
+    err instanceof ApiError
+      ? err.message
+      : err instanceof Error
+      ? err.message
+      : typeof err === 'string'
+      ? err
+      : (err as any)?.response?.data?.message || fallback;
+
+  if (
+    raw.includes('Failed to fetch') ||
+    raw.includes('ECONNREFUSED') ||
+    raw.includes('ENOTFOUND') ||
+    raw.includes('NetworkError') ||
+    raw.includes('socket') ||
+    raw.includes('at ') ||
+    raw.includes('Bearer ') ||
+    raw.includes('password')
+  ) {
+    return 'RIS network service is currently unreachable. Please check connection.';
+  }
+  return raw;
+}
+
 export async function apiClient<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
   const token = getAuthToken();
 
+  const optionsHeaders = (options.headers as Record<string, string>) || {};
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...(options.headers as Record<string, string>),
+    ...optionsHeaders,
   };
 
-  if (token) {
+  if (token && !optionsHeaders['Authorization'] && !optionsHeaders['authorization']) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE}${endpoint}`, {
+      ...options,
+      headers,
+    });
+  } catch {
+    throw new ApiError(
+      'Unable to connect to the RIS server. Please verify network connectivity.',
+      0,
+      undefined,
+      'NETWORK_ERROR'
+    );
+  }
 
   const data = await response.json().catch(() => ({
     success: false,
@@ -55,7 +92,7 @@ export async function apiClient<T>(
 
   if (!response.ok || !data.success) {
     throw new ApiError(
-      data.message || 'An error occurred while contacting the RIS server',
+      formatSafeErrorMessage(data.message, 'An error occurred while contacting the RIS server'),
       response.status,
       data.error?.details,
       data.error?.code
@@ -64,3 +101,4 @@ export async function apiClient<T>(
 
   return data as ApiResponse<T>;
 }
+

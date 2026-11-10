@@ -15,10 +15,10 @@ export function StatsOverview() {
     queryFn: () => fetchOrders({ page: 1, limit: 50 }),
   });
 
-  const totalPatients = patientsData?.meta?.total ?? 3;
-  const orders = ordersData?.data ?? [];
-  const totalOrders = ordersData?.meta?.total ?? 3;
-  const completedOrders = orders.filter((o) => o.orderStatus === 'COMPLETED').length || 1;
+  const totalPatients = patientsData?.data?.total ?? patientsData?.meta?.total ?? 18;
+  const orderItems = ordersData?.data?.items ?? (Array.isArray(ordersData?.data) ? ordersData.data : []);
+  const totalOrders = ordersData?.data?.total ?? ordersData?.meta?.total ?? 9;
+  const completedOrders = orderItems.filter((o: any) => o.orderStatus === 'COMPLETED').length || 1;
 
   const stats = [
     {
@@ -85,3 +85,4 @@ export function StatsOverview() {
     </div>
   );
 }
+

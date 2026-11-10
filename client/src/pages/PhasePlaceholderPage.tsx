@@ -24,7 +24,7 @@ export function PhasePlaceholderPage({
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-xl font-bold tracking-tight text-slate-900">{title}</h1>
+            <h1 className="text-base font-bold tracking-tight text-slate-900">{title}</h1>
             <Badge variant="cyan">{phase}</Badge>
           </div>
           <p className="text-xs text-slate-500">
@@ -71,3 +71,4 @@ export function PhasePlaceholderPage({
     </div>
   );
 }
+

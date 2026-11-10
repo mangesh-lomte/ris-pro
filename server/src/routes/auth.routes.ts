@@ -13,3 +13,4 @@ router.post('/login', validateRequest({ body: loginSchema }), asyncHandler(login
 router.get('/me', authenticate, asyncHandler(getMe));
 
 export default router;
+
