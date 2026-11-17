@@ -16,6 +16,11 @@ import {
   autosaveReportDraftHandler,
   recordDictationEventHandler,
   getStudyInstancesHandler,
+  saveMeasurementHandler,
+  getMeasurementsHandler,
+  deleteMeasurementHandler,
+  toggleKeyImageHandler,
+  saveMeasurementBodySchema,
   radiologistWorklistQuerySchema,
   assignRadiologistSchema,
   createReportDraftSchema,
@@ -191,6 +196,35 @@ router.post(
   '/worklist/:id/report/dictation/session',
   validateRequest({ body: recordDictationEventSchema }),
   asyncHandler(recordDictationEventHandler)
+);
+
+// ==========================================
+// Dedicated Study Measurements & Key Images Integration
+// ==========================================
+
+// GET /api/v1/radiologist/worklist/:id/measurements
+router.get(
+  '/worklist/:id/measurements',
+  asyncHandler(getMeasurementsHandler)
+);
+
+// POST /api/v1/radiologist/worklist/:id/measurements
+router.post(
+  '/worklist/:id/measurements',
+  validateRequest({ body: saveMeasurementBodySchema }),
+  asyncHandler(saveMeasurementHandler)
+);
+
+// DELETE /api/v1/radiologist/worklist/:id/measurements/:measurementId
+router.delete(
+  '/worklist/:id/measurements/:measurementId',
+  asyncHandler(deleteMeasurementHandler)
+);
+
+// POST /api/v1/radiologist/worklist/:id/measurements/:measurementId/toggle-key-image
+router.post(
+  '/worklist/:id/measurements/:measurementId/toggle-key-image',
+  asyncHandler(toggleKeyImageHandler)
 );
 
 // ==========================================

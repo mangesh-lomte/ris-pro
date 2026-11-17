@@ -49,6 +49,7 @@ import {
   Stethoscope,
   CheckCircle2,
   Fingerprint,
+  Star,
 } from 'lucide-react';
 import { ReportVersionHistoryModal } from './ReportVersionHistoryModal';
 import { ReportAmendmentModal } from './ReportAmendmentModal';
@@ -413,23 +414,134 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
     [orderId]
   );
 
+  // Unified processors for OHIF measurement & key image events
+  const processIncomingMeasurement = useCallback(
+    (data: any) => {
+      if (!data || typeof data !== 'object') return;
+      const isMeasurementMsg =
+        data.type === 'RIS_MEASUREMENT_ADDED' ||
+        data.type === 'RIS_MEASUREMENT_UPDATED' ||
+        data.type === 'OHIF_MEASUREMENT_CAPTURED';
+
+      if (!isMeasurementMsg) return;
+      if (workspace?.finalizedReport) return;
+
+      const currentStudyUid =
+        workspace?.order?.studyInstanceUid ||
+        studyInstancesData?.studyInstanceUid;
+
+      const m = data.measurement as MeasurementReference;
+      if (!m || !m.id) return;
+
+      if (currentStudyUid && m.studyInstanceUid && m.studyInstanceUid.trim() !== currentStudyUid.trim()) {
+        console.warn(`[RIS] Discarded measurement from foreign study: ${m.studyInstanceUid}`);
+        return;
+      }
+
+      if (!m.studyInstanceUid && currentStudyUid) {
+        m.studyInstanceUid = currentStudyUid;
+      }
+
+      setMeasurements((prev) => {
+        const existingIdx = prev.findIndex((item) => item.id === m.id);
+        let updated: MeasurementReference[];
+        if (existingIdx >= 0) {
+          updated = [...prev];
+          updated[existingIdx] = { ...updated[existingIdx], ...m };
+        } else {
+          updated = [...prev, m];
+        }
+        measurementsRef.current = updated;
+        return updated;
+      });
+
+      // Immediate database persistence via dedicated measurement API
+      radiologistService
+        .saveMeasurement(orderId, m)
+        .then((res) => {
+          if (res.draft) {
+            setDraftVersion(res.draft.version);
+          }
+          queryClient.invalidateQueries({
+            queryKey: ['radiologistReportWorkspace', orderId],
+          });
+        })
+        .catch((err) => {
+          console.warn('[RIS] Direct measurement save failed, triggering autosave fallback:', err);
+          triggerDebouncedAutosave(
+            draftContentRef.current,
+            draftVersionRef.current,
+            measurementsRef.current,
+            keyImagesRef.current
+          );
+        });
+    },
+    [
+      workspace?.order?.studyInstanceUid,
+      studyInstancesData?.studyInstanceUid,
+      workspace?.finalizedReport,
+      orderId,
+      queryClient,
+      triggerDebouncedAutosave,
+    ]
+  );
+
+  const processIncomingKeyImage = useCallback(
+    (data: any) => {
+      if (!data || typeof data !== 'object') return;
+      const isKeyImageMsg =
+        data.type === 'RIS_KEY_IMAGE_CAPTURED' ||
+        data.type === 'OHIF_KEY_IMAGE_CAPTURED';
+
+      if (!isKeyImageMsg) return;
+      if (workspace?.finalizedReport) return;
+
+      const currentStudyUid =
+        workspace?.order?.studyInstanceUid ||
+        studyInstancesData?.studyInstanceUid;
+
+      const k = data.keyImage as KeyImageReference;
+      if (!k || !k.id) return;
+
+      if (currentStudyUid && k.studyInstanceUid && k.studyInstanceUid.trim() !== currentStudyUid.trim()) {
+        console.warn(`[RIS] Discarded key image from foreign study: ${k.studyInstanceUid}`);
+        return;
+      }
+
+      setKeyImages((prev) => {
+        const existingIdx = prev.findIndex((item) => item.id === k.id);
+        let updated: KeyImageReference[];
+        if (existingIdx >= 0) {
+          updated = [...prev];
+          updated[existingIdx] = { ...updated[existingIdx], ...k };
+        } else {
+          updated = [...prev, k];
+        }
+        keyImagesRef.current = updated;
+        return updated;
+      });
+
+      triggerDebouncedAutosave(
+        draftContentRef.current,
+        draftVersionRef.current,
+        measurementsRef.current,
+        keyImagesRef.current
+      );
+      setShowAddKeyImageDialog(false);
+    },
+    [
+      workspace?.order?.studyInstanceUid,
+      studyInstancesData?.studyInstanceUid,
+      workspace?.finalizedReport,
+      triggerDebouncedAutosave,
+    ]
+  );
+
   // Real OHIF PACS Viewer Measurement & Key Image Event Bridge
   useEffect(() => {
     const handleWindowMessage = (event: MessageEvent) => {
       if (!event.data || typeof event.data !== 'object') return;
 
-      // 1. Origin validation: Only allow PACS viewer origin or current origin
-      const allowedOrigins = ['http://localhost:3002', window.location.origin];
-      const isLocalhostViewer =
-        typeof event.origin === 'string' &&
-        (allowedOrigins.includes(event.origin) ||
-          event.origin.startsWith('http://localhost:') ||
-          event.origin.startsWith('http://127.0.0.1:'));
-      if (!isLocalhostViewer) {
-        return;
-      }
-
-      // 2. Source-window validation: Verify source matches opened viewer window if active
       if (viewerWindowRef.current && !viewerWindowRef.current.closed && event.source) {
         if (event.source !== viewerWindowRef.current) {
           viewerWindowRef.current = event.source as Window;
@@ -438,101 +550,43 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
         viewerWindowRef.current = event.source as Window;
       }
 
-      // 3. Message type validation
-      const isMeasurementMsg =
-        event.data.type === 'RIS_MEASUREMENT_ADDED' ||
-        event.data.type === 'RIS_MEASUREMENT_UPDATED' ||
-        event.data.type === 'OHIF_MEASUREMENT_CAPTURED';
+      processIncomingMeasurement(event.data);
+      processIncomingKeyImage(event.data);
+    };
 
-      const isKeyImageMsg =
-        event.data.type === 'RIS_KEY_IMAGE_CAPTURED' ||
-        event.data.type === 'OHIF_KEY_IMAGE_CAPTURED';
-
-      if (!isMeasurementMsg && !isKeyImageMsg) return;
-
-      // 4. Do not mutate finalized / locked reports
-      if (workspace?.finalizedReport) {
-        return;
+    let bc: BroadcastChannel | null = null;
+    try {
+      if (typeof BroadcastChannel !== 'undefined') {
+        bc = new BroadcastChannel('radaxis-dicom-sync');
+        bc.onmessage = (event) => {
+          if (!event.data || typeof event.data !== 'object') return;
+          processIncomingMeasurement(event.data);
+          processIncomingKeyImage(event.data);
+        };
       }
+    } catch (e) {
+      console.warn('[RIS] BroadcastChannel init error:', e);
+    }
 
-      // 5. Resolve current study instance UID for cross-study verification
-      const currentStudyUid =
-        workspace?.order?.studyInstanceUid ||
-        studyInstancesData?.studyInstanceUid;
-
-      // Handle real OHIF drawing tool measurement
-      if (isMeasurementMsg) {
-        const m = event.data.measurement as MeasurementReference;
-        if (!m || !m.studyInstanceUid || !m.id) {
-          return;
-        }
-
-        // Current study verification: strictly discard measurements from foreign studies
-        if (currentStudyUid && m.studyInstanceUid.trim() !== currentStudyUid.trim()) {
-          console.warn(`[RIS] Discarded measurement from foreign study: ${m.studyInstanceUid}`);
-          return;
-        }
-
-        setMeasurements((prev) => {
-          const existingIdx = prev.findIndex((item) => item.id === m.id);
-          let updated: MeasurementReference[];
-          if (existingIdx >= 0) {
-            updated = [...prev];
-            updated[existingIdx] = { ...updated[existingIdx], ...m };
-          } else {
-            updated = [...prev, m];
-          }
-          measurementsRef.current = updated;
-
-          triggerDebouncedAutosave(
-            draftContentRef.current,
-            draftVersionRef.current,
-            updated,
-            keyImagesRef.current
-          );
-
-          return updated;
-        });
-      }
-
-      // Handle OHIF key image capture
-      if (isKeyImageMsg) {
-        const k = event.data.keyImage as KeyImageReference;
-        if (!k || !k.studyInstanceUid) return;
-
-        if (currentStudyUid && k.studyInstanceUid.trim() !== currentStudyUid.trim()) {
-          console.warn(`[RIS] Discarded key image from foreign study: ${k.studyInstanceUid}`);
-          return;
-        }
-
-        setKeyImages((prev) => {
-          const existingIdx = prev.findIndex((item) => item.id === k.id);
-          let updated: KeyImageReference[];
-          if (existingIdx >= 0) {
-            updated = [...prev];
-            updated[existingIdx] = { ...updated[existingIdx], ...k };
-          } else {
-            updated = [...prev, k];
-          }
-          keyImagesRef.current = updated;
-
-          triggerDebouncedAutosave(
-            draftContentRef.current,
-            draftVersionRef.current,
-            measurementsRef.current,
-            updated
-          );
-
-          return updated;
-        });
-
-        setShowAddKeyImageDialog(false);
+    const handleStorageEvent = (event: StorageEvent) => {
+      if (event.key === 'radaxis_dicom_sync' && event.newValue) {
+        try {
+          const parsed = JSON.parse(event.newValue);
+          processIncomingMeasurement(parsed);
+          processIncomingKeyImage(parsed);
+        } catch (e) {}
       }
     };
 
     window.addEventListener('message', handleWindowMessage);
-    return () => window.removeEventListener('message', handleWindowMessage);
-  }, [workspace?.order?.studyInstanceUid, studyInstancesData?.studyInstanceUid, workspace?.finalizedReport, triggerDebouncedAutosave]);
+    window.addEventListener('storage', handleStorageEvent);
+
+    return () => {
+      window.removeEventListener('message', handleWindowMessage);
+      window.removeEventListener('storage', handleStorageEvent);
+      if (bc) bc.close();
+    };
+  }, [processIncomingMeasurement, processIncomingKeyImage]);
 
   // Field change handler
   const handleFieldChange = useCallback((section: string, value: string) => {
@@ -693,11 +747,34 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
     triggerDebouncedAutosave(draftContentRef.current, draftVersionRef.current, updated, keyImagesRef.current);
   };
 
-  const handleRemoveMeasurement = (id: string) => {
-    const updated = measurements.filter((m) => m.id !== id);
-    setMeasurements(updated);
-    measurementsRef.current = updated;
-    triggerDebouncedAutosave(draftContentRef.current, draftVersionRef.current, updated, keyImagesRef.current);
+  // Toggle Key Image for measurement
+  const handleToggleKeyImage = async (measId: string) => {
+    try {
+      const res = await radiologistService.toggleKeyImage(orderId, measId);
+      setKeyImages(res.keyImages);
+      keyImagesRef.current = res.keyImages;
+      queryClient.invalidateQueries({ queryKey: ['radiologistReportWorkspace', orderId] });
+    } catch (e) {
+      console.warn('[RIS] Failed to toggle key image status:', e);
+    }
+  };
+
+  const handleRemoveMeasurement = async (id: string) => {
+    try {
+      const res = await radiologistService.deleteMeasurement(orderId, id);
+      setMeasurements(res.measurements);
+      measurementsRef.current = res.measurements;
+      if (res.keyImages) {
+        setKeyImages(res.keyImages);
+        keyImagesRef.current = res.keyImages;
+      }
+      queryClient.invalidateQueries({ queryKey: ['radiologistReportWorkspace', orderId] });
+    } catch {
+      const updated = measurements.filter((m) => m.id !== id);
+      setMeasurements(updated);
+      measurementsRef.current = updated;
+      triggerDebouncedAutosave(draftContentRef.current, draftVersionRef.current, updated, keyImagesRef.current);
+    }
   };
 
   // Add Key Image handler
@@ -1080,56 +1157,104 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
                     Measurements ({measurements.length})
                   </div>
                   <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
-                    {measurements.map((m) => (
-                      <div
-                        key={m.id}
-                        className="p-2 rounded border border-slate-200 bg-slate-50/60 hover:bg-slate-100/60 transition-colors flex items-start justify-between gap-2 text-xs"
-                      >
-                        <div className="space-y-0.5 min-w-0">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <Badge variant="secondary" className="text-[10px] font-mono px-1 py-0 bg-[#2563EB]/10 text-[#2563EB] border-[#2563EB]/20">
-                              {m.toolType}
-                            </Badge>
-                            <span className="font-semibold text-[#152B42] truncate">{m.label}</span>
-                            <span className="font-mono font-bold text-[#0284C7]">
-                              {m.numericValue} {m.unit}
-                            </span>
-                          </div>
-                          <div className="text-[10px] text-[#65758A] font-mono">
-                            Slice #{m.instanceNumber ?? '—'}{' '}
-                            {m.sliceLocation !== undefined ? `(${m.sliceLocation} mm)` : ''}
-                          </div>
-                          {m.findingText && (
-                            <div className="text-[11px] text-slate-600 italic mt-0.5">
-                              &ldquo;{m.findingText}&rdquo;
+                    {measurements.map((m) => {
+                      const isKey = keyImages.some(
+                        (k) => k.id === `key-${m.id}` || k.id === m.id
+                      );
+
+                      return (
+                        <div
+                          key={m.id}
+                          className={`p-2 rounded border transition-colors flex items-start justify-between gap-2 text-xs ${
+                            isKey
+                              ? 'border-amber-300 bg-amber-50/40 hover:bg-amber-50/70'
+                              : 'border-slate-200 bg-slate-50/60 hover:bg-slate-100/60'
+                          }`}
+                        >
+                          <div className="space-y-0.5 min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <Badge
+                                variant="secondary"
+                                className="text-[10px] font-mono px-1 py-0 bg-[#2563EB]/10 text-[#2563EB] border-[#2563EB]/20"
+                              >
+                                {m.toolType}
+                              </Badge>
+                              <span className="font-semibold text-[#152B42] truncate">{m.label}</span>
+                              <span className="font-mono font-bold text-[#0284C7]">
+                                {m.numericValue} {m.unit}
+                              </span>
+                              {isKey && (
+                                <Badge
+                                  variant="secondary"
+                                  className="text-[9px] font-semibold px-1 py-0 bg-amber-100 text-amber-800 border-amber-300 flex items-center gap-0.5"
+                                >
+                                  <Star className="h-2.5 w-2.5 fill-current" />
+                                  Key Image
+                                </Badge>
+                              )}
                             </div>
-                          )}
+                            <div className="text-[10px] text-[#65758A] font-mono flex items-center gap-2">
+                              <span>
+                                Slice #{m.instanceNumber ?? '—'}{' '}
+                                {m.sliceLocation !== undefined ? `(${m.sliceLocation} mm)` : ''}
+                              </span>
+                              {m.createdAt && (
+                                <span className="text-slate-400">
+                                  {new Date(m.createdAt).toLocaleTimeString([], {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })}
+                                </span>
+                              )}
+                            </div>
+                            {m.findingText && (
+                              <div className="text-[11px] text-slate-600 italic mt-0.5">
+                                &ldquo;{m.findingText}&rdquo;
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant={isKey ? 'default' : 'outline'}
+                              className={`h-6 px-1.5 text-[10px] font-medium flex items-center gap-1 ${
+                                isKey
+                                  ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-xs'
+                                  : 'text-slate-600 border-slate-200 hover:bg-slate-100'
+                              }`}
+                              title={isKey ? 'Remove from Key Images' : 'Mark as Key Image'}
+                              onClick={() => handleToggleKeyImage(m.id)}
+                              disabled={!!workspace?.finalizedReport}
+                            >
+                              <Star className={`h-2.5 w-2.5 ${isKey ? 'fill-current' : ''}`} />
+                              Key
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 w-6 p-0 text-slate-500 hover:text-[#2563EB]"
+                              title="View in PACS Viewer"
+                              onClick={() => handleViewReference(m.seriesInstanceUid, m.sopInstanceUid)}
+                            >
+                              <Eye className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 w-6 p-0 text-slate-400 hover:text-red-600"
+                              title="Remove Measurement"
+                              onClick={() => handleRemoveMeasurement(m.id)}
+                              disabled={saveStatus === 'conflict' || !!workspace?.finalizedReport}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1 shrink-0">
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="ghost"
-                            className="h-6 w-6 p-0 text-slate-500 hover:text-[#2563EB]"
-                            title="View in PACS Viewer"
-                            onClick={() => handleViewReference(m.seriesInstanceUid, m.sopInstanceUid)}
-                          >
-                            <Eye className="h-3 w-3" />
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="ghost"
-                            className="h-6 w-6 p-0 text-slate-400 hover:text-red-600"
-                            title="Remove Measurement"
-                            onClick={() => handleRemoveMeasurement(m.id)}
-                            disabled={saveStatus === 'conflict' || !!workspace?.finalizedReport}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}

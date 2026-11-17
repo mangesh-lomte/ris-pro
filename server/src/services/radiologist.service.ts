@@ -2071,7 +2071,7 @@ export async function createReportDraft(
     );
   }
 
-  // Idempotency: if draft already exists, return existing draft
+  // Idempotency: if draft already exists, return existing draft or apply template
   if (order.reportDraft) {
     if (
       userContext.role !== UserRole.ADMIN &&
@@ -2081,6 +2081,43 @@ export async function createReportDraft(
         "You are not authorized to view or edit another radiologist's draft.",
         'DRAFT_FORBIDDEN'
       );
+    }
+    if (payload.templateId && (!order.reportDraft.templateId || order.reportDraft.templateId !== payload.templateId)) {
+      const selectedTemplate = await prisma.reportingTemplate.findUnique({
+        where: { id: payload.templateId },
+      });
+      if (selectedTemplate) {
+        const prevContent =
+          order.reportDraft.content && typeof order.reportDraft.content === 'object' && !Array.isArray(order.reportDraft.content)
+            ? { ...(order.reportDraft.content as Record<string, any>) }
+            : {};
+        const sections: string[] = (selectedTemplate.sections as string[]) || [
+          'Clinical Indication',
+          'Comparison',
+          'Findings',
+          'Impression',
+        ];
+        for (const s of sections) {
+          if (!prevContent[s]) {
+            prevContent[s] = s.toLowerCase().includes('indication') ? (order.clinicalIndication || '') : '';
+          }
+        }
+        const updated = await prisma.reportDraft.update({
+          where: { id: order.reportDraft.id },
+          data: {
+            templateId: selectedTemplate.id,
+            templateName: selectedTemplate.name,
+            content: prevContent,
+            version: { increment: 1 },
+            updatedAt: new Date(),
+          },
+          include: {
+            author: { select: { id: true, firstName: true, lastName: true, email: true } },
+            template: true,
+          },
+        });
+        return { draft: formatDraftResponse(updated) };
+      }
     }
     return {
       draft: formatDraftResponse(order.reportDraft),
@@ -2209,16 +2246,37 @@ export async function saveReportDraft(
     );
   }
 
-  if (!order.reportDraft) {
-    throw AppError.notFound(
-      'No draft report exists for this order. Please select a template to create a draft first.',
-      'DRAFT_NOT_FOUND'
-    );
+  let currentDraft = order.reportDraft;
+  if (!currentDraft) {
+    const initialContentJson: Record<string, any> = {
+      ...(payload.content || {}),
+      _measurements: payload.measurements || [],
+      _keyImages: payload.keyImages || [],
+    };
+    currentDraft = await prisma.reportDraft.create({
+      data: {
+        imagingOrderId: order.id,
+        authorId: userContext.userId,
+        templateId: null,
+        templateName: null,
+        content: initialContentJson,
+        version: 1,
+        lastAutosavedAt: new Date(),
+      },
+      include: {
+        author: { select: { id: true, firstName: true, lastName: true, email: true } },
+        template: true,
+      },
+    });
+
+    return {
+      draft: formatDraftResponse(currentDraft),
+    };
   }
 
   if (
     userContext.role !== UserRole.ADMIN &&
-    order.reportDraft.authorId !== userContext.userId
+    currentDraft.authorId !== userContext.userId
   ) {
     throw AppError.forbidden(
       "You are not authorized to edit another radiologist's draft.",
@@ -2227,7 +2285,7 @@ export async function saveReportDraft(
   }
 
   // Optimistic concurrency check: version mismatch indicates stale tab edit
-  if (order.reportDraft.version !== payload.version) {
+  if (payload.version > 0 && currentDraft.version !== payload.version) {
     throw AppError.conflict(
       'This draft changed in another tab. Reload the latest version before saving.',
       'REPORT_DRAFT_VERSION_CONFLICT'
@@ -2261,8 +2319,8 @@ export async function saveReportDraft(
   }
 
   const prevContent =
-    order.reportDraft.content && typeof order.reportDraft.content === 'object' && !Array.isArray(order.reportDraft.content)
-      ? (order.reportDraft.content as Record<string, any>)
+    currentDraft.content && typeof currentDraft.content === 'object' && !Array.isArray(currentDraft.content)
+      ? (currentDraft.content as Record<string, any>)
       : {};
   const prevMeasurements: MeasurementReferenceInput[] = Array.isArray(prevContent._measurements)
     ? prevContent._measurements
@@ -2281,7 +2339,7 @@ export async function saveReportDraft(
   };
 
   const updated = await prisma.reportDraft.update({
-    where: { id: order.reportDraft.id },
+    where: { id: currentDraft.id },
     data: {
       content: updatedContentJson,
       version: { increment: 1 },
@@ -2406,16 +2464,37 @@ export async function autosaveReportDraft(
     );
   }
 
-  if (!order.reportDraft) {
-    throw AppError.notFound(
-      'No draft report exists for this order. Please select a template to create a draft first.',
-      'DRAFT_NOT_FOUND'
-    );
+  let currentDraft = order.reportDraft;
+  if (!currentDraft) {
+    const initialContentJson: Record<string, any> = {
+      ...(payload.content || {}),
+      _measurements: payload.measurements || [],
+      _keyImages: payload.keyImages || [],
+    };
+    currentDraft = await prisma.reportDraft.create({
+      data: {
+        imagingOrderId: order.id,
+        authorId: userContext.userId,
+        templateId: null,
+        templateName: null,
+        content: initialContentJson,
+        version: 1,
+        lastAutosavedAt: new Date(),
+      },
+      include: {
+        author: { select: { id: true, firstName: true, lastName: true, email: true } },
+        template: true,
+      },
+    });
+
+    return {
+      draft: formatDraftResponse(currentDraft),
+    };
   }
 
   if (
     userContext.role !== UserRole.ADMIN &&
-    order.reportDraft.authorId !== userContext.userId
+    currentDraft.authorId !== userContext.userId
   ) {
     throw AppError.forbidden(
       "You are not authorized to edit another radiologist's draft.",
@@ -2424,7 +2503,7 @@ export async function autosaveReportDraft(
   }
 
   // Optimistic concurrency check: version mismatch indicates stale tab edit
-  if (order.reportDraft.version !== payload.version) {
+  if (payload.version > 0 && currentDraft.version !== payload.version) {
     throw AppError.conflict(
       'This draft changed in another tab. Reload the latest version before saving.',
       'REPORT_DRAFT_VERSION_CONFLICT'
@@ -2456,8 +2535,8 @@ export async function autosaveReportDraft(
   }
 
   const prevContent =
-    order.reportDraft.content && typeof order.reportDraft.content === 'object' && !Array.isArray(order.reportDraft.content)
-      ? (order.reportDraft.content as Record<string, any>)
+    currentDraft.content && typeof currentDraft.content === 'object' && !Array.isArray(currentDraft.content)
+      ? (currentDraft.content as Record<string, any>)
       : {};
   const prevMeasurements: MeasurementReferenceInput[] = Array.isArray(prevContent._measurements)
     ? prevContent._measurements
@@ -2476,7 +2555,7 @@ export async function autosaveReportDraft(
   };
 
   const updated = await prisma.reportDraft.update({
-    where: { id: order.reportDraft.id },
+    where: { id: currentDraft.id },
     data: {
       content: updatedContentJson,
       version: { increment: 1 },
@@ -2645,6 +2724,409 @@ export async function getStudyInstances(
     patientId: order.patient.patientId,
     studyInstanceUid,
     series,
+  };
+}
+
+/**
+ * Dedicated Measurement API: Save / Upsert measurement and optional key image link
+ */
+export async function saveStudyMeasurement(
+  identifier: string,
+  payload: {
+    measurement: MeasurementReferenceInput;
+    isKeyImage?: boolean;
+  },
+  userContext: { userId: string; role: UserRole; ipAddress?: string; userAgent?: string }
+) {
+  const order = await prisma.imagingOrder.findFirst({
+    where: {
+      OR: [{ id: identifier.trim() }, { accessionNumber: identifier.trim() }],
+    },
+    include: {
+      patient: true,
+      pacsStudyLink: true,
+      reportDraft: {
+        include: {
+          author: { select: { id: true, firstName: true, lastName: true, email: true } },
+          template: true,
+        },
+      },
+      report: true,
+    },
+  });
+
+  if (!order) {
+    throw AppError.notFound(`Imaging order not found for identifier: ${identifier}`);
+  }
+
+  if (
+    order.report &&
+    (order.report.status === ReportStatus.FINAL ||
+      order.report.status === ReportStatus.ADDENDUM ||
+      order.report.isLocked)
+  ) {
+    throw AppError.conflict(
+      'This diagnostic report is finalized and locked. Normal draft editing is disabled.',
+      'REPORT_ALREADY_FINALIZED'
+    );
+  }
+
+  const currentStudyUid = order.pacsStudyLink?.studyInstanceUid?.trim() || '';
+  const m = payload.measurement;
+
+  if (currentStudyUid && m.studyInstanceUid && m.studyInstanceUid.trim() !== currentStudyUid) {
+    throw AppError.conflict(
+      `Measurement study UID '${m.studyInstanceUid}' does not match order study UID '${currentStudyUid}'.`,
+      'STUDY_UID_MISMATCH'
+    );
+  }
+
+  if (!m.studyInstanceUid && currentStudyUid) {
+    m.studyInstanceUid = currentStudyUid;
+  }
+
+  let draft = order.reportDraft;
+  if (!draft) {
+    draft = await prisma.reportDraft.create({
+      data: {
+        imagingOrderId: order.id,
+        authorId: userContext.userId,
+        templateId: null,
+        templateName: null,
+        content: {
+          _measurements: [],
+          _keyImages: [],
+        },
+        version: 1,
+      },
+      include: {
+        author: { select: { id: true, firstName: true, lastName: true, email: true } },
+        template: true,
+      },
+    });
+  }
+
+  const prevContent =
+    draft.content && typeof draft.content === 'object' && !Array.isArray(draft.content)
+      ? { ...(draft.content as Record<string, any>) }
+      : {};
+
+  const existingMeasurements: MeasurementReferenceInput[] = Array.isArray(prevContent._measurements)
+    ? [...prevContent._measurements]
+    : [];
+
+  const existingKeyImages: KeyImageReferenceInput[] = Array.isArray(prevContent._keyImages)
+    ? [...prevContent._keyImages]
+    : [];
+
+  // Upsert measurement by ID
+  const mIdx = existingMeasurements.findIndex((item) => item.id === m.id);
+  const fullMeasurement: MeasurementReferenceInput = {
+    ...m,
+    createdAt: m.createdAt || new Date().toISOString(),
+  };
+
+  if (mIdx >= 0) {
+    existingMeasurements[mIdx] = { ...existingMeasurements[mIdx], ...fullMeasurement };
+  } else {
+    existingMeasurements.push(fullMeasurement);
+  }
+
+  // Handle isKeyImage flag
+  if (payload.isKeyImage) {
+    const kId = `key-${m.id}`;
+    const kIdx = existingKeyImages.findIndex((k) => k.id === kId || k.sopInstanceUid === m.sopInstanceUid);
+    const keyImgItem: KeyImageReferenceInput = {
+      id: kId,
+      studyInstanceUid: m.studyInstanceUid,
+      seriesInstanceUid: m.seriesInstanceUid,
+      sopInstanceUid: m.sopInstanceUid,
+      frameNumber: m.frameNumber,
+      label: m.label || `Key Image - ${m.toolType || 'Measurement'}`,
+      description: `${m.numericValue ? `${m.numericValue} ${m.unit || 'mm'}` : ''}`,
+      createdAt: new Date().toISOString(),
+    };
+    if (kIdx >= 0) {
+      existingKeyImages[kIdx] = { ...existingKeyImages[kIdx], ...keyImgItem };
+    } else {
+      existingKeyImages.push(keyImgItem);
+    }
+  }
+
+  prevContent._measurements = existingMeasurements;
+  prevContent._keyImages = existingKeyImages;
+
+  const updatedDraft = await prisma.reportDraft.update({
+    where: { id: draft.id },
+    data: {
+      content: prevContent,
+      version: { increment: 1 },
+      lastAutosavedAt: new Date(),
+      updatedAt: new Date(),
+    },
+    include: {
+      author: { select: { id: true, firstName: true, lastName: true, email: true } },
+      template: true,
+    },
+  });
+
+  await logAuditEvent({
+    userId: userContext.userId,
+    action: mIdx >= 0 ? 'REPORT_MEASUREMENT_UPDATED' : 'REPORT_MEASUREMENT_ADDED',
+    entityType: 'ReportDraft',
+    entityId: draft.id,
+    details: {
+      orderId: order.id,
+      accessionNumber: order.accessionNumber,
+      measurementId: m.id,
+      numericValue: m.numericValue,
+      unit: m.unit,
+      toolType: m.toolType,
+    },
+    ipAddress: userContext.ipAddress,
+    userAgent: userContext.userAgent,
+  });
+
+  return {
+    measurement: fullMeasurement,
+    measurements: existingMeasurements,
+    keyImages: existingKeyImages,
+    draft: formatDraftResponse(updatedDraft),
+  };
+}
+
+/**
+ * Dedicated Measurement API: Retrieve study measurements and key images
+ */
+export async function getStudyMeasurements(
+  identifier: string,
+  _userContext: { userId: string; role: UserRole }
+) {
+  const order = await prisma.imagingOrder.findFirst({
+    where: {
+      OR: [{ id: identifier.trim() }, { accessionNumber: identifier.trim() }],
+    },
+    include: {
+      reportDraft: true,
+    },
+  });
+
+  if (!order) {
+    throw AppError.notFound(`Imaging order not found for identifier: ${identifier}`);
+  }
+
+  const content =
+    order.reportDraft?.content && typeof order.reportDraft.content === 'object' && !Array.isArray(order.reportDraft.content)
+      ? (order.reportDraft.content as Record<string, any>)
+      : {};
+
+  const measurements: MeasurementReferenceInput[] = Array.isArray(content._measurements)
+    ? content._measurements
+    : [];
+
+  const keyImages: KeyImageReferenceInput[] = Array.isArray(content._keyImages)
+    ? content._keyImages
+    : [];
+
+  return {
+    measurements,
+    keyImages,
+  };
+}
+
+/**
+ * Dedicated Measurement API: Delete measurement
+ */
+export async function deleteStudyMeasurement(
+  identifier: string,
+  measurementId: string,
+  userContext: { userId: string; role: UserRole; ipAddress?: string; userAgent?: string }
+) {
+  const order = await prisma.imagingOrder.findFirst({
+    where: {
+      OR: [{ id: identifier.trim() }, { accessionNumber: identifier.trim() }],
+    },
+    include: {
+      reportDraft: {
+        include: {
+          author: { select: { id: true, firstName: true, lastName: true, email: true } },
+          template: true,
+        },
+      },
+      report: true,
+    },
+  });
+
+  if (!order) {
+    throw AppError.notFound(`Imaging order not found for identifier: ${identifier}`);
+  }
+
+  if (order.report && (order.report.status === ReportStatus.FINAL || order.report.isLocked)) {
+    throw AppError.conflict('Report is finalized and locked.', 'REPORT_ALREADY_FINALIZED');
+  }
+
+  if (!order.reportDraft) {
+    return { measurements: [], keyImages: [] };
+  }
+
+  const prevContent =
+    order.reportDraft.content && typeof order.reportDraft.content === 'object' && !Array.isArray(order.reportDraft.content)
+      ? { ...(order.reportDraft.content as Record<string, any>) }
+      : {};
+
+  const measurements: MeasurementReferenceInput[] = Array.isArray(prevContent._measurements)
+    ? prevContent._measurements.filter((m) => m.id !== measurementId)
+    : [];
+
+  const keyImages: KeyImageReferenceInput[] = Array.isArray(prevContent._keyImages)
+    ? prevContent._keyImages.filter((k) => k.id !== `key-${measurementId}` && k.id !== measurementId)
+    : [];
+
+  prevContent._measurements = measurements;
+  prevContent._keyImages = keyImages;
+
+  const updatedDraft = await prisma.reportDraft.update({
+    where: { id: order.reportDraft.id },
+    data: {
+      content: prevContent,
+      version: { increment: 1 },
+      updatedAt: new Date(),
+    },
+    include: {
+      author: { select: { id: true, firstName: true, lastName: true, email: true } },
+      template: true,
+    },
+  });
+
+  await logAuditEvent({
+    userId: userContext.userId,
+    action: 'REPORT_MEASUREMENT_DELETED',
+    entityType: 'ReportDraft',
+    entityId: order.reportDraft.id,
+    details: {
+      orderId: order.id,
+      accessionNumber: order.accessionNumber,
+      measurementId,
+    },
+    ipAddress: userContext.ipAddress,
+    userAgent: userContext.userAgent,
+  });
+
+  return {
+    measurements,
+    keyImages,
+    draft: formatDraftResponse(updatedDraft),
+  };
+}
+
+/**
+ * Dedicated Measurement API: Toggle Key Image status for a measurement
+ */
+export async function toggleStudyKeyImage(
+  identifier: string,
+  measurementId: string,
+  userContext: { userId: string; role: UserRole; ipAddress?: string; userAgent?: string }
+) {
+  const order = await prisma.imagingOrder.findFirst({
+    where: {
+      OR: [{ id: identifier.trim() }, { accessionNumber: identifier.trim() }],
+    },
+    include: {
+      reportDraft: {
+        include: {
+          author: { select: { id: true, firstName: true, lastName: true, email: true } },
+          template: true,
+        },
+      },
+      report: true,
+    },
+  });
+
+  if (!order) {
+    throw AppError.notFound(`Imaging order not found for identifier: ${identifier}`);
+  }
+
+  if (order.report && (order.report.status === ReportStatus.FINAL || order.report.isLocked)) {
+    throw AppError.conflict('Report is finalized and locked.', 'REPORT_ALREADY_FINALIZED');
+  }
+
+  if (!order.reportDraft) {
+    throw AppError.notFound('No report draft exists.', 'DRAFT_NOT_FOUND');
+  }
+
+  const prevContent =
+    order.reportDraft.content && typeof order.reportDraft.content === 'object' && !Array.isArray(order.reportDraft.content)
+      ? { ...(order.reportDraft.content as Record<string, any>) }
+      : {};
+
+  const measurements: MeasurementReferenceInput[] = Array.isArray(prevContent._measurements)
+    ? prevContent._measurements
+    : [];
+
+  let keyImages: KeyImageReferenceInput[] = Array.isArray(prevContent._keyImages)
+    ? [...prevContent._keyImages]
+    : [];
+
+  const targetMeas = measurements.find((m) => m.id === measurementId);
+  const targetKeyImgIdx = keyImages.findIndex(
+    (k) => k.id === `key-${measurementId}` || k.id === measurementId
+  );
+
+  let isKeyImage = false;
+  if (targetKeyImgIdx >= 0) {
+    // Untoggle / remove
+    keyImages.splice(targetKeyImgIdx, 1);
+    isKeyImage = false;
+  } else if (targetMeas) {
+    // Add to key images
+    keyImages.push({
+      id: `key-${targetMeas.id}`,
+      studyInstanceUid: targetMeas.studyInstanceUid,
+      seriesInstanceUid: targetMeas.seriesInstanceUid,
+      sopInstanceUid: targetMeas.sopInstanceUid,
+      frameNumber: targetMeas.frameNumber,
+      label: targetMeas.label || `Key Image - ${targetMeas.toolType || 'Measurement'}`,
+      description: `${targetMeas.numericValue ? `${targetMeas.numericValue} ${targetMeas.unit || 'mm'}` : ''}`,
+      createdAt: new Date().toISOString(),
+    });
+    isKeyImage = true;
+  }
+
+  prevContent._keyImages = keyImages;
+
+  const updatedDraft = await prisma.reportDraft.update({
+    where: { id: order.reportDraft.id },
+    data: {
+      content: prevContent,
+      version: { increment: 1 },
+      updatedAt: new Date(),
+    },
+    include: {
+      author: { select: { id: true, firstName: true, lastName: true, email: true } },
+      template: true,
+    },
+  });
+
+  await logAuditEvent({
+    userId: userContext.userId,
+    action: isKeyImage ? 'REPORT_KEY_IMAGE_ATTACHED' : 'REPORT_KEY_IMAGE_REMOVED',
+    entityType: 'ReportDraft',
+    entityId: order.reportDraft.id,
+    details: {
+      orderId: order.id,
+      accessionNumber: order.accessionNumber,
+      measurementId,
+      isKeyImage,
+    },
+    ipAddress: userContext.ipAddress,
+    userAgent: userContext.userAgent,
+  });
+
+  return {
+    isKeyImage,
+    measurements,
+    keyImages,
+    draft: formatDraftResponse(updatedDraft),
   };
 }
 

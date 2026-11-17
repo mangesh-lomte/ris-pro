@@ -700,7 +700,18 @@ describe('Healthcare API Integration Tests (Phase 2)', () => {
       });
       const listBody = await listRes.json();
       assert.ok(listBody.data.items.length > 0);
-      const targetApptId = listBody.data.items[0].appointmentId;
+      const targetItem =
+        listBody.data.items.find((item: any) =>
+          [
+            'READY_FOR_TECH',
+            'SAFETY_REVIEW',
+            'SAFETY_CLEARED',
+            'PREPARATION_IN_PROGRESS',
+            'PREPARED',
+            'READY_FOR_SCAN',
+          ].includes(item.order?.orderStatus)
+        ) || listBody.data.items[0];
+      const targetApptId = targetItem.appointmentId;
 
       const detailRes = await fetch(`${baseUrl}/technologist/worklist/${targetApptId}`, {
         headers: { Authorization: `Bearer ${techToken}` },

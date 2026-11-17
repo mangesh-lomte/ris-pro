@@ -8,6 +8,8 @@ import {
   PriorReportDetail,
   ReportWorkspaceData,
   ReportDraftDetail,
+  MeasurementReference,
+  KeyImageReference,
   CreateReportDraftPayload,
   SaveReportDraftPayload,
   StudyInstancesResult,
@@ -254,6 +256,59 @@ export const radiologistService = {
   async getStudyInstances(identifier: string): Promise<StudyInstancesResult> {
     const response = await apiClient<StudyInstancesResult>(
       `/radiologist/worklist/${encodeURIComponent(identifier)}/study-instances`
+    );
+    return response.data;
+  },
+
+  /**
+   * Dedicated Study Measurements & Key Images Integration
+   */
+  async saveMeasurement(
+    identifier: string,
+    measurement: MeasurementReference,
+    isKeyImage?: boolean
+  ): Promise<{ measurement: MeasurementReference; measurements: MeasurementReference[]; keyImages: KeyImageReference[]; draft: ReportDraftDetail }> {
+    const response = await apiClient<{ measurement: MeasurementReference; measurements: MeasurementReference[]; keyImages: KeyImageReference[]; draft: ReportDraftDetail }>(
+      `/radiologist/worklist/${encodeURIComponent(identifier)}/measurements`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ measurement, isKeyImage }),
+      }
+    );
+    return response.data;
+  },
+
+  async getStudyMeasurements(
+    identifier: string
+  ): Promise<{ measurements: MeasurementReference[]; keyImages: KeyImageReference[] }> {
+    const response = await apiClient<{ measurements: MeasurementReference[]; keyImages: KeyImageReference[] }>(
+      `/radiologist/worklist/${encodeURIComponent(identifier)}/measurements`
+    );
+    return response.data;
+  },
+
+  async deleteMeasurement(
+    identifier: string,
+    measurementId: string
+  ): Promise<{ measurements: MeasurementReference[]; keyImages: KeyImageReference[]; draft?: ReportDraftDetail }> {
+    const response = await apiClient<{ measurements: MeasurementReference[]; keyImages: KeyImageReference[]; draft?: ReportDraftDetail }>(
+      `/radiologist/worklist/${encodeURIComponent(identifier)}/measurements/${encodeURIComponent(measurementId)}`,
+      {
+        method: 'DELETE',
+      }
+    );
+    return response.data;
+  },
+
+  async toggleKeyImage(
+    identifier: string,
+    measurementId: string
+  ): Promise<{ isKeyImage: boolean; measurements: MeasurementReference[]; keyImages: KeyImageReference[]; draft?: ReportDraftDetail }> {
+    const response = await apiClient<{ isKeyImage: boolean; measurements: MeasurementReference[]; keyImages: KeyImageReference[]; draft?: ReportDraftDetail }>(
+      `/radiologist/worklist/${encodeURIComponent(identifier)}/measurements/${encodeURIComponent(measurementId)}/toggle-key-image`,
+      {
+        method: 'POST',
+      }
     );
     return response.data;
   },

@@ -17,6 +17,38 @@ export default defineConfig({
         target: 'http://localhost:5000',
         changeOrigin: true,
       },
+      '/viewer': {
+        target: 'http://localhost:3002',
+        changeOrigin: true,
+      },
+      '/app-config.js': {
+        target: 'http://localhost:3002',
+        changeOrigin: true,
+      },
+      '/app.bundle': {
+        target: 'http://localhost:3002',
+        changeOrigin: true,
+      },
+      '^/.*\\.bundle\\..*': {
+        target: 'http://localhost:3002',
+        changeOrigin: true,
+      },
+      '^/.*\\.wasm$': {
+        target: 'http://localhost:3002',
+        changeOrigin: true,
+      },
+      '/init-service-worker.js': {
+        target: 'http://localhost:3002',
+        changeOrigin: true,
+      },
+      '/dicom-web': {
+        target: 'http://localhost:3002',
+        changeOrigin: true,
+      },
+      '/wado': {
+        target: 'http://localhost:3002',
+        changeOrigin: true,
+      },
     },
   },
 });

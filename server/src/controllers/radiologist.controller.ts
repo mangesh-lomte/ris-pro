@@ -19,6 +19,10 @@ import {
   autosaveReportDraft,
   recordDictationEvent,
   getStudyInstances,
+  saveStudyMeasurement,
+  getStudyMeasurements,
+  deleteStudyMeasurement,
+  toggleStudyKeyImage,
 } from '../services/radiologist.service';
 
 export const radiologistWorklistQuerySchema = z.object({
@@ -207,12 +211,12 @@ export const measurementReferenceSchema = z.object({
     'Probe',
     'PlanarFreehandROI',
   ]),
-  label: z.string().trim().min(1).max(100),
-  numericValue: z.number(),
-  unit: z.string().trim().min(1).max(20),
-  studyInstanceUid: z.string().trim().min(1),
-  seriesInstanceUid: z.string().trim().min(1),
-  sopInstanceUid: z.string().trim().min(1),
+  label: z.string().trim().min(1).max(100).default('Measurement'),
+  numericValue: z.coerce.number(),
+  unit: z.string().trim().min(1).max(20).default('mm'),
+  studyInstanceUid: z.string().trim().default(''),
+  seriesInstanceUid: z.string().trim().default(''),
+  sopInstanceUid: z.string().trim().default(''),
   frameNumber: z.number().int().min(1).optional(),
   instanceNumber: z.number().int().optional(),
   sliceLocation: z.union([z.number(), z.string().transform((v) => parseFloat(v))]).optional(),
@@ -365,6 +369,96 @@ export async function getStudyInstancesHandler(req: Request, res: Response): Pro
 
   const result = await getStudyInstances(id.trim(), userContext);
   return sendSuccess(res, result, 'Study instances retrieved successfully', 200);
+}
+
+export const saveMeasurementBodySchema = z.object({
+  measurement: measurementReferenceSchema,
+  isKeyImage: z.boolean().optional(),
+});
+
+/**
+ * POST /api/v1/radiologist/worklist/:id/measurements
+ */
+export async function saveMeasurementHandler(req: Request, res: Response): Promise<Response> {
+  const { id } = req.params;
+  if (!id || id.trim().length === 0) {
+    throw AppError.badRequest('Study identifier is required');
+  }
+
+  const parsed = saveMeasurementBodySchema.parse(req.body);
+  const userContext = {
+    userId: req.user!.id,
+    role: req.user!.role,
+    ipAddress: req.ip,
+    userAgent: req.get('user-agent'),
+  };
+
+  const result = await saveStudyMeasurement(id.trim(), parsed as any, userContext);
+  return sendSuccess(res, result, 'Measurement persisted successfully', 200);
+}
+
+/**
+ * GET /api/v1/radiologist/worklist/:id/measurements
+ */
+export async function getMeasurementsHandler(req: Request, res: Response): Promise<Response> {
+  const { id } = req.params;
+  if (!id || id.trim().length === 0) {
+    throw AppError.badRequest('Study identifier is required');
+  }
+
+  const userContext = {
+    userId: req.user!.id,
+    role: req.user!.role,
+  };
+
+  const result = await getStudyMeasurements(id.trim(), userContext);
+  return sendSuccess(res, result, 'Measurements retrieved successfully', 200);
+}
+
+/**
+ * DELETE /api/v1/radiologist/worklist/:id/measurements/:measurementId
+ */
+export async function deleteMeasurementHandler(req: Request, res: Response): Promise<Response> {
+  const { id, measurementId } = req.params;
+  if (!id || id.trim().length === 0) {
+    throw AppError.badRequest('Study identifier is required');
+  }
+  if (!measurementId || measurementId.trim().length === 0) {
+    throw AppError.badRequest('Measurement identifier is required');
+  }
+
+  const userContext = {
+    userId: req.user!.id,
+    role: req.user!.role,
+    ipAddress: req.ip,
+    userAgent: req.get('user-agent'),
+  };
+
+  const result = await deleteStudyMeasurement(id.trim(), measurementId.trim(), userContext);
+  return sendSuccess(res, result, 'Measurement removed successfully', 200);
+}
+
+/**
+ * POST /api/v1/radiologist/worklist/:id/measurements/:measurementId/toggle-key-image
+ */
+export async function toggleKeyImageHandler(req: Request, res: Response): Promise<Response> {
+  const { id, measurementId } = req.params;
+  if (!id || id.trim().length === 0) {
+    throw AppError.badRequest('Study identifier is required');
+  }
+  if (!measurementId || measurementId.trim().length === 0) {
+    throw AppError.badRequest('Measurement identifier is required');
+  }
+
+  const userContext = {
+    userId: req.user!.id,
+    role: req.user!.role,
+    ipAddress: req.ip,
+    userAgent: req.get('user-agent'),
+  };
+
+  const result = await toggleStudyKeyImage(id.trim(), measurementId.trim(), userContext);
+  return sendSuccess(res, result, 'Key image status toggled successfully', 200);
 }
 
 

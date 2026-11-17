@@ -1,5 +1,11 @@
 // OHIF Configuration & Real Measurement Bridge for RadAxis RIS
 (function() {
+  // Ensure full width viewport layout
+  try {
+    var styleEl = document.createElement('style');
+    styleEl.innerHTML = '.viewport-wrapper { flex: 1 1 0% !important; width: 100% !important; }';
+    document.head.appendChild(styleEl);
+  } catch (e) {}
   var ohifBaseConfig = {
     routerBasename: '/',
     extensions: [],
@@ -104,14 +110,9 @@
     return { numVal: numVal, unit: unit, displayStr: displayStr };
   }
 
-  // Broadcast measurement to opener RIS window
+  // Broadcast measurement across all communication channels to RIS
   function broadcastMeasurement(action, rawData) {
     try {
-      if (!window.opener || window.opener.closed) {
-        console.warn('[OHIF->RIS] No window.opener found to send measurement');
-        return;
-      }
-
       var m = (rawData && rawData.measurement) || rawData;
       if (!m) return;
 
@@ -130,9 +131,9 @@
         });
       }
 
+      var urlParams = new URLSearchParams(window.location.search);
       var studyUid = m.referenceStudyUID || m.StudyInstanceUID || '';
       if (!studyUid) {
-        var urlParams = new URLSearchParams(window.location.search);
         var qStudy = urlParams.get('StudyInstanceUIDs');
         if (qStudy) studyUid = qStudy.split(',')[0].trim();
       }
@@ -140,31 +141,98 @@
       var seriesUid = m.referenceSeriesUID || m.SeriesInstanceUID || '';
       var sopUid = m.SOPInstanceUID || '';
       var frameNo = typeof m.frameNumber === 'number' ? m.frameNumber : 1;
+      var orderId = urlParams.get('orderId') || '';
+      var accession = urlParams.get('accession') || '';
+      var patientId = urlParams.get('patientId') || '';
 
       var messageType = (action === 'UPDATED') ? 'RIS_MEASUREMENT_UPDATED' : 'RIS_MEASUREMENT_ADDED';
 
-      var payload = {
-        type: messageType,
-        measurement: {
-          id: String(m.uid || ('meas-' + Date.now())),
-          toolType: String(m.toolName || m.type || 'Length'),
-          label: m.label ? String(m.label) : ((m.toolName || 'Length') + (numVal ? ' (' + numVal + ' ' + unit + ')' : '')),
-          numericValue: numVal,
-          unit: unit,
-          displayText: displayStr || (numVal ? (numVal + ' ' + unit) : ''),
-          geometry: cleanGeometry,
-          studyInstanceUid: String(studyUid),
-          seriesInstanceUid: String(seriesUid),
-          sopInstanceUid: String(sopUid),
-          frameNumber: frameNo,
-          createdAt: new Date().toISOString()
-        }
+      var measurementData = {
+        id: String(m.uid || ('meas-' + Date.now())),
+        toolType: String(m.toolName || m.type || 'Length'),
+        label: m.label ? String(m.label) : ((m.toolName || 'Length') + (numVal ? ' (' + numVal + ' ' + unit + ')' : '')),
+        numericValue: numVal,
+        unit: unit,
+        displayText: displayStr || (numVal ? (numVal + ' ' + unit) : ''),
+        geometry: cleanGeometry,
+        studyInstanceUid: String(studyUid),
+        seriesInstanceUid: String(seriesUid),
+        sopInstanceUid: String(sopUid),
+        frameNumber: frameNo,
+        createdAt: new Date().toISOString()
       };
 
-      console.log('[OHIF->RIS] Emitting measurement to RIS:', payload);
-      window.opener.postMessage(payload, '*');
+      var payload = {
+        type: messageType,
+        orderId: orderId,
+        accessionNumber: accession,
+        patientId: patientId,
+        measurement: measurementData
+      };
+
+      console.log('[OHIF->RIS] Broadcasting measurement across channels:', payload);
+
+      // Channel 1: window.opener postMessage (if opener present)
+      try {
+        if (window.opener && !window.opener.closed) {
+          window.opener.postMessage(payload, '*');
+        }
+      } catch (e1) {
+        console.warn('[OHIF->RIS] Opener postMessage error:', e1);
+      }
+
+      // Channel 2: BroadcastChannel (cross-tab sync on same origin)
+      try {
+        if (typeof BroadcastChannel !== 'undefined') {
+          var bc = new BroadcastChannel('radaxis-dicom-sync');
+          bc.postMessage(payload);
+          setTimeout(function() { bc.close(); }, 500);
+        }
+      } catch (e2) {
+        console.warn('[OHIF->RIS] BroadcastChannel error:', e2);
+      }
+
+      // Channel 3: LocalStorage storage event
+      try {
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('radaxis_dicom_sync', JSON.stringify({
+            type: payload.type,
+            orderId: payload.orderId,
+            accessionNumber: payload.accessionNumber,
+            patientId: payload.patientId,
+            measurement: payload.measurement,
+            _ts: Date.now()
+          }));
+        }
+      } catch (e3) {
+        console.warn('[OHIF->RIS] LocalStorage error:', e3);
+      }
+
+      // Channel 4: Direct HTTP POST to RIS backend API
+      var targetId = orderId || accession;
+      if (targetId) {
+        try {
+          fetch('/api/v1/radiologist/worklist/' + encodeURIComponent(targetId) + '/measurements', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              measurement: measurementData
+            })
+          }).then(function(res) {
+            console.log('[OHIF->RIS] Direct POST measurement persisted status:', res.status);
+          }).catch(function(err) {
+            console.warn('[OHIF->RIS] Direct POST measurement failed:', err);
+          });
+        } catch (e4) {
+          console.warn('[OHIF->RIS] Direct fetch invocation error:', e4);
+        }
+      }
     } catch (err) {
-      console.error('[OHIF->RIS] Failed to format or post measurement:', err);
+      console.error('[OHIF->RIS] Failed to format or broadcast measurement:', err);
     }
   }
 
@@ -227,19 +295,43 @@
       var seriesUid = (displaySet && displaySet.SeriesInstanceUID) || (activeViewport && activeViewport.SeriesInstanceUID);
       var sopUid = (displaySet && displaySet.images && displaySet.images[0] && displaySet.images[0].SOPInstanceUID) || (displaySet && displaySet.SOPInstanceUID);
 
+      var urlParams = new URLSearchParams(window.location.search);
+      if (!studyUid) {
+        var qStudy = urlParams.get('StudyInstanceUIDs');
+        if (qStudy) studyUid = qStudy.split(',')[0].trim();
+      }
+      var orderId = urlParams.get('orderId') || '';
+      var accession = urlParams.get('accession') || '';
+
+      var keyPayload = {
+        type: 'RIS_KEY_IMAGE_CAPTURED',
+        orderId: orderId,
+        accessionNumber: accession,
+        keyImage: {
+          id: 'key-' + Date.now(),
+          studyInstanceUid: studyUid,
+          seriesInstanceUid: seriesUid,
+          sopInstanceUid: sopUid,
+          label: evt.data.label || 'Key Image Reference',
+          description: evt.data.notes || evt.data.description || '',
+          createdAt: new Date().toISOString()
+        }
+      };
+
       if (window.opener && !window.opener.closed) {
-        window.opener.postMessage({
-          type: 'RIS_KEY_IMAGE_CAPTURED',
-          keyImage: {
-            id: 'key-' + Date.now(),
-            studyInstanceUid: studyUid,
-            seriesInstanceUid: seriesUid,
-            sopInstanceUid: sopUid,
-            label: evt.data.label || 'Key Image Reference',
-            notes: evt.data.notes || '',
-            createdAt: new Date().toISOString()
-          }
-        }, '*');
+        try { window.opener.postMessage(keyPayload, '*'); } catch (e1) {}
+      }
+      if (typeof BroadcastChannel !== 'undefined') {
+        try {
+          var bc = new BroadcastChannel('radaxis-dicom-sync');
+          bc.postMessage(keyPayload);
+          setTimeout(function() { bc.close(); }, 500);
+        } catch (e2) {}
+      }
+      if (typeof localStorage !== 'undefined') {
+        try {
+          localStorage.setItem('radaxis_dicom_sync', JSON.stringify({ ...keyPayload, _ts: Date.now() }));
+        } catch (e3) {}
       }
     } catch (e) {
       console.warn('[OHIF] Key image capture failed:', e);
