@@ -10,6 +10,7 @@ import {
   checkIn,
   allocateStaff,
   getPrepCheck,
+  getSchedulingStaff,
   appointmentQuerySchema,
   createAppointmentSchema,
   rescheduleSchema,
@@ -48,6 +49,13 @@ router.get(
   '/prep-check',
   requireRole(UserRole.ADMIN, UserRole.RECEPTION, UserRole.TECHNOLOGIST, UserRole.RADIOLOGIST),
   asyncHandler(getPrepCheck)
+);
+
+// GET /api/v1/appointments/scheduling-staff - Available staff for scheduling/allocation
+router.get(
+  '/scheduling-staff',
+  requireRole(UserRole.ADMIN, UserRole.RECEPTION, UserRole.TECHNOLOGIST, UserRole.RADIOLOGIST),
+  asyncHandler(getSchedulingStaff)
 );
 
 // GET /api/v1/appointments/:id - View appointment details

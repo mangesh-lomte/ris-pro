@@ -966,9 +966,11 @@ export function TechnologistPreparationModal({
                                 {proto.description}
                               </p>
                             )}
-                            <p className="text-[10px] text-slate-500">
-                              Approved {new Date(proto.approvedAt).toLocaleDateString()}
-                            </p>
+                            {proto.approvedAt && (
+                              <p className="text-[10px] text-slate-500">
+                                Approved {new Date(proto.approvedAt).toLocaleDateString()}
+                              </p>
+                            )}
                           </div>
 
                           <div className="shrink-0 pt-0.5">

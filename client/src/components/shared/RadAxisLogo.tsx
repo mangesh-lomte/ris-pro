@@ -51,7 +51,7 @@ export function RadAxisLogo({
           {showDescriptor && (
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[10px] text-slate-400 font-medium">v2.4.1 Production</span>
+              <span className="text-[10px] text-slate-400 font-medium">v2.4.1 Demo</span>
             </div>
           )}
         </div>

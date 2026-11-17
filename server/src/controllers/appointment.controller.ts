@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
-import { ModalityType, Priority, AppointmentStatus } from '@prisma/client';
+import { ModalityType, Priority, AppointmentStatus, UserRole } from '@prisma/client';
+import { prisma } from '../config/db';
 import {
   createAppointment,
   rescheduleAppointment,
@@ -229,5 +230,23 @@ export async function getPrepCheck(req: Request, res: Response): Promise<Respons
   });
 
   return sendSuccess(res, prepCheck, 'Patient preparation instructions retrieved');
+}
+
+export async function getSchedulingStaff(_req: Request, res: Response): Promise<Response> {
+  const staff = await prisma.user.findMany({
+    where: {
+      role: { in: [UserRole.TECHNOLOGIST, UserRole.RADIOLOGIST, UserRole.ADMIN] },
+      isActive: true,
+    },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+    },
+    orderBy: { firstName: 'asc' },
+  });
+
+  return sendSuccess(res, staff, 'Scheduling staff retrieved');
 }
 

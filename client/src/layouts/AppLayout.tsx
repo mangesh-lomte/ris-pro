@@ -63,7 +63,7 @@ export function AppLayout() {
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Live PACS &amp; HL7 Sync
               </span>
               <span className="text-slate-300">|</span>
-              <span className="font-clinical-mono text-[11px] text-slate-400">v2.4.1 PROD</span>
+              <span className="font-clinical-mono text-[11px] text-slate-400">v2.4.1 DEMO</span>
             </div>
           </footer>
         </main>
