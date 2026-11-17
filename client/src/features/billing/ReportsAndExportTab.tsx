@@ -88,7 +88,7 @@ export function ReportsAndExportTab() {
 
   if (!isAdmin) {
     return (
-      <div className="p-8 text-center bg-white rounded-2xl border border-slate-200 shadow-sm space-y-3">
+      <div className="p-8 text-center bg-white rounded border border-slate-200 shadow-sm space-y-3">
         <ShieldAlert className="w-10 h-10 text-amber-500 mx-auto" />
         <h3 className="font-bold text-slate-800 text-sm">Financial Access Restricted</h3>
         <p className="text-2xs text-slate-500 max-w-md mx-auto">
@@ -101,14 +101,14 @@ export function ReportsAndExportTab() {
   return (
     <div className="space-y-6">
       {error && (
-        <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
+        <div className="p-3 rounded bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
           <AlertCircle className="w-4 h-4 shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
       {/* Accounting Export Callout Header */}
-      <div className="p-5 rounded-2xl border border-cyan-200 bg-cyan-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="p-5 rounded border border-cyan-200 bg-cyan-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
             <div className="p-1.5 bg-cyan-700 text-white rounded-lg">
@@ -171,7 +171,7 @@ export function ReportsAndExportTab() {
             return (
               <>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                  <div className="p-4 rounded-xl border border-slate-200 bg-white shadow-sm">
+                  <div className="p-4 rounded border border-slate-200 bg-white shadow-sm">
                     <span className="text-3xs uppercase font-bold text-slate-400 block">Gross Invoiced</span>
                     <span className="text-lg font-extrabold text-slate-900 font-mono">
                       {formatINR(grossBilled)}
@@ -179,7 +179,7 @@ export function ReportsAndExportTab() {
                     <p className="text-3xs text-slate-500 mt-0.5">{invCount} invoices issued</p>
                   </div>
 
-                  <div className="p-4 rounded-xl border border-amber-200 bg-amber-50/40">
+                  <div className="p-4 rounded border border-amber-200 bg-amber-50/40">
                     <span className="text-3xs uppercase font-bold text-amber-700 block">Discounts Approved</span>
                     <span className="text-lg font-extrabold text-amber-800 font-mono">
                       {formatINR(discountsGiven)}
@@ -187,7 +187,7 @@ export function ReportsAndExportTab() {
                     <p className="text-3xs text-amber-700 mt-0.5">Admin authorized</p>
                   </div>
 
-                  <div className="p-4 rounded-xl border border-emerald-200 bg-emerald-50/40">
+                  <div className="p-4 rounded border border-emerald-200 bg-emerald-50/40">
                     <span className="text-3xs uppercase font-bold text-emerald-700 block">Total Net Realized</span>
                     <span className="text-lg font-extrabold text-emerald-800 font-mono">
                       {formatINR(netRealized)}
@@ -195,7 +195,7 @@ export function ReportsAndExportTab() {
                     <p className="text-3xs text-emerald-700 mt-0.5">Collections: {formatINR(totalCollected)}</p>
                   </div>
 
-                  <div className="p-4 rounded-xl border border-rose-200 bg-rose-50/40">
+                  <div className="p-4 rounded border border-rose-200 bg-rose-50/40">
                     <span className="text-3xs uppercase font-bold text-rose-700 block">Outstanding Receivables</span>
                     <span className="text-lg font-extrabold text-rose-700 font-mono">
                       {formatINR(outstanding)}
@@ -205,7 +205,7 @@ export function ReportsAndExportTab() {
                 </div>
 
                 {/* Payment Method Breakdown */}
-                <div className="p-4 rounded-xl border border-slate-200 bg-white space-y-2">
+                <div className="p-4 rounded border border-slate-200 bg-white space-y-2">
                   <span className="font-bold text-2xs uppercase tracking-wide text-slate-600 block">
                     Collections by Tender / Payment Method
                   </span>
@@ -242,25 +242,25 @@ export function ReportsAndExportTab() {
             return (
               <>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                  <div className="p-3.5 rounded-xl border border-slate-200 bg-white">
+                  <div className="p-3.5 rounded border border-slate-200 bg-white">
                     <span className="text-3xs uppercase font-bold text-slate-400 block">&lt; 30 Days (Current)</span>
                     <span className="text-base font-extrabold text-slate-900 font-mono">
                       {formatINR(under30)}
                     </span>
                   </div>
-                  <div className="p-3.5 rounded-xl border border-slate-200 bg-white">
+                  <div className="p-3.5 rounded border border-slate-200 bg-white">
                     <span className="text-3xs uppercase font-bold text-slate-400 block">31 - 60 Days</span>
                     <span className="text-base font-extrabold text-amber-700 font-mono">
                       {formatINR(days31to60)}
                     </span>
                   </div>
-                  <div className="p-3.5 rounded-xl border border-slate-200 bg-white">
+                  <div className="p-3.5 rounded border border-slate-200 bg-white">
                     <span className="text-3xs uppercase font-bold text-slate-400 block">61 - 90 Days</span>
                     <span className="text-base font-extrabold text-rose-600 font-mono">
                       {formatINR(days61to90)}
                     </span>
                   </div>
-                  <div className="p-3.5 rounded-xl border border-rose-200 bg-rose-50/50">
+                  <div className="p-3.5 rounded border border-rose-200 bg-rose-50/50">
                     <span className="text-3xs uppercase font-bold text-rose-700 block">&gt; 90 Days (Delinquent)</span>
                     <span className="text-base font-extrabold text-rose-800 font-mono">
                       {formatINR(over90)}
@@ -268,7 +268,7 @@ export function ReportsAndExportTab() {
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+                <div className="rounded border border-slate-200 bg-white overflow-hidden shadow-sm">
                   <div className="px-4 py-2.5 border-b bg-slate-50/50 flex items-center justify-between">
                     <span className="font-bold text-2xs uppercase text-slate-700">Detailed Debtor Registry</span>
                     <span className="text-3xs text-slate-500 font-mono">Total Outstanding: {formatINR(totalRec)}</span>
@@ -301,7 +301,7 @@ export function ReportsAndExportTab() {
                           return (
                             <TableRow key={d.invoiceNumber || dIdx} className="hover:bg-slate-50/50 text-xs">
                               <TableCell className="font-mono font-bold text-cyan-900">{d.invoiceNumber}</TableCell>
-                              <TableCell className="font-mono font-bold text-indigo-700">{d.patientId}</TableCell>
+                              <TableCell className="font-mono font-bold text-blue-700">{d.patientId}</TableCell>
                               <TableCell className="font-medium text-slate-800">{d.patientName}</TableCell>
                               <TableCell className="font-mono text-slate-800">{d.accessionNumber}</TableCell>
                               <TableCell className="text-center font-mono text-2xs">{daysOverdue} days</TableCell>

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { inventoryService } from '../../services/inventoryService';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
-import { ShieldAlert, AlertCircle } from 'lucide-react';
+import { ShieldAlert, AlertCircle, X } from 'lucide-react';
 
 interface Props {
   isOpen: boolean;
@@ -69,13 +69,15 @@ export function EmergencyChecklistModal({ isOpen, onClose, onSuccess, registerIt
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-2xl rounded-xl bg-white shadow-2xl overflow-hidden border border-slate-200">
+      <div className="w-full max-w-2xl rounded bg-white shadow-2xl overflow-hidden border border-slate-200">
         <div className="bg-slate-900 px-6 py-4 flex items-center justify-between text-white">
           <div className="flex items-center gap-2">
             <ShieldAlert className="w-5 h-5 text-rose-400" />
             <h2 className="font-semibold text-lg">Contrast-Reaction Crash Cart Checklist</h2>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white text-lg">✕</button>
+          <button type="button" onClick={onClose} aria-label="Close checklist" className="rounded-md p-1 text-slate-300 hover:bg-slate-800 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400">
+            <X className="h-5 w-5" />
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4 text-sm max-h-[80vh] overflow-y-auto">

@@ -42,10 +42,10 @@ export function BillingPage() {
     setError(null);
     try {
       const [pricesRes, invoicesRes, quotesRes, claimsRes] = await Promise.all([
-        billingService.getPrices().catch(() => ({ data: [] })),
-        billingService.listInvoices().catch(() => ({ data: [] })),
-        billingService.listQuotations().catch(() => ({ data: [] })),
-        billingService.listClaims().catch(() => ({ data: [] })),
+        billingService.getPrices(),
+        billingService.listInvoices(),
+        billingService.listQuotations(),
+        billingService.listClaims(),
       ]);
 
       if (pricesRes.data) setPrices(pricesRes.data);
@@ -66,43 +66,43 @@ export function BillingPage() {
   return (
     <div className="space-y-6 max-w-[1500px] mx-auto pb-12">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-[#DCE2EC]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#dce6e0]">
         <div>
-          <h1 className="text-2xl sm:text-[28px] font-bold tracking-tight text-[#15233B]">
+          <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900">
             Billing &amp; Accounts
           </h1>
-          <p className="text-xs sm:text-sm text-[#64748B] mt-1">
+          <p className="text-xs text-slate-500 font-medium mt-0.5">
             Invoices, payments, TPA claims, cashier shifts &amp; revenue export
           </p>
         </div>
-        <Button size="sm" variant="outline" onClick={loadData} disabled={loading} className="gap-1.5 self-start sm:self-auto">
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+        <Button size="sm" variant="outline" onClick={loadData} disabled={loading} className="gap-1.5 self-start sm:self-auto rounded-full border-[#dce6e0] px-3.5 py-1.5 text-xs font-bold shadow-soft">
+          <RefreshCw className={`w-3.5 h-3.5 text-emerald-600 ${loading ? 'animate-spin' : ''}`} />
           Refresh
         </Button>
       </div>
 
       {error && (
-        <div className="p-3 rounded-md bg-rose-50 border border-rose-200 text-rose-800 text-xs">
+        <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium">
           {error}
         </div>
       )}
 
       {/* Tabs Navigation */}
       <Tabs value={activeTab} onValueChange={setActiveTab} variant="pills">
-        <div className="bg-[#F3F6FC] p-2 rounded-xl border border-[#DCE2EC] flex flex-wrap items-center gap-2">
+        <div className="bg-[#f0f4f1] p-1.5 rounded-full border border-[#dce6e0] flex flex-wrap items-center gap-1.5">
           {/* Group 1: Transactions */}
           <div className="flex items-center gap-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-1.5 hidden sm:inline">Transactions</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2 hidden sm:inline">Transactions</span>
             <TabsList className="bg-transparent p-0 gap-1">
-              <TabsTrigger value="invoices" className="gap-1.5">
+              <TabsTrigger value="invoices" className="gap-1.5 rounded-full px-3.5 py-1.5 font-bold text-xs">
                 <Receipt className="w-3.5 h-3.5" />
                 Invoices ({invoices.length})
               </TabsTrigger>
-              <TabsTrigger value="outstanding" className="gap-1.5">
+              <TabsTrigger value="outstanding" className="gap-1.5 rounded-full px-3.5 py-1.5 font-bold text-xs">
                 <CreditCard className="w-3.5 h-3.5" />
                 Outstanding ({invoices.filter((i) => Number(i.balance) > 0).length})
               </TabsTrigger>
-              <TabsTrigger value="quotations" className="gap-1.5">
+              <TabsTrigger value="quotations" className="gap-1.5 rounded-full px-3.5 py-1.5 font-bold text-xs">
                 <Calculator className="w-3.5 h-3.5" />
                 Quotes ({quotations.length})
               </TabsTrigger>
@@ -113,20 +113,20 @@ export function BillingPage() {
 
           {/* Group 2: Configuration */}
           <div className="flex items-center gap-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-1.5 hidden sm:inline">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2 hidden sm:inline">
               Configuration
             </span>
             <TabsList className="bg-transparent p-0 h-auto flex flex-wrap gap-1">
               <TabsTrigger
                 value="prices"
-                className="gap-1.5"
+                className="gap-1.5 rounded-full px-3.5 py-1.5 font-bold text-xs"
               >
                 <Tag className="w-3.5 h-3.5" />
                 Price Catalog ({prices.length})
               </TabsTrigger>
               <TabsTrigger
                 value="claims"
-                className="gap-1.5"
+                className="gap-1.5 rounded-full px-3.5 py-1.5 font-bold text-xs"
               >
                 <ShieldCheck className="w-3.5 h-3.5" />
                 TPA Claims ({claims.length})
@@ -138,23 +138,23 @@ export function BillingPage() {
 
           {/* Group 3: Operations */}
           <div className="flex items-center gap-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-1.5 hidden sm:inline">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2 hidden sm:inline">
               Operations
             </span>
             <TabsList className="bg-transparent p-0 h-auto flex flex-wrap gap-1">
               <TabsTrigger
                 value="cashier"
-                className="gap-1.5"
+                className="gap-1.5 rounded-full px-3.5 py-1.5 font-bold text-xs"
               >
                 <Lock className="w-3.5 h-3.5" />
                 Cashier Closing
               </TabsTrigger>
               <TabsTrigger
                 value="reports"
-                className="gap-1.5"
+                className="gap-1.5 rounded-full px-3.5 py-1.5 font-bold text-xs"
               >
                 <TrendingUp className="w-3.5 h-3.5" />
-                GL Export & Reports
+                GL Export &amp; Reports
               </TabsTrigger>
             </TabsList>
           </div>

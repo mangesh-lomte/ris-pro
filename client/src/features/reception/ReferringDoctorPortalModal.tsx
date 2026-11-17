@@ -81,7 +81,7 @@ export function ReferringDoctorPortalModal({
       <DialogContent className="max-w-xl p-6">
         <DialogHeader>
           <div className="flex items-center gap-2">
-            <Stethoscope className="h-5 w-5 text-indigo-600" />
+            <Stethoscope className="h-5 w-5 text-[#2563EB]" />
             <DialogTitle className="text-base font-bold">
               Referring Physician Secure Report Portal
             </DialogTitle>
@@ -127,13 +127,14 @@ export function ReferringDoctorPortalModal({
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-muted-foreground uppercase">Medical Registration Number (Optional / Demo)</label>
+              <label className="text-xs font-semibold text-muted-foreground uppercase">Medical Registration Number *</label>
               <input
                 type="text"
+                required
                 value={registrationNumber}
                 onChange={(e) => setRegistrationNumber(e.target.value)}
                 placeholder="MED-REG-88219"
-                className="w-full text-xs rounded border bg-background p-2 font-mono"
+                className="w-full min-h-11 rounded border bg-background px-3 text-sm font-mono"
               />
             </div>
 
@@ -144,7 +145,7 @@ export function ReferringDoctorPortalModal({
               <Button
                 type="submit"
                 size="sm"
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold flex items-center gap-1.5"
+                className="bg-[#2563EB] hover:bg-blue-700 text-white font-semibold flex items-center gap-1.5"
                 disabled={isLoggingIn}
               >
                 {isLoggingIn ? (
@@ -164,7 +165,7 @@ export function ReferringDoctorPortalModal({
         ) : (
           <div className="space-y-4 pt-2">
             {/* Authenticated Doctor Card */}
-            <div className="p-3 bg-indigo-50/60 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800 rounded-lg flex items-center justify-between text-xs">
+            <div className="p-3 bg-blue-50/60 dark:bg-indigo-950/20 border border-blue-200 dark:border-indigo-800 rounded-lg flex items-center justify-between text-xs">
               <div>
                 <span className="font-bold text-foreground text-sm">{doctorData.name}</span>
                 <div className="text-muted-foreground text-[11px] flex items-center gap-2 mt-0.5">

@@ -199,7 +199,7 @@ export function TechnologistSafetyScreeningModal({
         <DialogHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-indigo-50 border border-indigo-200 rounded-lg text-indigo-700">
+              <div className="p-2 bg-blue-50 border border-blue-200 rounded text-blue-700">
                 <ShieldCheck className="w-5 h-5" />
               </div>
               <div>
@@ -247,7 +247,7 @@ export function TechnologistSafetyScreeningModal({
         ) : (
           <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
             {/* Core Patient & Accession Identifiers (Immutable) */}
-            <div className="p-4 bg-slate-900 text-white rounded-xl shadow-sm border border-slate-800 space-y-3">
+            <div className="p-4 bg-slate-900 text-white rounded shadow-sm border border-slate-800 space-y-3">
               <div className="text-[11px] font-bold tracking-wider text-slate-400 uppercase flex items-center justify-between">
                 <span>Clinical Identifiers (Single Source of Truth)</span>
                 <span className="text-emerald-400 flex items-center gap-1 font-mono text-[10px]">
@@ -255,7 +255,7 @@ export function TechnologistSafetyScreeningModal({
                 </span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-slate-800/80 p-3 rounded-lg border border-slate-700/60">
+                <div className="bg-slate-800/80 p-3 rounded border border-slate-700/60">
                   <span className="text-[10px] text-slate-400 uppercase font-semibold block mb-1">
                     Patient Identification (MRN)
                   </span>
@@ -268,7 +268,7 @@ export function TechnologistSafetyScreeningModal({
                   </div>
                 </div>
 
-                <div className="bg-slate-800/80 p-3 rounded-lg border border-slate-700/60">
+                <div className="bg-slate-800/80 p-3 rounded border border-slate-700/60">
                   <span className="text-[10px] text-slate-400 uppercase font-semibold block mb-1">
                     Order Accession Number
                   </span>
@@ -283,20 +283,50 @@ export function TechnologistSafetyScreeningModal({
               </div>
             </div>
 
+            {context.patientPreVisitScreening && (
+              <div
+                role="alert"
+                className={`rounded border p-4 ${
+                  context.patientPreVisitScreening.status === 'REQUIRES_TECH_REVIEW'
+                    ? 'border-amber-300 bg-amber-50 text-amber-950'
+                    : 'border-[#E2E8F0] bg-slate-50 text-slate-800'
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold">Patient pre-visit questionnaire</p>
+                    <p className="mt-1 text-xs">
+                      {context.patientPreVisitScreening.status === 'REQUIRES_TECH_REVIEW'
+                        ? 'The patient reported potential risk factors. Review them in person before completing the authoritative safety screen.'
+                        : 'The patient reported no risk factors. Complete the in-person safety screen before acquisition.'}
+                    </p>
+                    {!!context.patientPreVisitScreening.risksIdentified?.length && (
+                      <ul className="mt-2 list-disc space-y-1 pl-4 text-xs font-semibold">
+                        {context.patientPreVisitScreening.risksIdentified.map((risk) => (
+                          <li key={risk}>{risk.replace(/_/g, ' ')}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Section 1: Bedside Patient Double-Identity Verification */}
-            <div className="border border-indigo-200 bg-indigo-50/50 rounded-xl p-4 space-y-3">
+            <div className="border border-blue-200 bg-blue-50/50 rounded p-4 space-y-3">
               <div className="flex items-center gap-2 text-indigo-900 font-semibold text-xs">
-                <UserCheck className="w-4 h-4 text-indigo-700" />
+                <UserCheck className="w-4 h-4 text-blue-700" />
                 <span>1. Patient Identity Verification (Mandatory Double-ID)</span>
               </div>
 
-              <div className="bg-white p-3.5 rounded-lg border border-indigo-100 shadow-xs space-y-3">
+              <div className="bg-white p-3.5 rounded border border-indigo-100 shadow-xs space-y-3">
                 <label className="flex items-start gap-3 cursor-pointer select-none">
                   <input
                     type="checkbox"
                     checked={identityVerified}
                     onChange={(e) => setIdentityVerified(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 rounded border-indigo-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                    className="mt-0.5 h-4 w-4 rounded border-indigo-300 text-[#2563EB] focus:ring-indigo-500 cursor-pointer"
                   />
                   <div className="text-xs">
                     <span className="font-bold text-slate-900 block">
@@ -328,7 +358,7 @@ export function TechnologistSafetyScreeningModal({
             </div>
 
             {/* Section 2: Clinical Indication Review (Read-Only) */}
-            <div className="border border-slate-200 bg-white rounded-xl p-4 space-y-2">
+            <div className="border border-[#E2E8F0] bg-white rounded p-4 space-y-2">
               <div className="flex items-center justify-between text-slate-800 font-semibold text-xs border-b border-slate-100 pb-2">
                 <div className="flex items-center gap-2">
                   <FileText className="w-4 h-4 text-slate-500" />
@@ -370,7 +400,7 @@ export function TechnologistSafetyScreeningModal({
             </div>
 
             {/* Section 3: Modality-Specific Safety Screening Checklist */}
-            <div className="border border-slate-200 bg-white rounded-xl p-4 space-y-4">
+            <div className="border border-[#E2E8F0] bg-white rounded p-4 space-y-4">
               <div className="flex items-center justify-between text-slate-800 font-semibold text-xs border-b border-slate-100 pb-2">
                 <div className="flex items-center gap-2">
                   <ShieldAlert className="w-4 h-4 text-slate-600" />
@@ -456,7 +486,7 @@ export function TechnologistSafetyScreeningModal({
                     />
 
                     {context.contrastRequired && (
-                      <div className="pt-2 border-t border-slate-200 space-y-3">
+                      <div className="pt-2 border-t border-[#E2E8F0] space-y-3">
                         <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900">
                           <AlertTriangle className="w-4 h-4 text-amber-600" />
                           <span>IV Gadolinium Contrast Safety Checks</span>
@@ -496,7 +526,7 @@ export function TechnologistSafetyScreeningModal({
                     />
 
                     {context.contrastRequired && (
-                      <div className="pt-2 border-t border-slate-200 space-y-3">
+                      <div className="pt-2 border-t border-[#E2E8F0] space-y-3">
                         <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900">
                           <AlertTriangle className="w-4 h-4 text-amber-600" />
                           <span>IV Iodinated Contrast Safety Checks</span>
@@ -555,7 +585,7 @@ export function TechnologistSafetyScreeningModal({
 
             {/* Section 4: Live Safety Evaluation Result */}
             <div
-              className={`p-4 rounded-xl border space-y-2.5 ${
+              className={`p-4 rounded border space-y-2.5 ${
                 isCleared
                   ? 'bg-emerald-50 border-emerald-300 text-emerald-950'
                   : risks.length > 0
@@ -640,12 +670,12 @@ export function TechnologistSafetyScreeningModal({
                 onChange={(e) => setSafetyNotes(e.target.value)}
                 placeholder="Enter any implant serial numbers, patient positioning accommodations, or clinical safety notes..."
                 rows={2}
-                className="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 resize-none"
+                className="w-full text-xs p-2.5 border border-slate-300 rounded focus:ring-indigo-500 focus:border-indigo-500 resize-none"
               />
             </div>
 
             {submissionError && (
-              <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 text-xs flex items-center gap-2">
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded text-rose-700 text-xs flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{submissionError}</span>
               </div>
@@ -664,7 +694,7 @@ export function TechnologistSafetyScreeningModal({
             }}
             disabled={saveMutation.isPending || isLoading || !context}
             className={`gap-1.5 font-semibold text-xs ${
-              isCleared ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+              isCleared ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-[#2563EB] hover:bg-blue-700 text-white'
             }`}
           >
             {saveMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
@@ -700,12 +730,12 @@ function QuestionRow({
   return (
     <div
       data-testid={name}
-      className={`p-3 rounded-lg border transition-colors ${
+      className={`p-3 rounded border transition-colors ${
         isHighRiskSelected
           ? 'bg-rose-50/70 border-rose-300'
           : value
-          ? 'bg-slate-50 border-slate-200'
-          : 'bg-white border-slate-200'
+          ? 'bg-slate-50 border-[#E2E8F0]'
+          : 'bg-white border-[#E2E8F0]'
       }`}
     >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">

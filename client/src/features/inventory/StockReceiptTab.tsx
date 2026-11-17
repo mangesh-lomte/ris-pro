@@ -13,13 +13,13 @@ interface Props {
 const LOCATIONS = ['GENERAL_STORE', 'CT_SCANNER', 'MRI_SCANNER', 'XRAY_ROOM', 'PHARMACY'];
 
 export function StockReceiptTab({ items, onRefresh }: Props) {
-  const [supplierName, setSupplierName] = useState('GE Healthcare');
+  const [supplierName, setSupplierName] = useState('');
   const [invoiceNumber, setInvoiceNumber] = useState('');
   const [selectedItemId, setSelectedItemId] = useState(items[0]?.id || '');
   const [batchNumber, setBatchNumber] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
-  const [quantity, setQuantity] = useState('20');
-  const [unitCost, setUnitCost] = useState('45.00');
+  const [quantity, setQuantity] = useState('');
+  const [unitCost, setUnitCost] = useState('');
   const [location, setLocation] = useState('GENERAL_STORE');
   const [notes, setNotes] = useState('');
 
@@ -90,11 +90,12 @@ export function StockReceiptTab({ items, onRefresh }: Props) {
   const parsedQty = parseInt(quantity, 10) || 0;
   const parsedCost = parseFloat(unitCost) || 0;
   const totalCost = parsedQty * parsedCost;
+  const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
 
   return (
     <div className="space-y-6">
       {/* Inward Receipt Form Card */}
-      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4 max-w-4xl">
+      <div className="bg-white p-6 rounded border border-slate-200 shadow-sm space-y-4 max-w-4xl">
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <div className="flex items-center gap-2">
             <Truck className="w-5 h-5 text-sky-600" />
@@ -175,6 +176,7 @@ export function StockReceiptTab({ items, onRefresh }: Props) {
               <label className="block font-semibold text-slate-700 mb-1">Expiration Date *</label>
               <Input
                 type="date"
+                min={tomorrow}
                 value={expiryDate}
                 onChange={(e) => setExpiryDate(e.target.value)}
                 required
@@ -189,6 +191,7 @@ export function StockReceiptTab({ items, onRefresh }: Props) {
               <Input
                 type="number"
                 min="1"
+                max="1000000"
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
                 required
@@ -201,6 +204,7 @@ export function StockReceiptTab({ items, onRefresh }: Props) {
                 type="number"
                 step="0.01"
                 min="0"
+                max="100000000"
                 value={unitCost}
                 onChange={(e) => setUnitCost(e.target.value)}
                 className="focus-visible:ring-2 focus-visible:ring-cyan-500 font-mono"
@@ -252,7 +256,7 @@ export function StockReceiptTab({ items, onRefresh }: Props) {
       </div>
 
       {/* Batches & Expiry Ledger Card */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+      <div className="bg-white rounded border border-slate-200 overflow-hidden shadow-sm">
         <div className="px-5 py-3.5 border-b border-slate-200 bg-slate-50/70 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Package className="w-4 h-4 text-sky-600" />

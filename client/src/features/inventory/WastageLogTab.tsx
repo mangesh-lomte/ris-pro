@@ -65,7 +65,7 @@ export function WastageLogTab({ items, wastageLogs, onRefresh }: Props) {
   return (
     <div className="space-y-6">
       {/* Wastage Recording Form */}
-      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm max-w-3xl space-y-4">
+      <div className="bg-white p-6 rounded border border-slate-200 shadow-sm max-w-3xl space-y-4">
         <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
           <Trash2 className="w-5 h-5 text-rose-600" />
           <h3 className="font-semibold text-base text-slate-900">Opened-Vial, Residual & Wastage Entry</h3>
@@ -187,7 +187,7 @@ export function WastageLogTab({ items, wastageLogs, onRefresh }: Props) {
       </div>
 
       {/* Historical Wastage Table */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+      <div className="bg-white rounded border border-slate-200 overflow-hidden shadow-sm">
         <div className="bg-slate-50 px-4 py-3 border-b border-slate-200 flex items-center justify-between">
           <h4 className="font-semibold text-xs text-slate-800 uppercase tracking-wider">
             Auditable Opened-Vial & Wastage Log

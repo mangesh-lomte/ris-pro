@@ -3,8 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { fetchAppointments } from '../../services/appointmentService';
 import { Appointment, LivePatientStatusData, ModalityType, UserRole } from '../../types';
 import { PriorityBadge } from '../../components/shared/PriorityBadge';
-import { Calendar, Clock, ChevronRight } from 'lucide-react';
-import { Badge } from '../../components/ui/badge';
+import { ChevronRight } from 'lucide-react';
 
 interface Props {
   activePatients?: LivePatientStatusData['activePatients'];
@@ -54,6 +53,7 @@ function hospitalHour(date: Date): number {
 export function ModalityScheduleMatrix({ activePatients = [], isLoading: isOverviewLoading, userRole }: Props) {
   const navigate = useNavigate();
   const currentHospitalDate = hospitalDateKey(new Date());
+  const currentHour = hospitalHour(new Date());
   const canManageSchedule = userRole === 'ADMIN' || userRole === 'RECEPTION';
 
   // Fetch real appointments to populate timeline
@@ -66,7 +66,6 @@ export function ModalityScheduleMatrix({ activePatients = [], isLoading: isOverv
   const appointments: Appointment[] = appointmentData?.data?.items || [];
   const isLoading = isOverviewLoading || isApptLoading;
 
-  // Standard operational time slots matching clinical operating model
   const standardTimeSlots: { label: string; startHour: number; endHour: number }[] = [
     { label: '09:00 - 10:00', startHour: 9, endHour: 10 },
     { label: '10:00 - 11:00', startHour: 10, endHour: 11 },
@@ -76,9 +75,7 @@ export function ModalityScheduleMatrix({ activePatients = [], isLoading: isOverv
     { label: '15:00 - 16:00', startHour: 15, endHour: 16 },
   ];
 
-  // Helper to find a real scheduled appointment for a modality and hourly window
   const findAppointment = (modality: ModalityType, startHour: number, endHour: number): AppointmentCardData | undefined => {
-    // 1. Filter appointments by modality and scheduledStart hour
     const matchingAppts = appointments.filter((a) => {
       if (a.modality !== modality) return false;
       const d = new Date(a.scheduledStart);
@@ -88,7 +85,6 @@ export function ModalityScheduleMatrix({ activePatients = [], isLoading: isOverv
     });
 
     if (matchingAppts.length > 0) {
-      // Prioritize STAT > URGENT > ROUTINE, then active statuses
       const priorityWeight: Record<string, number> = { STAT: 3, URGENT: 2, ROUTINE: 1 };
       const activeStatuses = ['CHECKED_IN', 'IN_PROGRESS', 'ARRIVED', 'SCHEDULED'];
 
@@ -119,7 +115,6 @@ export function ModalityScheduleMatrix({ activePatients = [], isLoading: isOverv
       };
     }
 
-    // 2. Check active patients if an active scan is ongoing for this modality
     const matchingActive = activePatients.find((p) => p.modality === modality && p.stage === 'SCANNING');
     if (matchingActive) {
       return {
@@ -157,24 +152,27 @@ export function ModalityScheduleMatrix({ activePatients = [], isLoading: isOverv
 
   const renderCard = (card?: AppointmentCardData) => {
     if (!card) {
-      if (!canManageSchedule) {
-        return (
-          <div className="w-full py-3 px-2 rounded-md border border-dashed border-slate-200 text-center text-[10px] text-slate-400 font-medium">
-            Slot Available
-          </div>
-        );
-      }
       return (
         <button
           type="button"
-          onClick={() => navigate('/appointments')}
-          className="w-full py-3 px-2 rounded-md border border-dashed border-slate-200 hover:border-slate-300 hover:bg-slate-50/70 transition-colors text-center text-[10px] text-slate-400 hover:text-slate-600 font-medium cursor-pointer"
-          title="Suite available — click to open Clinical Scheduler"
+          onClick={() => (canManageSchedule ? navigate('/appointments') : undefined)}
+          className="w-full p-3 rounded-2xl bg-white border border-dashed border-slate-300 hover:border-slate-400 hover:bg-slate-50/50 flex items-center justify-between text-left transition group cursor-pointer"
         >
-          Slot Available
+          <div>
+            <span className="text-xs text-slate-500 font-semibold italic">Emergency Buffer Slot</span>
+            <div className="text-[10px] text-slate-400">Available for Trauma / Inpatient</div>
+          </div>
+          {canManageSchedule && (
+            <span className="text-[10px] font-bold text-slate-800 bg-[#e9f1ed] hover:bg-emerald-100 px-3 py-1 rounded-full transition">
+              Assign
+            </span>
+          )}
         </button>
       );
     }
+
+    const isStat = card.priority === 'STAT';
+    const isUrgent = card.priority === 'URGENT';
 
     return (
       <div
@@ -187,132 +185,112 @@ export function ModalityScheduleMatrix({ activePatients = [], isLoading: isOverv
             handleCardClick(card);
           }
         }}
-        className="p-2.5 rounded-md bg-white border border-slate-200/90 shadow-2xs space-y-1.5 hover:border-[#174A70]/60 hover:shadow-xs transition-all cursor-pointer group text-left"
+        className={`p-3 rounded-2xl border transition-all cursor-pointer group text-left shadow-2xs ${
+          isStat
+            ? 'bg-rose-50/90 border-rose-200'
+            : isUrgent
+            ? 'bg-[#fdf9ee] border-amber-200/70'
+            : 'bg-[#f4f7f5] border-slate-200/60'
+        }`}
         title="Click to view patient clinical chart and order records"
       >
         <div className="flex items-center justify-between gap-1.5">
-          <span className="font-semibold text-xs text-[#152B42] group-hover:text-[#174A70] transition-colors truncate">
+          <span className={`font-bold text-xs truncate ${isStat ? 'text-rose-950 font-extrabold' : 'text-slate-900'}`}>
             {card.patientName}
           </span>
           <PriorityBadge priority={card.priority as any} />
         </div>
-        <p className="text-[11px] text-slate-600 truncate leading-snug">
+
+        <p className="text-[11px] text-slate-600 truncate mt-1">
           {card.examination}
         </p>
-        <div className="flex items-center justify-between gap-1 pt-0.5">
-          <span className="font-mono text-[10px] text-[#174A70] font-medium truncate">
-            {card.accessionNumber}
+
+        <div className="flex items-center justify-between text-[10px] text-slate-400 mt-1 font-clinical-mono">
+          <span className="truncate max-w-[120px]">{card.accessionNumber}</span>
+          <span className={`font-bold font-sans ${isStat ? 'text-rose-700' : 'text-emerald-700'}`}>
+            {card.scheduledTime ? `${card.scheduledTime} ` : ''}{card.status.replace(/_/g, ' ')}
           </span>
-          <div className="flex items-center gap-1 shrink-0">
-            {card.scheduledTime && (
-              <span className="font-mono text-[10px] text-slate-500 font-medium">
-                {card.scheduledTime}
-              </span>
-            )}
-            <Badge variant="outline" className="text-[9px] px-1 py-0 font-normal uppercase">
-              {card.status.replace('_', ' ')}
-            </Badge>
-          </div>
         </div>
       </div>
     );
   };
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200/90 shadow-2xs flex flex-col justify-between overflow-hidden">
+    <div className="bg-white rounded-3xl border border-[#dce6e0] shadow-soft p-5 lg:p-6 flex flex-col">
       {/* Header */}
-      <div className="p-3.5 sm:p-4 border-b border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-        <div className="flex items-center gap-2.5">
-          <div className="p-2 bg-[#174A70] text-white rounded-md shadow-2xs">
-            <Calendar className="w-4 h-4" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-slate-100">
+        <div>
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-extrabold text-slate-900">Modality Operations Matrix</h2>
+            <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100/80 px-2.5 py-0.5 rounded-full">
+              Live Progression
+            </span>
           </div>
-          <div>
-            <h3 className="text-sm font-bold text-[#152B42] tracking-tight">
-              Modality Schedule &amp; Operations Matrix
-            </h3>
-            <p className="text-[11px] text-slate-500 font-medium">
-              Today's scheduled examinations &amp; live scan progression across imaging suites
-            </p>
-          </div>
+          <p className="text-xs text-slate-400 mt-1 font-medium">
+            Examination status and suite allocations for today
+          </p>
         </div>
 
-        {canManageSchedule && <div className="flex items-center gap-2">
-          <Link
-            to="/appointments"
-            className="text-[11px] font-semibold text-[#174A70] hover:text-[#123855] px-2.5 py-1 rounded-md bg-[#174A70]/5 hover:bg-[#174A70]/10 border border-[#174A70]/20 transition-colors flex items-center gap-1 shadow-2xs"
-          >
-            <span>Full Schedule</span>
-            <ChevronRight className="w-3 h-3" />
+        {/* Filter Pills */}
+        <div className="flex items-center bg-[#f0f4f1] p-1 rounded-full">
+          <Link to="/appointments" className="px-3.5 py-1.5 rounded-full bg-slate-900 text-white text-xs font-bold shadow-xs">
+            All Suites
           </Link>
-        </div>}
+          <Link to="/appointments?modality=CT" className="px-3 py-1.5 rounded-full text-slate-600 hover:text-slate-900 text-xs font-semibold">
+            CT (128)
+          </Link>
+          <Link to="/appointments?modality=MRI" className="px-3 py-1.5 rounded-full text-slate-600 hover:text-slate-900 text-xs font-semibold">
+            MRI (3.0T)
+          </Link>
+        </div>
       </div>
 
-      {/* Schedule Table / Grid with Contained Horizontal Scroll & Sticky Time Slot Column */}
-      <div className="table-scroll-container thin-scroll w-full overflow-x-auto">
-        <table className="w-full text-left border-collapse text-xs min-w-[760px]">
-          <thead>
-            <tr className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200 text-[11px] uppercase tracking-wider">
-              <th className="sticky left-0 z-20 bg-slate-50 py-2.5 px-3 min-w-[120px] w-32 whitespace-nowrap border-r border-slate-200/80 shadow-[1px_0_0_0_#e2e8f0]">
-                Time Slot
-              </th>
-              <th className="py-2.5 px-3 min-w-[210px] border-r border-slate-200/80">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-indigo-500 shrink-0" />
-                  <span className="truncate">MRI Suite (1.5T / 3.0T)</span>
-                </div>
-              </th>
-              <th className="py-2.5 px-3 min-w-[210px] border-r border-slate-200/80">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-cyan-500 shrink-0" />
-                  <span className="truncate">CT Suite (128-Slice)</span>
-                </div>
-              </th>
-              <th className="py-2.5 px-3 min-w-[210px]">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-                  <span className="truncate">Digital X-Ray Suite</span>
-                </div>
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {isLoading ? (
-              <tr>
-                <td colSpan={4} className="py-8 text-center text-xs text-slate-400">
-                  Loading modality schedule telemetry...
-                </td>
-              </tr>
-            ) : (
-              slots.map((slot) => (
-                <tr key={slot.timeLabel} className="hover:bg-slate-50/40 transition-colors">
-                  {/* Sticky Time Column */}
-                  <td className="sticky left-0 z-10 bg-slate-50/95 backdrop-blur-xs font-mono font-medium text-slate-600 text-[11px] whitespace-nowrap tabular-nums align-top border-r border-slate-200/80 shadow-[1px_0_0_0_#e2e8f0] py-2.5 px-3">
-                    <div className="flex items-center gap-1">
-                      <Clock className="w-3 h-3 text-slate-400 shrink-0" />
-                      <span>{slot.timeLabel}</span>
-                    </div>
-                  </td>
+      {/* Slots List */}
+      <div className="divide-y divide-slate-100 text-xs mt-3">
+        {isLoading ? (
+          <div className="py-12 text-center text-xs text-slate-400 font-medium animate-pulse">
+            Loading modality schedule matrix...
+          </div>
+        ) : (
+          slots.map((slot, index) => {
+          const isActive = currentHour >= slot.startHour && currentHour < slot.endHour;
+          return (
+            <div
+              key={index}
+              className={`py-3.5 grid grid-cols-12 gap-3 items-center rounded-2xl px-2 transition ${
+                isActive ? 'bg-emerald-50/40 rounded-2xl' : 'hover:bg-slate-50/50'
+              }`}
+            >
+              {/* Time Column */}
+              <div className="col-span-12 sm:col-span-2 font-clinical-mono text-slate-500 font-bold text-xs flex items-center gap-1.5">
+                {isActive && <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />}
+                {slot.timeLabel}
+              </div>
 
-                  {/* MRI Cell */}
-                  <td className="py-2 px-3 border-r border-slate-100 align-top min-w-[210px]">
-                    {renderCard(slot.mri)}
-                  </td>
+              {/* CT Suite Column */}
+              <div className="col-span-12 sm:col-span-5">
+                {renderCard(slot.ct)}
+              </div>
 
-                  {/* CT Cell */}
-                  <td className="py-2 px-3 border-r border-slate-100 align-top min-w-[210px]">
-                    {renderCard(slot.ct)}
-                  </td>
+              {/* MRI Suite Column */}
+              <div className="col-span-12 sm:col-span-5">
+                {renderCard(slot.mri)}
+              </div>
+            </div>
+          );
+        })
+        )}
+      </div>
 
-                  {/* X-Ray Cell */}
-                  <td className="py-2 px-3 align-top min-w-[210px]">
-                    {renderCard(slot.xray)}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+      {/* Footer */}
+      <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400 font-medium">
+        <span>Live feed synced with PACS DICOM listener</span>
+        <Link to="/appointments" className="font-bold text-slate-900 hover:text-emerald-700 flex items-center gap-1">
+          Full Modality Calendar
+          <ChevronRight className="w-3.5 h-3.5" />
+        </Link>
       </div>
     </div>
   );
 }
+export default ModalityScheduleMatrix;

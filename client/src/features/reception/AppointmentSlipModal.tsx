@@ -35,16 +35,20 @@ export function AppointmentSlipModal({ open, onOpenChange, appointmentId }: Slip
   };
 
   const handlePrint = () => {
+    const cleanup = () => document.body.classList.remove('printing-appointment-slip');
+    document.body.classList.add('printing-appointment-slip');
+    window.addEventListener('afterprint', cleanup, { once: true });
     window.print();
+    window.setTimeout(cleanup, 1000);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl p-6 bg-white dark:bg-slate-900 border rounded-2xl shadow-2xl">
+      <DialogContent className="max-w-2xl p-6 bg-white dark:bg-slate-900 border rounded shadow-2xl">
         <DialogHeader className="border-b pb-3 print:hidden">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="p-2 bg-[#174A70] text-white rounded-lg">
+              <div className="p-2 bg-[#2563EB] text-white rounded-lg">
                 <FileText className="w-5 h-5" />
               </div>
               <div>
@@ -56,7 +60,7 @@ export function AppointmentSlipModal({ open, onOpenChange, appointmentId }: Slip
                 </p>
               </div>
             </div>
-            <Button size="sm" onClick={handlePrint} className="bg-[#174A70] hover:bg-[#123855] text-white text-xs gap-1.5 shadow-2xs">
+            <Button size="sm" onClick={handlePrint} className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs gap-1.5 shadow-2xs">
               <Printer className="w-3.5 h-3.5" />
               <span>Print Slip</span>
             </Button>
@@ -71,19 +75,24 @@ export function AppointmentSlipModal({ open, onOpenChange, appointmentId }: Slip
           <div id="printable-appointment-slip" className="space-y-4 py-2 font-sans text-slate-900">
             {/* Header info */}
             <div className="border-b pb-3 flex items-start justify-between">
-              <div>
-                <h2 className="text-base font-black tracking-tight">{slip.facilityName}</h2>
-                <p className="text-2xs text-slate-500">{slip.facilityAddress} • {slip.facilityPhone}</p>
-                <span className="text-3xs text-slate-400 font-mono">Generated: {new Date(slip.slipGeneratedAt).toLocaleString()}</span>
+              <div className="flex items-center gap-3">
+                <img src="/radaxis-symbol.png" alt="RadAxis" className="w-9 h-9 object-contain shrink-0" />
+                <div>
+                  <h2 className="text-base font-black tracking-tight">{slip.facilityName}</h2>
+                  {(slip.facilityAddress || slip.facilityPhone) && (
+                    <p className="text-2xs text-slate-500">{[slip.facilityAddress, slip.facilityPhone].filter(Boolean).join(' • ')}</p>
+                  )}
+                  <span className="text-3xs text-slate-400 font-mono">Generated: {new Date(slip.slipGeneratedAt).toLocaleString()}</span>
+                </div>
               </div>
               <div className="p-2 bg-slate-100 rounded-lg border text-right">
                 <span className="text-3xs uppercase text-slate-500 font-bold block">Waiting Token</span>
-                <span className="text-base font-black font-mono text-[#174A70]">{slip.appointment.tokenNumber}</span>
+                <span className="text-base font-black font-mono text-[#2563EB]">{slip.appointment.tokenNumber}</span>
               </div>
             </div>
 
             {/* Patient & Exam Card */}
-            <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded-xl border text-xs">
+            <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded border text-xs">
               <div>
                 <span className="text-2xs text-slate-500 block">Patient Name / MRN</span>
                 <div className="font-bold">{slip.patient.fullName}</div>
@@ -97,7 +106,7 @@ export function AppointmentSlipModal({ open, onOpenChange, appointmentId }: Slip
               <div>
                 <span className="text-2xs text-slate-500 block">Appointment Date & Time</span>
                 <div className="font-semibold flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5 text-indigo-600" />
+                  <Clock className="w-3.5 h-3.5 text-[#2563EB]" />
                   {new Date(slip.appointment.scheduledStart).toLocaleString()}
                 </div>
               </div>
@@ -109,7 +118,7 @@ export function AppointmentSlipModal({ open, onOpenChange, appointmentId }: Slip
             </div>
 
             {/* Preparation Rules Box */}
-            <div className="p-4 rounded-xl bg-amber-50/70 border border-amber-200 text-xs space-y-2">
+            <div className="p-4 rounded bg-amber-50/70 border border-amber-200 text-xs space-y-2">
               <div className="flex items-center gap-2 font-bold text-amber-950">
                 <AlertTriangle className="w-4 h-4 text-amber-600" />
                 <span>Patient Preparation Instructions</span>

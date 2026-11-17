@@ -86,7 +86,7 @@ export const ReportVersionHistoryModal: React.FC<ReportVersionHistoryModalProps>
         <DialogHeader className="border-b pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="p-2 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-600">
+              <div className="p-2 rounded-full bg-indigo-100 dark:bg-indigo-950 text-[#2563EB]">
                 <History className="h-5 w-5" />
               </div>
               <div>
@@ -134,7 +134,7 @@ export const ReportVersionHistoryModal: React.FC<ReportVersionHistoryModalProps>
                     key={`ver-${ver.versionNumber}-${idx}`}
                     className={`border rounded-lg p-3.5 transition-all ${
                       isLatest
-                        ? 'border-indigo-400 bg-indigo-50/20 dark:bg-indigo-950/20 shadow-sm'
+                        ? 'border-indigo-400 bg-blue-50/20 dark:bg-indigo-950/20 shadow-sm'
                         : 'border-border bg-card'
                     }`}
                   >
@@ -145,7 +145,7 @@ export const ReportVersionHistoryModal: React.FC<ReportVersionHistoryModalProps>
                         </span>
                         {getBadgeForType(ver.amendmentType, ver.isOriginal)}
                         {isLatest && (
-                          <span className="text-[10px] font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-[#2563EB] dark:text-indigo-400">
                             (Current Active State)
                           </span>
                         )}
@@ -222,7 +222,7 @@ export const ReportVersionHistoryModal: React.FC<ReportVersionHistoryModalProps>
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-8 text-xs text-indigo-700 border-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950 flex items-center gap-1"
+                  className="h-8 text-xs text-blue-700 border-indigo-300 hover:bg-blue-50 dark:hover:bg-indigo-950 flex items-center gap-1"
                   onClick={() => {
                     onOpenChange(false);
                     onOpenAmendment('ADDENDUM');

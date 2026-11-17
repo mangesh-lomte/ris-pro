@@ -35,8 +35,9 @@ export function ReceiptModal({ open, onOpenChange, receipt }: ReceiptModalProps)
       </DialogHeader>
 
       <DialogContent className="p-6 space-y-4 print:p-0">
-        <div className="border border-slate-200 rounded-xl p-5 bg-slate-50/50 space-y-4 text-xs">
-          <div className="text-center border-b pb-3">
+        <div className="border border-slate-200 rounded p-5 bg-slate-50/50 space-y-4 text-xs">
+          <div className="text-center border-b pb-3 flex flex-col items-center">
+            <img src="/radaxis-symbol.png" alt="RadAxis" className="w-8 h-8 object-contain mb-1 drop-shadow-xs" />
             <h3 className="font-bold text-sm tracking-wide text-slate-900 uppercase">
               RADAXIS RADIOLOGY & IMAGING CENTRE
             </h3>
@@ -55,7 +56,7 @@ export function ReceiptModal({ open, onOpenChange, receipt }: ReceiptModalProps)
             </div>
             <div>
               <span className="text-slate-400 block text-3xs uppercase font-bold">Patient ID (MRN)</span>
-              <span className="font-mono font-bold text-indigo-700">{snapshot.patientId || receipt.invoice?.patientId || 'N/A'}</span>
+              <span className="font-mono font-bold text-blue-700">{snapshot.patientId || receipt.invoice?.patientId || 'N/A'}</span>
             </div>
             <div>
               <span className="text-slate-400 block text-3xs uppercase font-bold">Accession Number</span>

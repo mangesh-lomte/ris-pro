@@ -31,6 +31,8 @@ export function OrderBillingModal({
   const [amount, setAmount] = useState<number>(0);
   const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'ONLINE'>('CASH');
   const [reference, setReference] = useState('');
+  const [authorizationConfirmed, setAuthorizationConfirmed] = useState(false);
+  const [paymentAttemptKey, setPaymentAttemptKey] = useState(() => crypto.randomUUID());
 
   useEffect(() => {
     if (open && orderId) {
@@ -63,9 +65,14 @@ export function OrderBillingModal({
       const res = await receptionDeliveryService.recordOrderPayment(orderId, {
         amount: Number(amount),
         paymentMethod,
-        reference: reference || `RCPT-${Date.now().toString().slice(-6)}`,
+        reference: reference.trim() || undefined,
+        authorizationConfirmed: paymentMethod === 'CASH' ? undefined : authorizationConfirmed,
+        idempotencyKey: paymentAttemptKey,
       });
       setSuccessMsg(`Payment of ${formatINR(res.amountPaid)} recorded successfully. Receipt: ${res.receiptNumber}`);
+      setReference('');
+      setAuthorizationConfirmed(false);
+      setPaymentAttemptKey(crypto.randomUUID());
       loadBilling();
       if (onPaymentSuccess) onPaymentSuccess();
     } catch (err: any) {
@@ -77,10 +84,10 @@ export function OrderBillingModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl p-6 bg-white dark:bg-slate-900 border rounded-2xl shadow-2xl">
+      <DialogContent className="max-w-xl p-6 bg-white dark:bg-slate-900 border rounded shadow-2xl">
         <DialogHeader className="border-b pb-3">
           <div className="flex items-center gap-2">
-            <div className="p-2 bg-[#174A70] text-white rounded-lg">
+            <div className="p-2 bg-[#2563EB] text-white rounded-lg">
               <CreditCard className="w-5 h-5" />
             </div>
             <div>
@@ -88,7 +95,7 @@ export function OrderBillingModal({
                 Billing & Payment Management
               </DialogTitle>
               <p className="text-2xs text-slate-500">
-                Accession: <span className="font-mono font-bold text-indigo-700">{accessionNumber}</span> • Patient: {patientName}
+                Accession: <span className="font-mono font-bold text-blue-700">{accessionNumber}</span> • Patient: {patientName}
               </p>
             </div>
           </div>
@@ -134,12 +141,12 @@ export function OrderBillingModal({
 
             {/* Collect Payment Form (if balance remains) */}
             {billing.invoice.outstandingAmount > 0 && (
-              <form onSubmit={handleCollectPayment} className="p-3 bg-slate-50 rounded-xl border space-y-3">
+              <form onSubmit={handleCollectPayment} className="p-3 bg-slate-50 rounded border space-y-3">
                 <h4 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                  <Plus className="w-3.5 h-3.5 text-indigo-600" /> Collect Front Desk Payment
+                  <Plus className="w-3.5 h-3.5 text-[#2563EB]" /> Collect Front Desk Payment
                 </h4>
 
-                <div className="grid grid-cols-3 gap-2 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
                   <div>
                     <label className="block text-3xs font-semibold mb-1">Amount (₹) *</label>
                     <input
@@ -168,19 +175,28 @@ export function OrderBillingModal({
                   </div>
 
                   <div>
-                    <label className="block text-3xs font-semibold mb-1">Reference / Note</label>
+                    <label className="block text-3xs font-semibold mb-1">External authorization reference</label>
                     <input
                       type="text"
                       placeholder="e.g. POS Txn #4829"
                       value={reference}
                       onChange={(e) => setReference(e.target.value)}
+                      required={paymentMethod !== 'CASH'}
+                      disabled={paymentMethod === 'CASH'}
                       className="w-full p-1.5 border rounded text-xs bg-white"
                     />
                   </div>
                 </div>
 
+                {paymentMethod !== 'CASH' && (
+                  <label className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-2.5 text-xs text-amber-950">
+                    <input type="checkbox" checked={authorizationConfirmed} onChange={(e) => setAuthorizationConfirmed(e.target.checked)} className="mt-0.5 h-4 w-4" />
+                    <span>I verified this payment was approved by the external POS terminal, UPI application, insurer, or bank. The RIS does not authorize the transaction itself.</span>
+                  </label>
+                )}
+
                 <div className="flex justify-end pt-1">
-                  <Button type="submit" disabled={loading} size="sm" className="bg-[#174A70] hover:bg-[#123855] text-white text-xs">
+                  <Button type="submit" disabled={loading || amount <= 0 || amount > billing.invoice.outstandingAmount || (paymentMethod !== 'CASH' && (!reference.trim() || !authorizationConfirmed))} size="sm" className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs">
                     {loading ? 'Processing...' : `Collect ${formatINR(amount)} Payment`}
                   </Button>
                 </div>
@@ -202,7 +218,7 @@ export function OrderBillingModal({
                     <div key={p.id} className="p-2 bg-slate-50 border rounded-lg text-xs flex items-center justify-between font-mono">
                       <div>
                         <span className="font-bold text-slate-900">{formatINR(p.amount)}</span>
-                        <span className="text-2xs text-slate-500 ml-2 font-sans">({p.paymentMethod} • Ref: {p.reference || 'N/A'})</span>
+                        <span className="text-2xs text-slate-500 ml-2 font-sans">({p.paymentMethod} • Receipt: {p.receiptNumber || 'Pending'} • Ref: {p.reference || 'Cash'})</span>
                       </div>
                       <span className="text-3xs text-slate-400">{new Date(p.paidAt).toLocaleTimeString()}</span>
                     </div>

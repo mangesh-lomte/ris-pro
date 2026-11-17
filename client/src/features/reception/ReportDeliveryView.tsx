@@ -54,7 +54,9 @@ export function ReportDeliveryView() {
       const notif = await receptionDeliveryService.sendPatientNotification(orderId, { channel });
       setNotificationMsg({
         type: 'success',
-        text: `Sent ${channel} alert to ${notif.recipientContact} (Provider: ${notif.provider}). Non-sensitive content safely delivered.`,
+        text: notif.status === 'SIMULATED'
+          ? `Simulated ${channel} alert for ${notif.recipientContact}. No external message was sent in local development.`
+          : `${channel} alert accepted for ${notif.recipientContact} by ${notif.provider}.`,
       });
       refetch();
     } catch (err: any) {
@@ -93,7 +95,7 @@ export function ReportDeliveryView() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h2 className="text-base font-bold text-foreground flex items-center gap-2">
-            <FileText className="h-5 w-5 text-indigo-600" />
+            <FileText className="h-5 w-5 text-[#2563EB]" />
             <span>Finalized Diagnostic Reports — Front Desk Collection & Delivery</span>
           </h2>
           <p className="text-xs text-muted-foreground">
@@ -105,7 +107,7 @@ export function ReportDeliveryView() {
           <Button
             size="sm"
             variant="outline"
-            className="text-xs flex items-center gap-1.5 border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+            className="text-xs flex items-center gap-1.5 border-blue-200 text-blue-700 hover:bg-blue-50"
             onClick={() => setIsPatientPortalOpen(true)}
           >
             <UserCheck className="h-3.5 w-3.5" />
@@ -114,7 +116,7 @@ export function ReportDeliveryView() {
           <Button
             size="sm"
             variant="outline"
-            className="text-xs flex items-center gap-1.5 border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+            className="text-xs flex items-center gap-1.5 border-blue-200 text-blue-700 hover:bg-blue-50"
             onClick={() => setIsDoctorPortalOpen(true)}
           >
             <Stethoscope className="h-3.5 w-3.5" />
@@ -167,7 +169,7 @@ export function ReportDeliveryView() {
         <CardContent className="p-0">
           {isLoading ? (
             <div className="py-12 flex flex-col items-center justify-center text-muted-foreground text-sm">
-              <Loader2 className="h-6 w-6 animate-spin text-indigo-600 mb-2" />
+              <Loader2 className="h-6 w-6 animate-spin text-[#2563EB] mb-2" />
               <span>Loading reception report queue...</span>
             </div>
           ) : reports.length === 0 ? (

@@ -1,4 +1,4 @@
-// OHIF Configuration & Real Measurement Bridge for Manrad RIS
+// OHIF Configuration & Real Measurement Bridge for RadAxis RIS
 (function() {
   var ohifBaseConfig = {
     routerBasename: '/',
@@ -10,8 +10,8 @@
         namespace: '@ohif/extension-default.dataSourcesModule.dicomweb',
         sourceName: 'dicomweb',
         configuration: {
-          friendlyName: 'Manrad Orthanc PACS',
-          name: 'MANRAD_ORTHANC',
+          friendlyName: 'RadAxis Orthanc PACS',
+          name: 'RADAXIS_ORTHANC',
           qidoRoot: '/dicom-web',
           wadoRoot: '/dicom-web',
           wadoUriRoot: '/wado',

@@ -95,7 +95,7 @@ export function PeerReviewRequestModal({
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <div className="flex items-center gap-2">
-            <Users className="h-5 w-5 text-indigo-600" />
+            <Users className="h-5 w-5 text-[#2563EB]" />
             <DialogTitle className="text-lg font-bold">Request Peer Review / Second Opinion</DialogTitle>
           </div>
           <DialogDescription className="text-xs text-muted-foreground mt-1">
@@ -120,7 +120,7 @@ export function PeerReviewRequestModal({
           </div>
           <div className="text-[11px] text-muted-foreground pt-1 border-t">
             <span>Current Radiologist: </span>
-            <strong className="text-foreground">{user?.firstName ? `Dr. ${user.firstName} ${user.lastName}` : 'Dr. Elena Rostova'}</strong>
+            <strong className="text-foreground">{user?.firstName ? `Dr. ${user.firstName} ${user.lastName}` : 'Authenticated radiologist'}</strong>
           </div>
         </div>
 
@@ -196,7 +196,7 @@ export function PeerReviewRequestModal({
             <Button
               type="submit"
               size="sm"
-              className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs flex items-center gap-1.5"
+              className="bg-[#2563EB] hover:bg-blue-700 text-white font-semibold text-xs flex items-center gap-1.5"
               disabled={!selectedReviewerId || requestMutation.isPending}
             >
               {requestMutation.isPending ? (

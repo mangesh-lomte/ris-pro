@@ -1,42 +1,38 @@
 import { Priority } from '../../types';
-import { Badge } from '../ui/badge';
 import { AlertCircle, Clock, Minus } from 'lucide-react';
 
 export function PriorityBadge({ priority }: { priority: Priority }) {
   switch (priority) {
     case 'STAT':
       return (
-        <Badge
-          variant="destructive"
-          className="gap-1 font-bold tracking-wider whitespace-nowrap select-none bg-rose-100/90 text-[#D92D4C] border border-rose-300"
+        <span
+          className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-700 border border-rose-200/60 whitespace-nowrap select-none animate-pulse"
           aria-label="Clinical priority: STAT — immediate attention required"
         >
-          <AlertCircle className="w-3 h-3 shrink-0" aria-hidden="true" />
+          <AlertCircle className="w-2.5 h-2.5 shrink-0" aria-hidden="true" />
           STAT
-        </Badge>
+        </span>
       );
     case 'URGENT':
       return (
-        <Badge
-          variant="warning"
-          className="gap-1 font-bold whitespace-nowrap select-none bg-amber-100/80 text-[#D97706] border border-amber-300"
+        <span
+          className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200/60 whitespace-nowrap select-none"
           aria-label="Clinical priority: URGENT — elevated turnaround"
         >
-          <Clock className="w-3 h-3 shrink-0" aria-hidden="true" />
+          <Clock className="w-2.5 h-2.5 shrink-0" aria-hidden="true" />
           URGENT
-        </Badge>
+        </span>
       );
     case 'ROUTINE':
     default:
       return (
-        <Badge
-          variant="secondary"
-          className="gap-1 font-medium whitespace-nowrap select-none bg-[#F3F6FC] text-[#64748B] border border-[#DCE2EC]"
+        <span
+          className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200/60 whitespace-nowrap select-none"
           aria-label="Clinical priority: ROUTINE — standard turnaround"
         >
-          <Minus className="w-3 h-3 shrink-0 opacity-60" aria-hidden="true" />
+          <Minus className="w-2.5 h-2.5 shrink-0 opacity-50" aria-hidden="true" />
           ROUTINE
-        </Badge>
+        </span>
       );
   }
 }

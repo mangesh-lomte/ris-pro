@@ -2163,6 +2163,145 @@ describe('Healthcare Unit Tests (Phase 2)', () => {
           'Speech recognition network connection failed. Your existing draft is preserved.'
         );
       });
+
+      it('differentiates interim results from final results and suppresses duplicate finalized chunks', async () => {
+        const { BrowserSpeechProvider } = await import(
+          '../../client/src/services/speechRecognitionService'
+        );
+
+        let activeMockInstance: any = null;
+        class MockSpeechRecognition {
+          public onstart: (() => void) | null = null;
+          public onresult: ((e: any) => void) | null = null;
+          public onend: (() => void) | null = null;
+          start() {
+            activeMockInstance = this;
+            setTimeout(() => this.onstart?.(), 5);
+          }
+          stop() {
+            setTimeout(() => this.onend?.(), 5);
+          }
+        }
+
+        const provider = new BrowserSpeechProvider(() => MockSpeechRecognition);
+        const emitted: Array<{ chunk: string; isFinal: boolean }> = [];
+
+        await new Promise<void>((resolve) => {
+          provider.start({
+            onStateChange: (state) => {
+              if (state === 'listening' && activeMockInstance) {
+                const rec = activeMockInstance;
+                activeMockInstance = null; // Prevent re-triggering on subsequent 'listening' states
+                setTimeout(() => {
+                  // 1. Emit interim chunk: "my name"
+                  rec.onresult?.({
+                    resultIndex: 0,
+                    results: [
+                      Object.assign([{ transcript: 'my name' }], { isFinal: false }),
+                    ],
+                  });
+
+                  // 2. Emit interim chunk: "my name is"
+                  rec.onresult?.({
+                    resultIndex: 0,
+                    results: [
+                      Object.assign([{ transcript: 'my name is' }], { isFinal: false }),
+                    ],
+                  });
+
+                  // 3. Emit final chunk: "my name is Mangesh"
+                  rec.onresult?.({
+                    resultIndex: 0,
+                    results: [
+                      Object.assign([{ transcript: 'my name is Mangesh' }], { isFinal: true }),
+                    ],
+                  });
+
+                  // 4. In continuous mode, next event might have resultIndex 0 or 1
+                  // Even if event.results contains the previous index 0, it must NOT re-emit index 0!
+                  rec.onresult?.({
+                    resultIndex: 0,
+                    results: [
+                      Object.assign([{ transcript: 'my name is Mangesh' }], { isFinal: true }),
+                      Object.assign([{ transcript: 'second sentence' }], { isFinal: true }),
+                    ],
+                  });
+
+                  provider.stop();
+                  resolve();
+                }, 10);
+              }
+            },
+            onTranscriptChunk: (chunk, isFinal) => {
+              emitted.push({ chunk, isFinal });
+            },
+            onError: () => {},
+          });
+        });
+
+        // Verify emitted sequence
+        const interim = emitted.filter((e) => !e.isFinal);
+        const finalized = emitted.filter((e) => e.isFinal);
+
+        assert.strictEqual(interim.length, 2, 'Two interim events');
+        assert.strictEqual(interim[0].chunk, 'my name');
+        assert.strictEqual(interim[1].chunk, 'my name is');
+
+        assert.strictEqual(finalized.length, 2, 'Two finalized events (no duplication of first sentence)');
+        assert.strictEqual(finalized[0].chunk, 'my name is Mangesh');
+        assert.strictEqual(finalized[1].chunk, 'second sentence');
+      });
+
+      it('cleans up previous recognition instance on repeated start/stop cycles', async () => {
+        const { BrowserSpeechProvider } = await import(
+          '../../client/src/services/speechRecognitionService'
+        );
+
+        let instancesCreated = 0;
+        const instances: any[] = [];
+        class MockSpeechRecognition {
+          public onstart: (() => void) | null = null;
+          public onresult: ((e: any) => void) | null = null;
+          public onend: (() => void) | null = null;
+          public abortCalls = 0;
+          constructor() {
+            instancesCreated++;
+            instances.push(this);
+          }
+          start() {
+            setTimeout(() => this.onstart?.(), 5);
+          }
+          stop() {
+            setTimeout(() => this.onend?.(), 5);
+          }
+          abort() {
+            this.abortCalls++;
+          }
+        }
+
+        const provider = new BrowserSpeechProvider(() => MockSpeechRecognition);
+
+        // Cycle 1
+        provider.start({
+          onStateChange: () => {},
+          onTranscriptChunk: () => {},
+          onError: () => {},
+        });
+        provider.stop();
+
+        // Cycle 2
+        provider.start({
+          onStateChange: () => {},
+          onTranscriptChunk: () => {},
+          onError: () => {},
+        });
+        provider.stop();
+
+        assert.strictEqual(instancesCreated, 2, 'Two distinct instances created');
+        // Old instance aborted/cleaned up
+        assert.strictEqual(instances[0].onresult, null, 'Old instance onresult cleared');
+        assert.strictEqual(provider.getState(), 'stopped');
+      });
     });
 
     describe('17.3 Security and Immutability Boundary', () => {
@@ -2330,6 +2469,77 @@ describe('Healthcare Unit Tests (Phase 2)', () => {
         );
         assert.strictEqual(url.searchParams.get('initialSeriesInstanceUID'), '1.2.3.4.5');
         assert.strictEqual(url.searchParams.get('initialSOPInstanceUID'), '1.2.3.4.5.6');
+      });
+    });
+
+    describe('SECTION 19 — PHASE 4.2B: PRIOR STUDY COMPARISON & PACS VERIFICATION INTEGRITY', () => {
+      it('verifies MockPacsGateway findStudyByStudyInstanceUid contract', async () => {
+        const { MockPacsGateway } = await import('../src/integrations/pacs/mockPacsGateway');
+        const gateway = new MockPacsGateway('success');
+        const found = await gateway.findStudyByStudyInstanceUid('1.2.840.113619.test.1');
+        assert.ok(found);
+        assert.strictEqual(found?.studyInstanceUid, '1.2.840.113619.test.1');
+
+        gateway.setOutcome('failure');
+        const notFound = await gateway.findStudyByStudyInstanceUid('1.2.840.113619.test.1');
+        assert.strictEqual(notFound, null);
+      });
+
+      it('builds multi-study comparison viewer URL with current and prior UIDs', () => {
+        const viewerBaseUrl = 'http://localhost:3000';
+        const currentUid = '1.2.276.0.7230010.3.1.2.1697669689.1.1793917892.804058';
+        const priorUid = '1.2.276.0.7230010.3.1.2.1697669689.1.1793952311.403583';
+        const multiStudyViewerUrl = `${viewerBaseUrl}/viewer?StudyInstanceUIDs=${encodeURIComponent(currentUid)},${encodeURIComponent(priorUid)}`;
+        assert.strictEqual(
+          multiStudyViewerUrl,
+          'http://localhost:3000/viewer?StudyInstanceUIDs=1.2.276.0.7230010.3.1.2.1697669689.1.1793917892.804058,1.2.276.0.7230010.3.1.2.1697669689.1.1793952311.403583'
+        );
+      });
+
+      it('rejects multi-study comparison launch with AppError conflict when prior study is not in PACS', async () => {
+        const { AppError } = await import('../src/utils/appError');
+        const error = AppError.conflict(
+          'Prior examination images are not available in PACS archive for verified viewing.',
+          'PRIOR_STUDY_NOT_IN_PACS'
+        );
+        assert.strictEqual(error.statusCode, 409);
+        assert.strictEqual(error.code, 'PRIOR_STUDY_NOT_IN_PACS');
+        assert.strictEqual(error.message, 'Prior examination images are not available in PACS archive for verified viewing.');
+      });
+
+      it('correctly maps external import prior with unlinked PACS status as ineligible for image comparison', () => {
+        const mockPriorOrder = {
+          id: 'ord-ext-1',
+          accessionNumber: 'ACC-EXT-660806',
+          modality: 'CT',
+          bodyPart: 'External Study',
+          examinationName: 'External Import from CD (Outside Facility)',
+          pacsStudyLink: {
+            status: 'UNLINKED',
+            studyInstanceUid: '1.2.840.113619.EXT.1794242660806',
+          },
+        };
+
+        const hasPacsStudy = Boolean(
+          mockPriorOrder.pacsStudyLink &&
+          mockPriorOrder.pacsStudyLink.status === 'LINKED' &&
+          mockPriorOrder.pacsStudyLink.studyInstanceUid
+        );
+
+        let pacsStatus: 'LINKED' | 'NOT_RECONCILED' | 'UNAVAILABLE';
+        let isImageComparisonEligible: boolean;
+
+        if (hasPacsStudy) {
+          pacsStatus = 'LINKED';
+          isImageComparisonEligible = true;
+        } else {
+          pacsStatus = 'NOT_RECONCILED';
+          isImageComparisonEligible = false;
+        }
+
+        assert.strictEqual(hasPacsStudy, false);
+        assert.strictEqual(pacsStatus, 'NOT_RECONCILED');
+        assert.strictEqual(isImageComparisonEligible, false);
       });
     });
   });

@@ -17,7 +17,7 @@ interface ServiceTicketsTabProps {
   loading: boolean;
   onRefresh: () => void;
   onOpenCreateTicketModal: () => void;
-  onUpdateTicketStatus: (id: string, status: string, notes?: string) => void;
+  onUpdateTicketStatus: (id: string, status: string, notes?: string, rootCause?: string) => void;
 }
 
 export const ServiceTicketsTab: React.FC<ServiceTicketsTabProps> = ({
@@ -30,6 +30,14 @@ export const ServiceTicketsTab: React.FC<ServiceTicketsTabProps> = ({
   const [priorityFilter, setPriorityFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [search, setSearch] = useState('');
+  const requestStatusChange = (id: string, status: string) => {
+    if (status !== 'RESOLVED') return onUpdateTicketStatus(id, status);
+    const notes = window.prompt('Describe the repair and verification performed:');
+    if (!notes?.trim()) return;
+    const rootCause = window.prompt('Record the confirmed root cause:');
+    if (!rootCause?.trim()) return;
+    onUpdateTicketStatus(id, status, notes.trim(), rootCause.trim());
+  };
 
   const filtered = tickets.filter((t) => {
     const matchesPriority = priorityFilter === 'ALL' || t.priority === priorityFilter;
@@ -86,8 +94,8 @@ export const ServiceTicketsTab: React.FC<ServiceTicketsTabProps> = ({
       case 'ASSIGNED':
       case 'IN_PROGRESS':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-xs font-semibold bg-indigo-50 text-indigo-800 border border-indigo-200">
-            <Wrench className="w-3 h-3 text-indigo-600" /> In Progress
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-xs font-semibold bg-blue-50 text-indigo-800 border border-blue-200">
+            <Wrench className="w-3 h-3 text-[#2563EB]" /> In Progress
           </span>
         );
       case 'AWAITING_PARTS':
@@ -111,7 +119,7 @@ export const ServiceTicketsTab: React.FC<ServiceTicketsTabProps> = ({
   return (
     <div className="space-y-4">
       {/* Controls Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded shadow-sm border border-slate-200">
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative">
             <Search className="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5" />
@@ -166,7 +174,7 @@ export const ServiceTicketsTab: React.FC<ServiceTicketsTabProps> = ({
       </div>
 
       {/* Tickets Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded shadow-sm border border-slate-200 overflow-hidden">
         {loading ? (
           <div className="p-12 text-center text-slate-500 text-xs">Loading breakdown service tickets...</div>
         ) : filtered.length === 0 ? (
@@ -233,7 +241,7 @@ export const ServiceTicketsTab: React.FC<ServiceTicketsTabProps> = ({
                       <select
                         value={t.status}
                         aria-label={`Update status for ticket ${t.ticketNumber}`}
-                        onChange={(e) => onUpdateTicketStatus(t.id, e.target.value)}
+                        onChange={(e) => requestStatusChange(t.id, e.target.value)}
                         className="text-xs border border-slate-300 rounded-md px-2 py-1 bg-white font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 shadow-2xs"
                       >
                         <option value="OPEN">Open</option>

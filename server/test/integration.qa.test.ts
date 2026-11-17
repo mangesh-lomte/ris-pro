@@ -2056,7 +2056,7 @@ describe('PHASE 3.7 — Full Technologist Workflow Integration QA (Master Matrix
         body: JSON.stringify({ notes: 'Accepted for outage testing' }),
       });
 
-      // Point OrthancPacsGateway to unreachable port (simulates manrad-orthanc stopped)
+      // Point OrthancPacsGateway to unreachable port (simulates radaxis-orthanc stopped)
       unreachableGateway = new OrthancPacsGateway({
         baseUrl: 'http://127.0.0.1:19999',
         username: process.env.ORTHANC_USERNAME || 'orthanc',

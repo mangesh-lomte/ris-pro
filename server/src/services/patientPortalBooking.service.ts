@@ -462,12 +462,12 @@ export async function bookPortalAppointment(
   });
   const timeFormatted = startTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
-  const messageText = `Manrad RIS: Appointment confirmed for ${patient.firstName} ${patient.lastName}. Exam: ${exam.name}. Date: ${dateFormatted} at ${timeFormatted}. Accession: ${accessionNumber}. Ref: ${appointmentNumber}. Fasting: ${exam.fastingRequired ? '4-6h required' : 'No'}.`;
+  const messageText = `RadAxis RIS: Appointment confirmed for ${patient.firstName} ${patient.lastName}. Exam: ${exam.name}. Date: ${dateFormatted} at ${timeFormatted}. Accession: ${accessionNumber}. Ref: ${appointmentNumber}. Fasting: ${exam.fastingRequired ? '4-6h required' : 'No'}.`;
 
   const notificationsSent = [
     { channel: 'SMS', recipient: patient.phone, status: 'DELIVERED' },
     { channel: 'WHATSAPP', recipient: patient.phone, status: 'DELIVERED' },
-    { channel: 'EMAIL', recipient: `${patient.patientId.toLowerCase()}@portal.manrad.com`, status: 'DELIVERED' },
+    { channel: 'EMAIL', recipient: `${patient.patientId.toLowerCase()}@portal.radaxis.com`, status: 'DELIVERED' },
   ];
 
   await logAuditEvent({
@@ -644,7 +644,7 @@ export async function getPortalReferralFile(patientId: string, appointmentId: st
   } else {
     // Fallback: generate a receipt-style confirmation document if metadata only was recorded
     fileBuffer = Buffer.from(
-      `MANRAD RIS - Prescription Referral Note\nAppointment: ${appointment.appointmentNumber}\nDoctor: ${prescription.doctorName || 'N/A'}\nClinical Notes: ${prescription.referralNotes || 'None'}\nUploaded: ${prescription.uploadedAt || 'N/A'}`
+      `RADAXIS RIS - Prescription Referral Note\nAppointment: ${appointment.appointmentNumber}\nDoctor: ${prescription.doctorName || 'N/A'}\nClinical Notes: ${prescription.referralNotes || 'None'}\nUploaded: ${prescription.uploadedAt || 'N/A'}`
     );
     fileType = 'text/plain';
     fileName = `referral_${appointment.appointmentNumber}.txt`;

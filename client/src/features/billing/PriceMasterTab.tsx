@@ -27,7 +27,7 @@ export function PriceMasterTab({ prices, loading, onRefresh }: PriceMasterTabPro
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
   const [modality, setModality] = useState('CT');
-  const [category, setCategory] = useState('DIAGNOSTIC');
+  const [category, setCategory] = useState('EXAMINATION');
   const [basePrice, setBasePrice] = useState<number>(100);
   const [taxRate, setTaxRate] = useState<number>(0);
   const [modalLoading, setModalLoading] = useState(false);
@@ -38,7 +38,7 @@ export function PriceMasterTab({ prices, loading, onRefresh }: PriceMasterTabPro
     setCode('');
     setName('');
     setModality('CT');
-    setCategory('DIAGNOSTIC');
+    setCategory('EXAMINATION');
     setBasePrice(100);
     setTaxRate(0);
     setModalError(null);
@@ -76,7 +76,7 @@ export function PriceMasterTab({ prices, loading, onRefresh }: PriceMasterTabPro
         await billingService.createPrice({
           code: code.trim().toUpperCase(),
           name: name.trim(),
-          modality,
+          modality: modality || undefined,
           category,
           basePrice,
           taxRate,
@@ -144,7 +144,7 @@ export function PriceMasterTab({ prices, loading, onRefresh }: PriceMasterTabPro
         )}
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+      <div className="rounded border border-slate-200 bg-white overflow-hidden shadow-sm">
         <Table>
           <TableHeader>
             <TableRow className="bg-slate-50/80">
@@ -264,7 +264,7 @@ export function PriceMasterTab({ prices, loading, onRefresh }: PriceMasterTabPro
                   <option value="XRAY">X-Ray</option>
                   <option value="ULTRASOUND">Ultrasound</option>
                   <option value="MAMMOGRAPHY">Mammography</option>
-                  <option value="OTHER">Consumables / Other</option>
+                  <option value="">Not modality-specific</option>
                 </select>
               </div>
             </div>
@@ -285,7 +285,7 @@ export function PriceMasterTab({ prices, loading, onRefresh }: PriceMasterTabPro
                 <Input
                   type="number"
                   step="0.01"
-                  min="0"
+                  min="0.01"
                   value={basePrice}
                   onChange={(e) => setBasePrice(parseFloat(e.target.value) || 0)}
                   className="font-mono font-bold"
@@ -298,6 +298,7 @@ export function PriceMasterTab({ prices, loading, onRefresh }: PriceMasterTabPro
                   type="number"
                   step="0.1"
                   min="0"
+                  max="100"
                   value={taxRate}
                   onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
                   className="font-mono"
@@ -311,9 +312,11 @@ export function PriceMasterTab({ prices, loading, onRefresh }: PriceMasterTabPro
                   onChange={(e) => setCategory(e.target.value)}
                   className="w-full rounded-lg border border-slate-300 text-xs px-2 py-2 bg-white"
                 >
-                  <option value="DIAGNOSTIC">Diagnostic</option>
-                  <option value="CONSUMABLE">Consumable</option>
-                  <option value="PROCEDURE">Procedure</option>
+                  <option value="EXAMINATION">Examination</option>
+                  <option value="CONTRAST">Contrast</option>
+                  <option value="FILM">Film</option>
+                  <option value="PACKAGE">Package</option>
+                  <option value="SERVICE">Service</option>
                 </select>
               </div>
             </div>

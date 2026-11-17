@@ -76,7 +76,7 @@ export function ReportHandoverModal({
       <DialogContent className="max-w-md p-6">
         <DialogHeader className="space-y-1">
           <DialogTitle className="text-base font-bold flex items-center gap-2">
-            <UserCheck className="h-5 w-5 text-indigo-600" />
+            <UserCheck className="h-5 w-5 text-[#2563EB]" />
             <span>Record Front-Desk Report Handover</span>
           </DialogTitle>
           <p className="text-xs text-muted-foreground">

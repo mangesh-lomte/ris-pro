@@ -138,12 +138,12 @@ export function ReportsTab() {
           <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
             <div className="flex justify-between items-center text-slate-500">
               <span className="text-xs font-medium uppercase">Vendor Invoices</span>
-              <Building2 className="w-4 h-4 text-indigo-600" />
+              <Building2 className="w-4 h-4 text-[#2563EB]" />
             </div>
             <div className="text-2xl font-bold text-slate-900 mt-2">
               {reportsData.supplierPurchases?.length || 0}
             </div>
-            <span className="text-[11px] text-indigo-600 font-medium">Recorded receipts</span>
+            <span className="text-[11px] text-[#2563EB] font-medium">Recorded receipts</span>
           </div>
 
           <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
@@ -246,7 +246,7 @@ export function ReportsTab() {
         <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
           <div className="px-4 py-3 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-indigo-600" />
+              <Building2 className="w-4 h-4 text-[#2563EB]" />
               <h3 className="text-sm font-semibold text-slate-800">Supplier Invoices & Purchases</h3>
             </div>
             <span className="text-xs text-slate-500">{reportsData.supplierPurchases.length} invoices</span>

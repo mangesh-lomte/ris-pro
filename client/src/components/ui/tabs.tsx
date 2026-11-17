@@ -41,12 +41,18 @@ export function Tabs({
   );
 }
 
-/** Line variant: sits on top of a border-b. Pills variant: rounded pill selector */
 export function TabsList({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  const ctx = React.useContext(TabsContext);
+  const isPills = ctx?.variant === 'pills';
+
   return (
     <div
       role="tablist"
-      className={cn('inline-flex items-center gap-1', className)}
+      className={cn(
+        'inline-flex items-center gap-1',
+        isPills ? 'bg-[#f0f4f1] p-1 rounded-full' : 'border-b border-slate-200 w-full',
+        className
+      )}
       {...props}
     />
   );
@@ -61,41 +67,43 @@ export function TabsTrigger({
   const context = React.useContext(TabsContext);
   if (!context) throw new Error('TabsTrigger must be used within Tabs');
 
-  const isActive = context.activeTab === value;
-  const isPills = context.variant === 'pills';
+  const { activeTab, setActiveTab, variant } = context;
+  const isSelected = activeTab === value;
+
+  if (variant === 'pills') {
+    return (
+      <button
+        type="button"
+        role="tab"
+        aria-selected={isSelected}
+        onClick={() => setActiveTab(value)}
+        className={cn(
+          'inline-flex items-center justify-center whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900',
+          isSelected
+            ? 'bg-slate-900 text-white shadow-xs'
+            : 'text-slate-600 hover:text-slate-900 hover:bg-white/60',
+          className
+        )}
+        {...props}
+      >
+        {children}
+      </button>
+    );
+  }
 
   return (
     <button
       type="button"
       role="tab"
-      aria-selected={isActive}
-      aria-controls={`tabpanel-${value}`}
-      id={`tab-${value}`}
-      value={value}
-      data-value={value}
-      data-state={isActive ? 'active' : 'inactive'}
-      onClick={() => context.setActiveTab(value)}
+      aria-selected={isSelected}
+      onClick={() => setActiveTab(value)}
       className={cn(
-        'inline-flex items-center gap-2 whitespace-nowrap text-xs font-semibold transition-all cursor-pointer',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#33398A] focus-visible:ring-inset',
-        'disabled:pointer-events-none disabled:opacity-50',
-
-        // Line variant (underline tab bar)
-        !isPills && [
-          'relative px-4 py-2.5',
-          isActive
-            ? 'text-[#33398A] font-bold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-[#33398A] after:rounded-t'
-            : 'text-[#64748B] hover:text-[#15233B] hover:bg-[#F3F6FC]',
-        ],
-
-        // Pills variant (segment control)
-        isPills && [
-          'px-3.5 py-1.5 rounded-lg',
-          isActive
-            ? 'bg-white text-[#33398A] shadow-xs font-bold border border-[#DCE2EC]'
-            : 'text-[#64748B] hover:text-[#15233B] hover:bg-slate-200/50',
-        ],
-
+        'inline-flex items-center justify-center whitespace-nowrap py-2.5 px-4 text-xs font-bold border-b-2 transition-all cursor-pointer',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900',
+        isSelected
+          ? 'border-slate-900 text-slate-900'
+          : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300',
         className
       )}
       {...props}
@@ -119,10 +127,8 @@ export function TabsContent({
   return (
     <div
       role="tabpanel"
-      id={`tabpanel-${value}`}
-      aria-labelledby={`tab-${value}`}
       tabIndex={0}
-      className={cn('mt-4 focus-visible:outline-none', className)}
+      className={cn('mt-4 focus-visible:outline-none animate-in fade-in-50 duration-150', className)}
       {...props}
     >
       {children}

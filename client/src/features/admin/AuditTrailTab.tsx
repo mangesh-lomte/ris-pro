@@ -57,8 +57,8 @@ export const AuditTrailTab: React.FC<AuditTrailTabProps> = ({
     switch (role) {
       case 'ADMIN':
         return (
-          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
-            <Shield className="w-3 h-3 text-indigo-600" />
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+            <Shield className="w-3 h-3 text-[#2563EB]" />
             ADMIN
           </span>
         );
@@ -125,7 +125,7 @@ export const AuditTrailTab: React.FC<AuditTrailTabProps> = ({
           <div className="flex items-center gap-2">
             <button
               type="submit"
-              className="inline-flex items-center px-3.5 py-1.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md shadow-sm transition-colors focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:outline-none"
+              className="inline-flex items-center px-3.5 py-1.5 text-sm font-medium text-white bg-[#2563EB] hover:bg-blue-700 rounded-md shadow-sm transition-colors focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:outline-none"
             >
               Filter Logs
             </button>
@@ -158,7 +158,7 @@ export const AuditTrailTab: React.FC<AuditTrailTabProps> = ({
       <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
         <div className="p-3 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-slate-600">
           <div className="flex items-center gap-2">
-            <FileCheck2 className="w-4 h-4 text-indigo-600" />
+            <FileCheck2 className="w-4 h-4 text-[#2563EB]" />
             <span>Clinical Audit Trail Ledger (Total: {auditTotal})</span>
           </div>
           <span>Page {auditPage} of {totalPages}</span>
@@ -191,7 +191,7 @@ export const AuditTrailTab: React.FC<AuditTrailTabProps> = ({
                       {new Date(log.timestamp).toLocaleString('en-IN')}
                     </td>
                     <td className="px-4 py-2.5">
-                      <span className="font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded text-[11px]">
+                      <span className="font-semibold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded text-[11px]">
                         {log.action}
                       </span>
                     </td>

@@ -23,16 +23,16 @@ export function WalkInRegistrationModal({ open, onOpenChange, onSuccess }: WalkI
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
-  const [dob, setDob] = useState('1985-06-15');
+  const [dob, setDob] = useState('');
   const [gender, setGender] = useState<'MALE' | 'FEMALE' | 'OTHER'>('MALE');
 
   const [modality, setModality] = useState<'CT' | 'MRI' | 'XRAY' | 'ULTRASOUND'>('CT');
-  const [bodyPart, setBodyPart] = useState('Chest');
-  const [examinationName, setExaminationName] = useState('CT Chest Angiography (Emergency Walk-In)');
-  const [clinicalIndication, setClinicalIndication] = useState('Acute chest pain, rule out PE');
-  const [priority, setPriority] = useState<'STAT' | 'URGENT'>('STAT');
-  const [referringDoctorText, setReferringDoctorText] = useState('Dr. Marcus Vance (Emergency Department)');
-  const [contrastRequired, setContrastRequired] = useState(true);
+  const [bodyPart, setBodyPart] = useState('');
+  const [examinationName, setExaminationName] = useState('');
+  const [clinicalIndication, setClinicalIndication] = useState('');
+  const [priority, setPriority] = useState<'STAT' | 'URGENT'>('URGENT');
+  const [referringDoctorText, setReferringDoctorText] = useState('');
+  const [contrastRequired, setContrastRequired] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,7 +67,11 @@ export function WalkInRegistrationModal({ open, onOpenChange, onSuccess }: WalkI
       queryClient.invalidateQueries({ queryKey: ['scheduledToday'] });
       if (onSuccess) onSuccess();
     } catch (err: any) {
-      setError(err?.response?.data?.message || err.message || 'Failed to register walk-in');
+      const candidates = err?.details?.candidates || err?.response?.data?.details?.candidates;
+      const duplicateHint = Array.isArray(candidates) && candidates.length > 0
+        ? ` Possible match: ${candidates.map((candidate: any) => `${candidate.patientId} — ${candidate.firstName} ${candidate.lastName}`).join(', ')}. Switch to Existing Patient and use the correct MRN.`
+        : '';
+      setError(`${err?.response?.data?.message || err.message || 'Failed to register walk-in'}.${duplicateHint}`);
     } finally {
       setLoading(false);
     }
@@ -81,7 +85,7 @@ export function WalkInRegistrationModal({ open, onOpenChange, onSuccess }: WalkI
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl p-6 bg-white dark:bg-slate-900 border rounded-2xl shadow-2xl">
+      <DialogContent className="max-w-xl p-6 bg-white dark:bg-slate-900 border rounded shadow-2xl">
         <DialogHeader className="border-b pb-3">
           <div className="flex items-center gap-2">
             <div className="p-2 bg-rose-600 text-white rounded-lg">
@@ -107,7 +111,7 @@ export function WalkInRegistrationModal({ open, onOpenChange, onSuccess }: WalkI
 
         {result ? (
           <div className="py-4 space-y-4">
-            <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-slate-900 space-y-2">
+            <div className="p-4 rounded bg-emerald-50 border border-emerald-200 text-slate-900 space-y-2">
               <div className="flex items-center gap-2 text-emerald-900 font-bold text-sm">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                 <span>Walk-In Patient Registered & Checked In!</span>
@@ -122,7 +126,7 @@ export function WalkInRegistrationModal({ open, onOpenChange, onSuccess }: WalkI
                 </div>
                 <div>
                   <span className="text-2xs text-slate-500 block">Accession</span>
-                  <span className="text-sm font-bold text-indigo-700">{result.accessionNumber}</span>
+                  <span className="text-sm font-bold text-blue-700">{result.accessionNumber}</span>
                 </div>
                 <div>
                   <span className="text-2xs text-slate-500 block">Patient MRN</span>
@@ -202,6 +206,7 @@ export function WalkInRegistrationModal({ open, onOpenChange, onSuccess }: WalkI
                     required
                     value={dob}
                     onChange={(e) => setDob(e.target.value)}
+                    max={new Date().toISOString().split('T')[0]}
                     className="w-full p-2 border rounded"
                   />
                 </div>
@@ -281,7 +286,7 @@ export function WalkInRegistrationModal({ open, onOpenChange, onSuccess }: WalkI
                       type="checkbox"
                       checked={contrastRequired}
                       onChange={(e) => setContrastRequired(e.target.checked)}
-                      className="rounded text-indigo-600 w-4 h-4"
+                      className="rounded text-[#2563EB] w-4 h-4"
                     />
                     <span>IV Contrast Administration Required</span>
                   </label>
@@ -311,11 +316,13 @@ export function WalkInRegistrationModal({ open, onOpenChange, onSuccess }: WalkI
               </div>
 
               <div className="col-span-2">
-                <label className="block text-2xs font-semibold mb-1">Referring Clinician / ER</label>
+                <label className="block text-2xs font-semibold mb-1">Referring Clinician / Department *</label>
                 <input
                   type="text"
+                  required
                   value={referringDoctorText}
                   onChange={(e) => setReferringDoctorText(e.target.value)}
+                  placeholder="Clinician name and hospital / department"
                   className="w-full p-2 border rounded text-xs"
                 />
               </div>

@@ -75,7 +75,7 @@ export const ReportReviewSignModal: React.FC<ReportReviewSignModalProps> = ({
         findings: findings.trim(),
         impression: impression.trim(),
         approved: true,
-        signatureStatement: `Electronically reviewed, approved, and digitally signed by ${signerName} (${signerRole}) per 21 CFR Part 11 policy.`,
+        signatureStatement: `Electronically reviewed, approved, and signed by ${signerName} (${signerRole}) for final clinical release.`,
       });
 
       onSuccess(result);
@@ -93,7 +93,7 @@ export const ReportReviewSignModal: React.FC<ReportReviewSignModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 overflow-y-auto">
-      <div className="relative w-full max-w-3xl rounded-xl border border-slate-200 bg-white shadow-2xl flex flex-col max-h-[90vh]">
+      <div className="relative w-full max-w-3xl rounded border border-slate-200 bg-white shadow-2xl flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 p-5 bg-slate-50/70 rounded-t-xl">
           <div className="flex items-center gap-3">
@@ -155,7 +155,7 @@ export const ReportReviewSignModal: React.FC<ReportReviewSignModalProps> = ({
           {/* Completeness Checklist */}
           <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-2.5">
             <h4 className="text-xs font-semibold text-[#152B42] uppercase tracking-wider flex items-center gap-2">
-              <FileText className="w-3.5 h-3.5 text-[#174A70]" />
+              <FileText className="w-3.5 h-3.5 text-[#2563EB]" />
               Clinical Completeness Checklist
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">

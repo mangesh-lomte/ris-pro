@@ -96,14 +96,14 @@ export const ConsentRetentionTab: React.FC<ConsentRetentionTabProps> = ({
         {/* Consent Compliance */}
         <div className="p-4 bg-white border border-slate-200 rounded-lg shadow-sm space-y-2">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-indigo-50 text-indigo-700 rounded-lg">
+            <div className="p-2 bg-blue-50 text-blue-700 rounded-lg">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
                 Patient Consent
               </span>
-              <p className="text-sm font-bold text-indigo-700">Contrast & Share Verifications</p>
+              <p className="text-sm font-bold text-blue-700">Contrast & Share Verifications</p>
             </div>
           </div>
           <p className="text-xs text-slate-600">
@@ -159,7 +159,7 @@ export const ConsentRetentionTab: React.FC<ConsentRetentionTabProps> = ({
             </button>
             <button
               onClick={() => setIsAddRuleOpen(true)}
-              className="inline-flex items-center px-3.5 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded shadow-sm transition-colors"
+              className="inline-flex items-center px-3.5 py-1.5 text-xs font-medium text-white bg-[#2563EB] hover:bg-blue-700 rounded shadow-sm transition-colors"
             >
               <Plus className="w-3.5 h-3.5 mr-1" />
               Add Policy Rule
@@ -188,7 +188,7 @@ export const ConsentRetentionTab: React.FC<ConsentRetentionTabProps> = ({
               ) : (
                 retentionRules.map((r) => (
                   <tr key={r.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="px-4 py-3 font-semibold text-indigo-700 font-mono">
+                    <td className="px-4 py-3 font-semibold text-blue-700 font-mono">
                       {r.dataCategory}
                     </td>
                     <td className="px-4 py-3 font-medium text-slate-900">{r.policyName}</td>
@@ -295,7 +295,7 @@ export const ConsentRetentionTab: React.FC<ConsentRetentionTabProps> = ({
                 <button
                   type="submit"
                   disabled={creating}
-                  className="px-4 py-2 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded disabled:opacity-50"
+                  className="px-4 py-2 text-xs font-medium text-white bg-[#2563EB] hover:bg-blue-700 rounded disabled:opacity-50"
                 >
                   {creating ? 'Saving...' : 'Save Policy'}
                 </button>

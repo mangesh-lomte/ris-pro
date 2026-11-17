@@ -139,7 +139,7 @@ export const ServiceMastersTab: React.FC<ServiceMastersTabProps> = ({
       case 'CT':
         return <span className="px-2 py-0.5 rounded text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200">CT</span>;
       case 'MRI':
-        return <span className="px-2 py-0.5 rounded text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">MRI</span>;
+        return <span className="px-2 py-0.5 rounded text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">MRI</span>;
       case 'XRAY':
       case 'XR':
         return <span className="px-2 py-0.5 rounded text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">X-Ray</span>;
@@ -156,7 +156,7 @@ export const ServiceMastersTab: React.FC<ServiceMastersTabProps> = ({
       <div className="bg-white p-6 border border-slate-200 rounded-lg shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-indigo-50 text-indigo-700 rounded-lg">
+            <div className="p-2 bg-blue-50 text-blue-700 rounded-lg">
               <Layers className="w-5 h-5" />
             </div>
             <div>
@@ -175,7 +175,7 @@ export const ServiceMastersTab: React.FC<ServiceMastersTabProps> = ({
             </button>
             <button
               onClick={() => setIsAddExamOpen(true)}
-              className="inline-flex items-center px-3.5 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded shadow-sm transition-colors"
+              className="inline-flex items-center px-3.5 py-1.5 text-xs font-medium text-white bg-[#2563EB] hover:bg-blue-700 rounded shadow-sm transition-colors"
             >
               <Plus className="w-3.5 h-3.5 mr-1" />
               Add Service Definition
@@ -236,7 +236,7 @@ export const ServiceMastersTab: React.FC<ServiceMastersTabProps> = ({
               ) : (
                 filteredExams.map((ex) => (
                   <tr key={ex.id || ex.code} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="px-4 py-2.5 font-mono font-bold text-indigo-700 bg-indigo-50/50">
+                    <td className="px-4 py-2.5 font-mono font-bold text-blue-700 bg-blue-50/50">
                       {ex.code}
                     </td>
                     <td className="px-4 py-2.5 font-medium text-slate-900">{ex.name}</td>
@@ -284,7 +284,7 @@ export const ServiceMastersTab: React.FC<ServiceMastersTabProps> = ({
           </div>
           <button
             onClick={() => setIsAddTemplateOpen(true)}
-            className="inline-flex items-center px-3.5 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded shadow-sm transition-colors"
+            className="inline-flex items-center px-3.5 py-1.5 text-xs font-medium text-white bg-[#2563EB] hover:bg-blue-700 rounded shadow-sm transition-colors"
           >
             <Plus className="w-3.5 h-3.5 mr-1" />
             Add Reporting Template
@@ -435,7 +435,7 @@ export const ServiceMastersTab: React.FC<ServiceMastersTabProps> = ({
                     id="modalContrastReq"
                     checked={newExamData.requiresContrast}
                     onChange={(e) => setNewExamData({ ...newExamData, requiresContrast: e.target.checked })}
-                    className="rounded border-slate-300 text-indigo-600 focus:ring-cyan-500"
+                    className="rounded border-slate-300 text-[#2563EB] focus:ring-cyan-500"
                   />
                   <label htmlFor="modalContrastReq" className="font-semibold text-slate-700">Requires Contrast</label>
                 </div>
@@ -452,7 +452,7 @@ export const ServiceMastersTab: React.FC<ServiceMastersTabProps> = ({
                 <button
                   type="submit"
                   disabled={creatingExam}
-                  className="px-4 py-2 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded disabled:opacity-50"
+                  className="px-4 py-2 text-xs font-medium text-white bg-[#2563EB] hover:bg-blue-700 rounded disabled:opacity-50"
                 >
                   {creatingExam ? 'Saving...' : 'Save Definition'}
                 </button>
@@ -542,7 +542,7 @@ export const ServiceMastersTab: React.FC<ServiceMastersTabProps> = ({
                 <button
                   type="submit"
                   disabled={creatingTemplate}
-                  className="px-4 py-2 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded disabled:opacity-50"
+                  className="px-4 py-2 text-xs font-medium text-white bg-[#2563EB] hover:bg-blue-700 rounded disabled:opacity-50"
                 >
                   {creatingTemplate ? 'Saving...' : 'Save Template'}
                 </button>

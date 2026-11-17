@@ -70,7 +70,11 @@ export const ExternalSharePage: React.FC = () => {
         fetchPatients({ limit: 200 }),
       ]);
 
-      const rawOrders = ordersRes.data?.items || (ordersRes.data as any) || [];
+      const rawOrders = Array.isArray(ordersRes.data?.items)
+        ? ordersRes.data.items
+        : Array.isArray(ordersRes.data)
+        ? ordersRes.data
+        : [];
       const formattedOrders = rawOrders.map((o: any) => ({
         id: o.id,
         accessionNumber: o.accessionNumber,
@@ -91,7 +95,12 @@ export const ExternalSharePage: React.FC = () => {
       });
 
       setFinalizedOrders(formattedOrders);
-      setPatients(patientsRes.data?.items || (patientsRes.data as any) || []);
+      const rawPatients = Array.isArray(patientsRes.data?.items)
+        ? patientsRes.data.items
+        : Array.isArray(patientsRes.data)
+        ? patientsRes.data
+        : [];
+      setPatients(rawPatients);
     } catch (err) {
       console.warn('Failed to load reference orders/patients', err);
     }
@@ -133,12 +142,13 @@ export const ExternalSharePage: React.FC = () => {
 
   const handleInitiateTransfer = async (payload: {
     orderId: string;
-    targetSystem: string;
-    transferProtocol: 'DICOM_DIR' | 'C_STORE' | 'TLS_HTTPS' | 'WADO_RS';
-    simulateFailure?: boolean;
+    destination: string;
+    packageType: 'DICOM_ZIP' | 'DICOM_DIR' | 'C_STORE' | 'STOW_RS';
+    totalFiles: number;
+    totalBytes: number;
   }) => {
     const res = await externalShareService.initiateTransfer(payload);
-    setSuccessMsg(`Transfer job #${res.transferNumber} queued with protocol ${res.transferProtocol}.`);
+    setSuccessMsg(`Transfer job #${res.transferNumber} queued for ${res.targetSystem}.`);
     setTimeout(() => setSuccessMsg(null), 4000);
     await loadAllData();
   };
@@ -160,10 +170,10 @@ export const ExternalSharePage: React.FC = () => {
   const handleReconcileImport = async (
     id: string,
     payload: {
-      action: 'ATTACH_TO_PATIENT' | 'REJECT';
-      patientId?: string;
-      notes?: string;
-      rejectionReason?: string;
+      matchedPatientId?: string;
+      matchedOrderId?: string;
+      reconciliationNotes: string;
+      reject: boolean;
     }
   ) => {
     const res = await externalShareService.reconcileImport(id, payload);
@@ -177,43 +187,47 @@ export const ExternalSharePage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Standard RIS Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-[#DCE2EC]">
+    <div className="space-y-6 max-w-[1500px] mx-auto pb-12">
+      {/* Header */}
+      <div className="rounded-3xl border border-[#dce6e0] bg-white p-5 md:p-6 shadow-soft flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-[28px] font-bold tracking-tight text-[#15233B]">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider">Interoperability &amp; Exchange</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
             External Study Sharing &amp; DICOM Dispatch
           </h1>
-          <p className="text-xs sm:text-sm text-[#64748B] mt-1">
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
             Securely share authorized reports and imaging studies with verified external recipients.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
           <Button
             variant="outline"
             size="sm"
             onClick={() => setIsReceiveImportOpen(true)}
-            className="text-xs gap-1.5 rounded-lg"
+            className="text-xs gap-1.5 rounded-full border-[#dce6e0] bg-white hover:bg-slate-50 shadow-soft font-bold"
           >
-            <ArrowDownLeft className="w-4 h-4 text-[#15966A]" />
+            <ArrowDownLeft className="w-4 h-4 text-emerald-600" />
             <span>Intake Outside Study</span>
           </Button>
           <Button
             variant="outline"
             size="sm"
             onClick={() => setIsInitiateTransferOpen(true)}
-            className="text-xs gap-1.5 rounded-lg"
+            className="text-xs gap-1.5 rounded-full border-[#dce6e0] bg-white hover:bg-slate-50 shadow-soft font-bold"
           >
-            <ArrowUpRight className="w-4 h-4 text-[#2563B8]" />
+            <ArrowUpRight className="w-4 h-4 text-sky-600" />
             <span>Dispatch DICOM Node</span>
           </Button>
           <Button
             size="sm"
             onClick={() => setIsCreateShareOpen(true)}
-            className="text-xs gap-1.5 shadow-xs rounded-lg"
+            className="text-xs gap-1.5 rounded-full bg-slate-900 hover:bg-slate-800 text-white shadow-soft font-bold cursor-pointer"
           >
-            <Share2 className="w-4 h-4" />
+            <Share2 className="w-4 h-4 text-emerald-400" />
             <span>+ New External Share</span>
           </Button>
         </div>
@@ -221,83 +235,107 @@ export const ExternalSharePage: React.FC = () => {
 
       {/* Alerts */}
       {successMsg && (
-        <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-lg flex items-center gap-2 shadow-2xs animate-in fade-in">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-          <span>{successMsg}</span>
+        <div className="p-4 bg-emerald-50 border border-emerald-200/80 text-emerald-900 text-xs rounded-2xl flex items-center justify-between shadow-soft animate-in fade-in">
+          <div className="flex items-center gap-3">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+            <span className="font-semibold">{successMsg}</span>
+          </div>
+          <button onClick={() => setSuccessMsg(null)} className="text-emerald-700 hover:text-emerald-900 text-sm font-bold cursor-pointer">
+            &times;
+          </button>
         </div>
       )}
 
       {error && (
-        <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-lg flex items-center gap-2 shadow-2xs">
-          <span className="font-bold">Error:</span> {error}
+        <div className="p-4 bg-rose-50 border border-rose-200/80 text-rose-900 text-xs rounded-2xl flex items-center justify-between shadow-soft">
+          <div className="flex items-center gap-2">
+            <span className="font-bold">Error:</span> {error}
+          </div>
+          <button onClick={() => setError(null)} className="text-rose-700 hover:text-rose-900 text-sm font-bold cursor-pointer">
+            &times;
+          </button>
         </div>
       )}
 
       {/* Navigation Tabs */}
-      <div role="tablist" aria-label="External Share Sections" className="flex border-b border-slate-200 gap-1 overflow-x-auto">
-        <button
-          role="tab"
-          aria-selected={activeTab === 'shares'}
-          onClick={() => setActiveTab('shares')}
-          className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold border-b-2 transition cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#227DA5] ${activeTab === 'shares'
-            ? 'border-[#174A70] text-[#174A70]'
-            : 'border-transparent text-slate-500 hover:text-slate-800'
+      <div className="overflow-x-auto pb-1">
+        <nav role="tablist" aria-label="External Share Sections" className="flex space-x-2 p-1.5 bg-[#f4f8f5]/80 rounded-3xl border border-[#dce6e0] shadow-soft">
+          <button
+            role="tab"
+            aria-selected={activeTab === 'shares'}
+            onClick={() => setActiveTab('shares')}
+            className={`whitespace-nowrap flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-full transition-all cursor-pointer ${
+              activeTab === 'shares'
+                ? 'bg-slate-900 text-white shadow-soft'
+                : 'bg-white/80 hover:bg-white text-slate-600 border border-transparent hover:border-[#dce6e0]'
             }`}
-        >
-          <Share2 className="w-3.5 h-3.5" />
-          Active Shares
-          <span className="ml-1.5 px-1.5 py-0.2 text-[10px] rounded-full bg-[#174A70]/10 text-[#174A70] font-bold tabular-nums">
-            {shares.length}
-          </span>
-        </button>
+          >
+            <Share2 className={`w-3.5 h-3.5 ${activeTab === 'shares' ? 'text-emerald-400' : 'text-slate-400'}`} />
+            <span>Active Shares</span>
+            <span className={`ml-1 px-2 py-0.5 text-[10px] rounded-full font-bold tabular-nums ${
+              activeTab === 'shares' ? 'bg-white/20 text-white' : 'bg-[#e9f1ed] text-emerald-800'
+            }`}>
+              {shares.length}
+            </span>
+          </button>
 
-        <button
-          role="tab"
-          aria-selected={activeTab === 'transfers'}
-          onClick={() => setActiveTab('transfers')}
-          className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold border-b-2 transition cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#227DA5] ${activeTab === 'transfers'
-            ? 'border-[#174A70] text-[#174A70]'
-            : 'border-transparent text-slate-500 hover:text-slate-800'
+          <button
+            role="tab"
+            aria-selected={activeTab === 'transfers'}
+            onClick={() => setActiveTab('transfers')}
+            className={`whitespace-nowrap flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-full transition-all cursor-pointer ${
+              activeTab === 'transfers'
+                ? 'bg-slate-900 text-white shadow-soft'
+                : 'bg-white/80 hover:bg-white text-slate-600 border border-transparent hover:border-[#dce6e0]'
             }`}
-        >
-          <ArrowUpRight className="w-3.5 h-3.5" />
-          Large File Transfers
-          <span className="ml-1.5 px-1.5 py-0.2 text-[10px] rounded-full bg-indigo-50 text-indigo-700 font-bold tabular-nums">
-            {transfers.length}
-          </span>
-        </button>
+          >
+            <ArrowUpRight className={`w-3.5 h-3.5 ${activeTab === 'transfers' ? 'text-sky-400' : 'text-slate-400'}`} />
+            <span>Large File Transfers</span>
+            <span className={`ml-1 px-2 py-0.5 text-[10px] rounded-full font-bold tabular-nums ${
+              activeTab === 'transfers' ? 'bg-white/20 text-white' : 'bg-blue-50 text-blue-800'
+            }`}>
+              {transfers.length}
+            </span>
+          </button>
 
-        <button
-          role="tab"
-          aria-selected={activeTab === 'imports'}
-          onClick={() => setActiveTab('imports')}
-          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition ${activeTab === 'imports'
-            ? 'border-blue-600 text-blue-600'
-            : 'border-transparent text-gray-500 hover:text-gray-700'
+          <button
+            role="tab"
+            aria-selected={activeTab === 'imports'}
+            onClick={() => setActiveTab('imports')}
+            className={`whitespace-nowrap flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-full transition-all cursor-pointer ${
+              activeTab === 'imports'
+                ? 'bg-slate-900 text-white shadow-soft'
+                : 'bg-white/80 hover:bg-white text-slate-600 border border-transparent hover:border-[#dce6e0]'
             }`}
-        >
-          <ArrowDownLeft className="w-4 h-4" />
-          Outside Study Imports
-          <span className="ml-1.5 px-2 py-0.5 text-xs rounded-full bg-amber-100 text-amber-800 font-bold">
-            {imports.length}
-          </span>
-        </button>
+          >
+            <ArrowDownLeft className={`w-3.5 h-3.5 ${activeTab === 'imports' ? 'text-amber-400' : 'text-slate-400'}`} />
+            <span>Outside Study Imports</span>
+            <span className={`ml-1 px-2 py-0.5 text-[10px] rounded-full font-bold tabular-nums ${
+              activeTab === 'imports' ? 'bg-white/20 text-white' : 'bg-amber-50 text-amber-800'
+            }`}>
+              {imports.length}
+            </span>
+          </button>
 
-        <button
-          role="tab"
-          aria-selected={activeTab === 'logs'}
-          onClick={() => setActiveTab('logs')}
-          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition ${activeTab === 'logs'
-            ? 'border-blue-600 text-blue-600'
-            : 'border-transparent text-gray-500 hover:text-gray-700'
+          <button
+            role="tab"
+            aria-selected={activeTab === 'logs'}
+            onClick={() => setActiveTab('logs')}
+            className={`whitespace-nowrap flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-full transition-all cursor-pointer ${
+              activeTab === 'logs'
+                ? 'bg-slate-900 text-white shadow-soft'
+                : 'bg-white/80 hover:bg-white text-slate-600 border border-transparent hover:border-[#dce6e0]'
             }`}
-        >
-          <ShieldCheck className="w-4 h-4" />
-          Access & Disclosure Audit
-          <span className="ml-1.5 px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-700 font-bold">
-            {logs.length}
-          </span>
-        </button>
+          >
+            <ShieldCheck className={`w-3.5 h-3.5 ${activeTab === 'logs' ? 'text-emerald-400' : 'text-slate-400'}`} />
+            <span>Access &amp; Disclosure Audit</span>
+            <span className={`ml-1 px-2 py-0.5 text-[10px] rounded-full font-bold tabular-nums ${
+              activeTab === 'logs' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'
+            }`}>
+              {logs.length}
+            </span>
+          </button>
+        </nav>
       </div>
 
       {/* Tab Panels */}

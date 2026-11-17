@@ -83,6 +83,8 @@ export class BrowserSpeechProvider implements SpeechToTextProvider {
   private state: DictationState = 'ready';
   private callbacks: SpeechToTextCallbacks | null = null;
   private activeSession = false;
+  private sessionId = 0;
+  private lastFinalIndex = -1;
 
   constructor(private customFactory?: () => any) {}
 
@@ -99,6 +101,21 @@ export class BrowserSpeechProvider implements SpeechToTextProvider {
     return this.state;
   }
 
+  private cleanupRecognition(rec: any): void {
+    if (!rec) return;
+    try {
+      rec.onstart = null;
+      rec.onresult = null;
+      rec.onerror = null;
+      rec.onend = null;
+      if (typeof rec.abort === 'function') {
+        rec.abort();
+      }
+    } catch {
+      // Safe ignore
+    }
+  }
+
   public start(callbacks: SpeechToTextCallbacks): void {
     if (this.activeSession || this.state === 'listening') {
       // Duplicate dictation protection - already listening
@@ -112,6 +129,14 @@ export class BrowserSpeechProvider implements SpeechToTextProvider {
       return;
     }
 
+    // Clean up any lingering recognition instance from previous session
+    if (this.recognition) {
+      this.cleanupRecognition(this.recognition);
+      this.recognition = null;
+    }
+
+    const currentSessionId = ++this.sessionId;
+    this.lastFinalIndex = -1;
     this.callbacks = callbacks;
 
     try {
@@ -126,30 +151,41 @@ export class BrowserSpeechProvider implements SpeechToTextProvider {
       recognition.lang = 'en-US';
 
       recognition.onstart = () => {
+        if (this.sessionId !== currentSessionId) return;
         this.activeSession = true;
         this.state = 'listening';
         this.callbacks?.onStateChange('listening');
       };
 
       recognition.onresult = (event: any) => {
+        if (this.sessionId !== currentSessionId) return;
         this.state = 'processing';
         this.callbacks?.onStateChange('processing');
 
         for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (i <= this.lastFinalIndex) {
+            // Already finalized in this session — do not re-emit
+            continue;
+          }
           const result = event.results[i];
           const transcript = result[0]?.transcript || '';
+          const isFinal = Boolean(result.isFinal);
+          if (isFinal) {
+            this.lastFinalIndex = i;
+          }
           if (transcript.trim().length > 0) {
-            this.callbacks?.onTranscriptChunk(transcript.trim(), Boolean(result.isFinal));
+            this.callbacks?.onTranscriptChunk(transcript.trim(), isFinal);
           }
         }
 
-        if (this.activeSession) {
+        if (this.activeSession && this.sessionId === currentSessionId) {
           this.state = 'listening';
           this.callbacks?.onStateChange('listening');
         }
       };
 
       recognition.onerror = (event: any) => {
+        if (this.sessionId !== currentSessionId) return;
         const errorCode = event.error || '';
         let userMessage = 'Speech-to-text stopped unexpectedly. Your existing draft is preserved.';
         let targetState: DictationState = 'error';
@@ -181,10 +217,15 @@ export class BrowserSpeechProvider implements SpeechToTextProvider {
       };
 
       recognition.onend = () => {
+        if (this.sessionId !== currentSessionId) return;
         this.activeSession = false;
         if (this.state === 'listening' || this.state === 'processing') {
           this.state = 'stopped';
           this.callbacks?.onStateChange('stopped', 'Dictation stopped');
+        }
+        this.cleanupRecognition(recognition);
+        if (this.recognition === recognition) {
+          this.recognition = null;
         }
       };
 
@@ -213,16 +254,15 @@ export class BrowserSpeechProvider implements SpeechToTextProvider {
   }
 
   public abort(): void {
-    if (this.recognition && this.activeSession) {
-      try {
-        this.recognition.abort();
-      } catch {
-        // Safe ignore
-      }
+    this.sessionId++;
+    if (this.recognition) {
+      this.cleanupRecognition(this.recognition);
+      this.recognition = null;
     }
     this.activeSession = false;
     this.state = 'stopped';
     this.callbacks?.onStateChange('stopped', 'Dictation stopped');
+    this.callbacks = null;
   }
 }
 

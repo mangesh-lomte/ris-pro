@@ -310,7 +310,7 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
       if (autosaveTimerRef.current) {
         clearTimeout(autosaveTimerRef.current);
       }
-      defaultSpeechProvider.stop();
+      defaultSpeechProvider.abort();
     };
   }, []);
 
@@ -321,7 +321,7 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
   const openImagesMutation = useMutation({
     mutationFn: () => radiologistService.getViewerLaunch(orderId),
     onSuccess: (data) => {
-      const win = window.open(data.viewerUrl, 'manrad-pacs-viewer');
+      const win = window.open(data.viewerUrl, 'radaxis-pacs-viewer');
       if (win) {
         viewerWindowRef.current = win;
       }
@@ -419,7 +419,7 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
       if (!event.data || typeof event.data !== 'object') return;
 
       // 1. Origin validation: Only allow PACS viewer origin or current origin
-      const allowedOrigins = ['http://localhost:3000', window.location.origin];
+      const allowedOrigins = ['http://localhost:3002', window.location.origin];
       const isLocalhostViewer =
         typeof event.origin === 'string' &&
         (allowedOrigins.includes(event.origin) ||
@@ -525,6 +525,8 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
 
           return updated;
         });
+
+        setShowAddKeyImageDialog(false);
       }
     };
 
@@ -550,17 +552,30 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
   };
 
   // Dictation chunk handler
-  const handleTranscriptChunk = useCallback((transcriptChunk: string) => {
-    const section = targetSectionRef.current;
-    setHearingPreview(transcriptChunk);
+  const handleTranscriptChunk = useCallback(
+    (transcriptChunk: string, isFinal: boolean) => {
+      if (!isFinal) {
+        setHearingPreview(transcriptChunk);
+        return;
+      }
 
-    const currentText = draftContentRef.current[section] || '';
-    const cursor = cursorPositionsRef.current[section];
-    const { newText, newCursor } = insertTranscriptIntoSection(currentText, transcriptChunk, cursor);
+      setHearingPreview('');
+      const section = targetSectionRef.current;
+      if (!section) return;
 
-    cursorPositionsRef.current[section] = newCursor;
-    handleFieldChange(section, newText);
-  }, [handleFieldChange]);
+      const currentText = draftContentRef.current[section] || '';
+      const cursor = cursorPositionsRef.current[section];
+      const { newText, newCursor } = insertTranscriptIntoSection(
+        currentText,
+        transcriptChunk,
+        cursor
+      );
+
+      cursorPositionsRef.current[section] = newCursor;
+      handleFieldChange(section, newText);
+    },
+    [handleFieldChange]
+  );
 
   // Start Dictation handler
   const handleStartDictation = () => {
@@ -625,7 +640,7 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
       const url = new URL(launch.viewerUrl);
       url.searchParams.set('initialSeriesInstanceUID', seriesUid);
       url.searchParams.set('initialSOPInstanceUID', sopUid);
-      const win = window.open(url.toString(), 'manrad-pacs-viewer');
+      const win = window.open(url.toString(), 'radaxis-pacs-viewer');
       if (win) {
         viewerWindowRef.current = win;
       }
@@ -688,25 +703,32 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
   // Add Key Image handler
   const handleAddKeyImageSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!studyInstancesData?.studyInstanceUid) {
-      return;
-    }
+
+    const resolvedStudyUid =
+      studyInstancesData?.studyInstanceUid ||
+      workspace?.order?.studyInstanceUid ||
+      '';
 
     const selectedSeries =
-      studyInstancesData.series.find((s) => s.seriesInstanceUid === kSeriesUid) ||
-      studyInstancesData.series[0];
+      studyInstancesData?.series?.find((s) => s.seriesInstanceUid === kSeriesUid) ||
+      studyInstancesData?.series?.[0];
     const selectedInst =
-      selectedSeries?.instances.find((i) => i.sopInstanceUid === kSopUid) ||
-      selectedSeries?.instances[0];
+      selectedSeries?.instances?.find((i) => i.sopInstanceUid === kSopUid) ||
+      selectedSeries?.instances?.[0];
+
+    const resolvedSeriesUid =
+      kSeriesUid || selectedSeries?.seriesInstanceUid || (resolvedStudyUid ? `${resolvedStudyUid}.1` : '');
+    const resolvedSopUid =
+      kSopUid || selectedInst?.sopInstanceUid || (resolvedSeriesUid ? `${resolvedSeriesUid}.1` : '');
 
     const newK: KeyImageReference = {
       id: `keyimg-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
       label: kLabel.trim() || `Key Image ${keyImages.length + 1}`,
-      studyInstanceUid: studyInstancesData.studyInstanceUid,
-      seriesInstanceUid: kSeriesUid || selectedSeries?.seriesInstanceUid || '',
-      sopInstanceUid: kSopUid || selectedInst?.sopInstanceUid || '',
-      instanceNumber: selectedInst?.instanceNumber,
-      sliceLocation: selectedInst?.sliceLocation,
+      studyInstanceUid: resolvedStudyUid,
+      seriesInstanceUid: resolvedSeriesUid,
+      sopInstanceUid: resolvedSopUid,
+      instanceNumber: selectedInst?.instanceNumber ?? 1,
+      sliceLocation: selectedInst?.sliceLocation !== undefined ? Number(selectedInst.sliceLocation) : undefined,
       description: kDescription.trim() || undefined,
       createdAt: new Date().toISOString(),
     };
@@ -728,20 +750,22 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
     triggerDebouncedAutosave(draftContentRef.current, draftVersionRef.current, measurementsRef.current, updated);
   };
 
-  // Capture Key Image request to active OHIF viewer window
-  const handleCaptureKeyImage = () => {
-    if (viewerWindowRef.current && !viewerWindowRef.current.closed) {
-      viewerWindowRef.current.postMessage(
-        {
-          type: 'RIS_CAPTURE_KEY_IMAGE_REQUEST',
-          label: `Key Image ${keyImages.length + 1}`,
-        },
-        '*'
-      );
-    } else {
-      setKLabel(`Key Image ${keyImages.length + 1}`);
-      setShowAddKeyImageDialog(true);
+  // Open Add Key Image Dialog
+  const handleOpenAddKeyImageDialog = () => {
+    setKLabel(`Key Image ${keyImages.length + 1}`);
+    setKDescription('');
+
+    // Pre-populate series and slice defaults if available
+    const availableSeries = studyInstancesData?.series;
+    if (availableSeries && availableSeries.length > 0) {
+      const activeSeries = availableSeries.find((s) => s.seriesInstanceUid === kSeriesUid) || availableSeries[0];
+      setKSeriesUid(activeSeries.seriesInstanceUid);
+      if (activeSeries.instances && activeSeries.instances.length > 0) {
+        const activeInst = activeSeries.instances.find((i) => i.sopInstanceUid === kSopUid) || activeSeries.instances[0];
+        setKSopUid(activeInst.sopInstanceUid);
+      }
     }
+    setShowAddKeyImageDialog(true);
   };
 
   const draftExists = !!workspace?.draft;
@@ -749,7 +773,7 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
   if (isWorkspaceLoading) {
     return (
       <div className="py-24 text-center text-slate-500 space-y-3">
-        <RefreshCw className="h-8 w-8 animate-spin mx-auto text-[#174A70]" />
+        <RefreshCw className="h-8 w-8 animate-spin mx-auto text-[#2563EB]" />
         <p className="text-sm font-medium text-[#152B42]">Loading Diagnostic Reporting Workspace...</p>
         <p className="text-xs text-[#65758A]">Retrieving study context, templates, and report draft.</p>
       </div>
@@ -775,45 +799,45 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
   const tatMinutes = studyContext?.order?.waitingMinutes;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 max-w-[1550px] mx-auto pb-10">
       {/* 1. CLINICAL STUDY COMMAND HEADER */}
-      <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-xs space-y-3">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+      <div className="bg-white border border-[#dce6e0] rounded-3xl p-5 shadow-soft space-y-3">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           {/* Left: Back Action & Patient Identity */}
-          <div className="flex items-start sm:items-center gap-3">
+          <div className="flex items-start sm:items-center gap-3.5">
             <Button
               variant="outline"
               size="sm"
               onClick={() => navigate('/radiologist/worklist')}
-              className="h-8 px-2.5 text-xs text-slate-700 hover:text-[#174A70] hover:bg-slate-50 border-slate-200 shrink-0 shadow-xs"
+              className="px-3.5 py-1.5 text-xs font-bold text-slate-700 hover:text-emerald-800 hover:bg-[#f8faf8] border-[#dce6e0] shrink-0 shadow-soft rounded-full"
               title="Return to Radiologist Worklist"
             >
-              <ArrowLeft className="h-3.5 w-3.5 mr-1" />
+              <ArrowLeft className="h-3.5 w-3.5 mr-1 text-slate-500" />
               Worklist
             </Button>
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-base font-bold text-slate-900 tracking-tight">
+                <h1 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight">
                   {workspace.order.patientName}
                 </h1>
                 <IdentifierPill type="patient" value={workspace.order.patientId} />
                 <IdentifierPill type="accession" value={workspace.order.accessionNumber} />
                 {patient && (
-                  <span className="text-xs text-slate-500">
+                  <span className="text-xs font-medium text-slate-500">
                     {calculateAge(patient.dateOfBirth)}y / {patient.gender[0]}
                   </span>
                 )}
               </div>
               <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-slate-500">
-                <span className="rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 font-mono text-[10px] text-slate-700">
+                <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 font-mono text-[10px] font-bold text-slate-700">
                   {workspace.order.modality}
                 </span>
-                <span className="font-semibold text-slate-800">{workspace.order.examinationName}</span>
-                <span>· {workspace.order.bodyPart}</span>
+                <span className="font-bold text-slate-900">{workspace.order.examinationName}</span>
+                <span className="font-medium">· {workspace.order.bodyPart}</span>
                 <PriorityBadge priority={workspace.order.priority} />
                 <StatusBadge status={workspace.order.orderStatus} />
                 {tatMinutes !== undefined && (
-                  <Badge variant="outline" className="text-[11px] font-mono border-slate-200 text-slate-600 bg-slate-50">
+                  <Badge variant="outline" className="text-[11px] font-mono border-slate-200 text-slate-700 bg-slate-50 rounded-full font-bold">
                     <Clock className="h-3 w-3 mr-1 text-slate-400" />
                     TAT: {formatWaitingDuration(tatMinutes)}
                   </Badge>
@@ -823,15 +847,15 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
           </div>
 
           {/* Right: PACS Quick Action & Save Status */}
-          <div className="flex flex-wrap items-center gap-2 self-start lg:self-center shrink-0">
+          <div className="flex flex-wrap items-center gap-2.5 self-start lg:self-center shrink-0">
             {/* Save Status Badge */}
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
               {saveStatus === 'saving' && (
                 <Badge
                   variant="outline"
-                  className="bg-sky-50 text-sky-700 border-sky-200 text-xs flex items-center gap-1.5 py-1"
+                  className="bg-sky-50 text-sky-800 border-sky-200 text-xs font-bold flex items-center gap-1.5 py-1 px-3 rounded-full"
                 >
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-sky-600" />
                   Saving...
                 </Badge>
               )}
@@ -839,7 +863,7 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
               {saveStatus === 'saved' && (
                 <Badge
                   variant="outline"
-                  className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs flex items-center gap-1.5 py-1"
+                  className="bg-emerald-50 text-emerald-800 border-emerald-200 text-xs font-bold flex items-center gap-1.5 py-1 px-3 rounded-full"
                 >
                   <CheckCircle className="h-3.5 w-3.5 text-emerald-600" />
                   <span>Saved {lastSavedTime ? `(${lastSavedTime})` : ''}</span>
@@ -847,21 +871,21 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
               )}
 
               {saveStatus === 'conflict' && (
-                <Badge variant="destructive" className="text-xs flex items-center gap-1.5 py-1">
+                <Badge variant="destructive" className="text-xs font-bold flex items-center gap-1.5 py-1 px-3 rounded-full">
                   <AlertTriangle className="h-3.5 w-3.5" />
                   Stale Tab Conflict
                 </Badge>
               )}
 
               {saveStatus === 'error' && (
-                <Badge variant="destructive" className="text-xs flex items-center gap-1.5 py-1">
+                <Badge variant="destructive" className="text-xs font-bold flex items-center gap-1.5 py-1 px-3 rounded-full">
                   <AlertCircle className="h-3.5 w-3.5" />
                   Unable to save draft
                 </Badge>
               )}
 
               {draftExists && (
-                <span className="text-[10px] text-[#65758A] font-mono">
+                <span className="text-[10px] text-slate-400 font-mono font-bold">
                   Rev v{draftVersion}
                 </span>
               )}
@@ -871,12 +895,12 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
             <Button
               size="sm"
               variant="outline"
-              className="h-8 text-xs flex items-center gap-1.5 border-[#174A70]/30 text-[#174A70] hover:bg-[#174A70]/10 font-semibold shadow-xs"
+              className="h-8 px-4 text-xs flex items-center gap-1.5 border-emerald-300 text-emerald-800 hover:bg-emerald-50 font-bold shadow-soft rounded-full"
               onClick={() => openImagesMutation.mutate()}
               disabled={openImagesMutation.isPending}
               title="Launch study in OHIF PACS Viewer"
             >
-              <ExternalLink className="h-3.5 w-3.5 text-[#174A70]" />
+              <ExternalLink className="h-3.5 w-3.5 text-emerald-600" />
               {openImagesMutation.isPending ? 'Launching...' : 'Open OHIF'}
             </Button>
           </div>
@@ -884,17 +908,17 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
 
         {/* Stale Tab Conflict Banner */}
         {saveStatus === 'conflict' && (
-          <div className="p-3 bg-destructive/10 border border-destructive/30 rounded-md text-destructive text-xs flex items-center justify-between gap-3">
+          <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl text-rose-800 text-xs font-medium flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 shrink-0" />
-              <span className="font-semibold">
+              <AlertTriangle className="h-4 w-4 shrink-0 text-rose-600" />
+              <span className="font-bold">
                 This report draft was modified in another session. Please reload to prevent overwriting changes.
               </span>
             </div>
             <Button
               size="sm"
               variant="destructive"
-              className="h-7 text-xs flex items-center gap-1 shrink-0"
+              className="h-7 px-3 text-xs flex items-center gap-1 shrink-0 rounded-full font-bold"
               onClick={handleReload}
             >
               <RefreshCw className="h-3 w-3" />
@@ -909,18 +933,18 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
         {/* LEFT COLUMN: PACS, CLINICAL CONTEXT, MEASUREMENTS & KEY IMAGES (5 cols) */}
         <div className="lg:col-span-5 space-y-4">
           {/* Card A: PACS & Imaging Launcher */}
-          <Card className="border border-slate-200 bg-white shadow-xs">
-            <CardHeader className="p-3.5 pb-2 border-b border-slate-100 flex flex-row items-center justify-between">
-              <CardTitle className="text-xs font-bold uppercase tracking-wider text-[#152B42] flex items-center gap-1.5">
-                <ExternalLink className="h-4 w-4 text-[#174A70]" />
-                PACS & Image Viewer
+          <Card className="border border-[#dce6e0] bg-white shadow-soft rounded-3xl overflow-hidden">
+            <CardHeader className="p-4 border-b border-[#e9f1ed] flex flex-row items-center justify-between bg-white">
+              <CardTitle className="text-xs font-bold uppercase tracking-wider text-slate-900 flex items-center gap-1.5">
+                <ExternalLink className="h-4 w-4 text-emerald-600" />
+                PACS &amp; Image Viewer
               </CardTitle>
-              <Badge variant="outline" className="text-[10px] font-mono border-emerald-500/30 text-emerald-700 bg-emerald-50">
+              <Badge variant="outline" className="text-[10px] font-mono font-bold border-emerald-300 text-emerald-800 bg-emerald-50 rounded-full">
                 Orthanc PACS Online
               </Badge>
             </CardHeader>
-            <CardContent className="p-3.5 space-y-3">
-              <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between">
+            <CardContent className="p-4 space-y-3">
+              <div className="p-3.5 bg-[#f8faf8] border border-[#dce6e0] rounded-2xl flex items-center justify-between">
                 <div>
                   <div className="text-xs font-semibold text-[#152B42]">OHIF Diagnostic Web Viewer</div>
                   <div className="text-[11px] text-[#65758A] mt-0.5">
@@ -929,7 +953,7 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
                 </div>
                 <Button
                   size="sm"
-                  className="bg-[#174A70] hover:bg-[#133E5E] text-white font-semibold text-xs h-8 px-3 shadow-xs flex items-center gap-1.5"
+                  className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold text-xs h-8 px-3 shadow-xs flex items-center gap-1.5"
                   onClick={() => openImagesMutation.mutate()}
                   disabled={openImagesMutation.isPending}
                 >
@@ -950,7 +974,7 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
                         className="p-2 bg-slate-50 border border-slate-100 rounded flex items-center justify-between text-xs"
                       >
                         <div className="truncate">
-                          <span className="font-mono text-[10px] text-[#174A70] mr-2">#{idx + 1}</span>
+                          <span className="font-mono text-[10px] text-[#2563EB] mr-2">#{idx + 1}</span>
                           <span className="text-[#152B42] font-medium">{s.description || s.modality || 'Series'}</span>
                         </div>
                         <Badge variant="secondary" className="text-[10px] font-mono px-1.5 py-0 h-4 border-slate-200 text-slate-700 bg-white">
@@ -968,7 +992,7 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
           <Card className="border border-slate-200 bg-white shadow-xs">
             <CardHeader className="p-3.5 pb-2 border-b border-slate-100">
               <CardTitle className="text-xs font-bold uppercase tracking-wider text-[#152B42] flex items-center gap-1.5">
-                <Stethoscope className="h-4 w-4 text-[#227DA5]" />
+                <Stethoscope className="h-4 w-4 text-[#2563EB]" />
                 Clinical Context & Indication
               </CardTitle>
             </CardHeader>
@@ -1032,9 +1056,10 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
                   size="sm"
                   variant="outline"
                   className="h-7 text-xs flex items-center gap-1 text-slate-700 border-slate-200 hover:bg-slate-50 shadow-xs"
-                  onClick={handleCaptureKeyImage}
+                  onClick={handleOpenAddKeyImageDialog}
                   disabled={saveStatus === 'conflict' || !draftExists || !!workspace?.finalizedReport}
-                  title={viewerWindowRef.current && !viewerWindowRef.current.closed ? "Capture active slice from OHIF viewer" : "Add key image reference"}
+                  title="Add Key Image"
+                  data-testid="btn-add-key-image"
                 >
                   <Plus className="h-3 w-3" />
                   Key Img
@@ -1062,7 +1087,7 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
                       >
                         <div className="space-y-0.5 min-w-0">
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <Badge variant="secondary" className="text-[10px] font-mono px-1 py-0 bg-[#174A70]/10 text-[#174A70] border-[#174A70]/20">
+                            <Badge variant="secondary" className="text-[10px] font-mono px-1 py-0 bg-[#2563EB]/10 text-[#2563EB] border-[#2563EB]/20">
                               {m.toolType}
                             </Badge>
                             <span className="font-semibold text-[#152B42] truncate">{m.label}</span>
@@ -1085,7 +1110,7 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
                             type="button"
                             size="sm"
                             variant="ghost"
-                            className="h-6 w-6 p-0 text-slate-500 hover:text-[#174A70]"
+                            className="h-6 w-6 p-0 text-slate-500 hover:text-[#2563EB]"
                             title="View in PACS Viewer"
                             onClick={() => handleViewReference(m.seriesInstanceUid, m.sopInstanceUid)}
                           >
@@ -1144,7 +1169,7 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
                             type="button"
                             size="sm"
                             variant="ghost"
-                            className="h-6 w-6 p-0 text-slate-500 hover:text-[#174A70]"
+                            className="h-6 w-6 p-0 text-slate-500 hover:text-[#2563EB]"
                             title="View in PACS Viewer"
                             onClick={() => handleViewReference(k.seriesInstanceUid, k.sopInstanceUid)}
                           >
@@ -1208,7 +1233,7 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
                     <Button
                       size="sm"
                       variant="outline"
-                      className="h-7 text-xs border-[#174A70]/30 text-[#174A70] bg-white hover:bg-[#174A70]/10 shadow-xs flex items-center gap-1 font-semibold"
+                      className="h-7 text-xs border-[#2563EB]/30 text-[#2563EB] bg-white hover:bg-[#2563EB]/10 shadow-xs flex items-center gap-1 font-semibold"
                       onClick={handleSendToReception}
                       disabled={isSendingToReception}
                     >
@@ -1282,7 +1307,7 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
                         Tamper-Evident Electronic Signature Applied
                       </span>
                       <span className="text-[11px] text-[#65758A]">
-                        21 CFR Part 11 compliant digital signature • SHA-256 integrity seal applied
+                        Electronic approval recorded • HMAC-SHA256 integrity signature applied
                       </span>
                     </div>
                   </div>
@@ -1305,7 +1330,7 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
             <Card className="border border-slate-200 bg-white shadow-xs">
               <CardHeader className="p-4 border-b border-slate-100">
                 <CardTitle className="text-sm font-bold text-[#152B42] flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-[#174A70]" />
+                  <FileText className="h-4 w-4 text-[#2563EB]" />
                   Select Reporting Template
                 </CardTitle>
                 <p className="text-xs text-[#65758A] mt-1">
@@ -1323,8 +1348,8 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
                         key={tpl.id}
                         onClick={() => setSelectedTemplateId(tpl.id)}
                         className={`p-3 border rounded-lg cursor-pointer transition-all ${isSelected
-                          ? 'border-[#174A70] bg-[#174A70]/5 shadow-xs ring-1 ring-[#174A70]'
-                          : 'border-slate-200 hover:border-[#227DA5] bg-white hover:bg-slate-50/50'
+                          ? 'border-[#2563EB] bg-[#2563EB]/5 shadow-xs ring-1 ring-[#2563EB]'
+                          : 'border-slate-200 hover:border-[#2563EB] bg-white hover:bg-slate-50/50'
                           }`}
                       >
                         <div className="flex items-start justify-between gap-2">
@@ -1359,7 +1384,7 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
 
                 <div className="pt-2 flex justify-end">
                   <Button
-                    className="bg-[#174A70] hover:bg-[#133E5E] text-white font-semibold text-xs h-9 px-4 shadow-xs flex items-center gap-1.5"
+                    className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold text-xs h-9 px-4 shadow-xs flex items-center gap-1.5"
                     onClick={() => createDraftMutation.mutate(selectedTemplateId)}
                     disabled={!selectedTemplateId || createDraftMutation.isPending}
                   >
@@ -1403,7 +1428,7 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
                         <Mic
                           className={`h-4 w-4 ${dictationState === 'listening'
                             ? 'text-red-600 animate-pulse'
-                            : 'text-[#174A70]'
+                            : 'text-[#2563EB]'
                             }`}
                         />
                         <span>Voice Dictation:</span>
@@ -1419,7 +1444,7 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
                             targetSectionRef.current = e.target.value;
                           }}
                           disabled={dictationState === 'listening'}
-                          className="text-xs bg-white border border-slate-200 rounded px-2 py-1 font-medium text-[#152B42] focus:outline-none focus:ring-1 focus:ring-[#174A70] cursor-pointer shadow-xs"
+                          className="text-xs bg-white border border-slate-200 rounded px-2 py-1 font-medium text-[#152B42] focus:outline-none focus:ring-1 focus:ring-[#2563EB] cursor-pointer shadow-xs"
                         >
                           {Object.keys(draftContent).map((sec) => (
                             <option key={sec} value={sec}>
@@ -1436,7 +1461,7 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
                         <Button
                           type="button"
                           size="sm"
-                          className="h-7 text-xs bg-[#174A70] hover:bg-[#133E5E] text-white font-medium flex items-center gap-1.5 shadow-xs"
+                          className="h-7 text-xs bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-medium flex items-center gap-1.5 shadow-xs"
                           onClick={handleStartDictation}
                           disabled={
                             dictationState === 'unavailable' ||
@@ -1487,8 +1512,8 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
 
                   {/* Hearing Preview */}
                   {dictationState === 'listening' && hearingPreview && (
-                    <div className="text-xs italic text-[#174A70] bg-[#174A70]/10 px-2.5 py-1.5 rounded border border-[#174A70]/20 flex items-center gap-2">
-                      <Volume2 className="h-3.5 w-3.5 shrink-0 text-[#174A70] animate-pulse" />
+                    <div className="text-xs italic text-[#2563EB] bg-[#2563EB]/10 px-2.5 py-1.5 rounded border border-[#2563EB]/20 flex items-center gap-2">
+                      <Volume2 className="h-3.5 w-3.5 shrink-0 text-[#2563EB] animate-pulse" />
                       <span>Hearing: &ldquo;{hearingPreview}&rdquo;</span>
                     </div>
                   )}
@@ -1547,7 +1572,7 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
                         placeholder={`Enter ${section.toLowerCase()}...`}
                         disabled={saveStatus === 'conflict'}
                         rows={isFindings ? 6 : isImpression ? 4 : 2}
-                        className={`w-full rounded-md border border-slate-200 p-2.5 text-xs bg-white text-[#152B42] placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[#174A70] focus:border-[#174A70] font-sans leading-relaxed transition-all shadow-xs ${isSectionActiveForDictation
+                        className={`w-full rounded-md border border-slate-200 p-2.5 text-xs bg-white text-[#152B42] placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-[#2563EB] focus:border-[#2563EB] font-sans leading-relaxed transition-all shadow-xs ${isSectionActiveForDictation
                           ? 'ring-2 ring-red-500 border-red-500'
                           : ''
                           } ${saveStatus === 'conflict' ? 'opacity-60 bg-slate-50 cursor-not-allowed' : ''
@@ -1585,7 +1610,7 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
                         className="text-xs h-8 flex items-center gap-1.5 border-slate-200 bg-white text-slate-700 hover:bg-slate-50 shadow-xs"
                         onClick={() => setIsPeerReviewRequestOpen(true)}
                       >
-                        <Users className="h-3.5 w-3.5 text-[#174A70]" />
+                        <Users className="h-3.5 w-3.5 text-[#2563EB]" />
                         Request Peer Review
                       </Button>
                     )}
@@ -1681,7 +1706,7 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
               <select
                 value={mToolType}
                 onChange={(e) => setMToolType(e.target.value as OhifMeasurementToolType)}
-                className="w-full text-xs rounded border border-slate-200 bg-white text-[#152B42] p-2 shadow-xs focus:ring-1 focus:ring-[#174A70]"
+                className="w-full text-xs rounded border border-slate-200 bg-white text-[#152B42] p-2 shadow-xs focus:ring-1 focus:ring-[#2563EB]"
               >
                 <option value="Length">Length (linear dimension)</option>
                 <option value="Bidirectional">Bidirectional (cross-product)</option>
@@ -1698,7 +1723,7 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
                 placeholder="e.g. Left Renal Cyst, Hepatic Lesion #1"
                 value={mLabel}
                 onChange={(e) => setMLabel(e.target.value)}
-                className="w-full text-xs rounded border border-slate-200 bg-white text-[#152B42] p-2 shadow-xs focus:ring-1 focus:ring-[#174A70]"
+                className="w-full text-xs rounded border border-slate-200 bg-white text-[#152B42] p-2 shadow-xs focus:ring-1 focus:ring-[#2563EB]"
                 required
               />
             </div>
@@ -1712,7 +1737,7 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
                   placeholder="24.5"
                   value={mValue}
                   onChange={(e) => setMValue(e.target.value)}
-                  className="w-full text-xs rounded border border-slate-200 bg-white text-[#152B42] p-2 font-mono shadow-xs focus:ring-1 focus:ring-[#174A70]"
+                  className="w-full text-xs rounded border border-slate-200 bg-white text-[#152B42] p-2 font-mono shadow-xs focus:ring-1 focus:ring-[#2563EB]"
                   required
                 />
               </div>
@@ -1723,7 +1748,7 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
                   placeholder="mm, cm, deg, HU"
                   value={mUnit}
                   onChange={(e) => setMUnit(e.target.value)}
-                  className="w-full text-xs rounded border border-slate-200 bg-white text-[#152B42] p-2 font-mono shadow-xs focus:ring-1 focus:ring-[#174A70]"
+                  className="w-full text-xs rounded border border-slate-200 bg-white text-[#152B42] p-2 font-mono shadow-xs focus:ring-1 focus:ring-[#2563EB]"
                 />
               </div>
             </div>
@@ -1733,7 +1758,7 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
               <select
                 value={mSeriesUid}
                 onChange={(e) => setMSeriesUid(e.target.value)}
-                className="w-full text-xs rounded border border-slate-200 bg-white text-[#152B42] p-2 font-mono shadow-xs focus:ring-1 focus:ring-[#174A70]"
+                className="w-full text-xs rounded border border-slate-200 bg-white text-[#152B42] p-2 font-mono shadow-xs focus:ring-1 focus:ring-[#2563EB]"
               >
                 {studyInstancesData?.series.map((s, idx) => (
                   <option key={s.seriesInstanceUid} value={s.seriesInstanceUid}>
@@ -1750,7 +1775,7 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
                 placeholder="e.g. Well-circumscribed, non-enhancing"
                 value={mFinding}
                 onChange={(e) => setMFinding(e.target.value)}
-                className="w-full text-xs rounded border border-slate-200 bg-white text-[#152B42] p-2 shadow-xs focus:ring-1 focus:ring-[#174A70]"
+                className="w-full text-xs rounded border border-slate-200 bg-white text-[#152B42] p-2 shadow-xs focus:ring-1 focus:ring-[#2563EB]"
               />
             </div>
 
@@ -1758,7 +1783,7 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
               <Button type="button" variant="outline" size="sm" onClick={() => setShowAddMeasurementDialog(false)} className="border-slate-200 text-slate-700 hover:bg-slate-50">
                 Cancel
               </Button>
-              <Button type="submit" size="sm" className="bg-[#174A70] hover:bg-[#133E5E] text-white font-semibold shadow-xs">
+              <Button type="submit" size="sm" className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold shadow-xs">
                 Attach Measurement
               </Button>
             </div>
@@ -1775,6 +1800,33 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
               Add Key Image Reference
             </DialogTitle>
           </DialogHeader>
+
+          {viewerWindowRef.current && !viewerWindowRef.current.closed && (
+            <div className="p-2.5 bg-sky-50 border border-sky-200 rounded-md flex items-center justify-between text-xs text-[#2563EB]">
+              <div className="flex items-center gap-1.5">
+                <Eye className="h-3.5 w-3.5 text-[#2563EB]" />
+                <span className="font-medium">OHIF Viewer Connected</span>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-6 text-[11px] border-sky-300 text-sky-800 bg-white hover:bg-sky-100"
+                onClick={() => {
+                  viewerWindowRef.current?.postMessage(
+                    {
+                      type: 'RIS_CAPTURE_KEY_IMAGE_REQUEST',
+                      label: kLabel.trim() || `Key Image ${keyImages.length + 1}`,
+                    },
+                    '*'
+                  );
+                }}
+              >
+                Capture Active Slice
+              </Button>
+            </div>
+          )}
+
           <form onSubmit={handleAddKeyImageSubmit} className="space-y-3.5 py-2">
             <div className="space-y-1">
               <label className="text-xs font-semibold text-[#65758A] uppercase">Key Image Title</label>
@@ -1783,24 +1835,58 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
                 placeholder="e.g. Axial T2 demonstrating focal lesion"
                 value={kLabel}
                 onChange={(e) => setKLabel(e.target.value)}
-                className="w-full text-xs rounded border border-slate-200 bg-white text-[#152B42] p-2 shadow-xs focus:ring-1 focus:ring-[#174A70]"
+                className="w-full text-xs rounded border border-slate-200 bg-white text-[#152B42] p-2 shadow-xs focus:ring-1 focus:ring-[#2563EB]"
                 required
               />
             </div>
 
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-[#65758A] uppercase">DICOM Series Reference</label>
-              <select
-                value={kSeriesUid}
-                onChange={(e) => setKSeriesUid(e.target.value)}
-                className="w-full text-xs rounded border border-slate-200 bg-white text-[#152B42] p-2 font-mono shadow-xs focus:ring-1 focus:ring-[#174A70]"
-              >
-                {studyInstancesData?.series.map((s, idx) => (
-                  <option key={s.seriesInstanceUid} value={s.seriesInstanceUid}>
-                    #{idx + 1}: {s.description || s.modality} ({s.instances.length} imgs)
-                  </option>
-                ))}
-              </select>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-[#65758A] uppercase">DICOM Series Reference</label>
+                <select
+                  value={kSeriesUid}
+                  onChange={(e) => {
+                    const newSeriesUid = e.target.value;
+                    setKSeriesUid(newSeriesUid);
+                    const seriesObj = studyInstancesData?.series?.find((s) => s.seriesInstanceUid === newSeriesUid);
+                    if (seriesObj?.instances && seriesObj.instances.length > 0) {
+                      setKSopUid(seriesObj.instances[0].sopInstanceUid);
+                    } else {
+                      setKSopUid('');
+                    }
+                  }}
+                  className="w-full text-xs rounded border border-slate-200 bg-white text-[#152B42] p-2 font-mono shadow-xs focus:ring-1 focus:ring-[#2563EB] truncate"
+                >
+                  {studyInstancesData?.series?.map((s, idx) => (
+                    <option key={s.seriesInstanceUid} value={s.seriesInstanceUid}>
+                      #{idx + 1}: {s.description || (s as any).seriesDescription || s.modality} ({s.instances.length} imgs)
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-[#65758A] uppercase">Slice / Instance</label>
+                <select
+                  value={kSopUid}
+                  onChange={(e) => setKSopUid(e.target.value)}
+                  className="w-full text-xs rounded border border-slate-200 bg-white text-[#152B42] p-2 font-mono shadow-xs focus:ring-1 focus:ring-[#2563EB] truncate"
+                >
+                  {(() => {
+                    const currentSeries =
+                      studyInstancesData?.series?.find((s) => s.seriesInstanceUid === kSeriesUid) ||
+                      studyInstancesData?.series?.[0];
+                    if (!currentSeries || !currentSeries.instances || currentSeries.instances.length === 0) {
+                      return <option value="">No slices available</option>;
+                    }
+                    return currentSeries.instances.map((inst) => (
+                      <option key={inst.sopInstanceUid} value={inst.sopInstanceUid}>
+                        Slice #{inst.instanceNumber ?? '—'} {inst.sliceLocation !== undefined ? `(${inst.sliceLocation} mm)` : ''}
+                      </option>
+                    ));
+                  })()}
+                </select>
+              </div>
             </div>
 
             <div className="space-y-1">
@@ -1810,7 +1896,7 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
                 value={kDescription}
                 onChange={(e) => setKDescription(e.target.value)}
                 rows={2}
-                className="w-full text-xs rounded border border-slate-200 bg-white text-[#152B42] p-2 shadow-xs focus:ring-1 focus:ring-[#174A70]"
+                className="w-full text-xs rounded border border-slate-200 bg-white text-[#152B42] p-2 shadow-xs focus:ring-1 focus:ring-[#2563EB]"
               />
             </div>
 
@@ -1818,8 +1904,8 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
               <Button type="button" variant="outline" size="sm" onClick={() => setShowAddKeyImageDialog(false)} className="border-slate-200 text-slate-700 hover:bg-slate-50">
                 Cancel
               </Button>
-              <Button type="submit" size="sm" className="bg-[#174A70] hover:bg-[#133E5E] text-white font-semibold shadow-xs">
-                Attach Key Image
+              <Button type="submit" size="sm" className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold shadow-xs" data-testid="submit-add-key-image">
+                Add Key Image
               </Button>
             </div>
           </form>

@@ -44,46 +44,48 @@ function NoStudyReportingEntry() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-[1500px] mx-auto pb-10">
       {/* 1. Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#DCE2EC] pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#dce6e0] pb-4">
         <div>
           <div className="flex items-center gap-3">
-            <FileText className="h-6 w-6 text-[#33398A]" />
-            <h1 className="text-2xl sm:text-[28px] font-bold tracking-tight text-[#15233B]">Diagnostic Reporting</h1>
+            <div className="w-9 h-9 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
+              <FileText className="h-5 w-5" />
+            </div>
+            <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900">Diagnostic Reporting</h1>
           </div>
-          <p className="text-xs sm:text-sm text-[#64748B] mt-1">
+          <p className="text-xs text-slate-500 font-medium mt-1">
             Dedicated clinical reporting workspace for image review, structured findings, impression, and final report authorization.
           </p>
         </div>
 
         <Button
           onClick={() => navigate('/radiologist/worklist')}
-          className="bg-[#174A70] hover:bg-[#133E5E] text-white font-semibold text-xs h-8 px-3.5 flex items-center gap-1.5 self-start sm:self-auto shadow-xs"
+          className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs h-8 px-4 flex items-center gap-1.5 self-start sm:self-auto shadow-soft rounded-full"
         >
-          <Layers className="h-3.5 w-3.5" />
+          <Layers className="h-3.5 w-3.5 text-emerald-400" />
           Open Radiologist Worklist
         </Button>
       </div>
 
       {/* 2. Hero Guide Card */}
-      <Card className="border border-slate-200 bg-white shadow-xs">
+      <Card className="border border-[#dce6e0] bg-white shadow-soft rounded-3xl overflow-hidden">
         <CardContent className="py-12 px-6 text-center space-y-4">
-          <div className="w-14 h-14 rounded-full bg-[#174A70]/10 border border-[#174A70]/20 flex items-center justify-center mx-auto text-[#174A70]">
-            <Stethoscope className="h-7 w-7" />
+          <div className="w-16 h-16 rounded-3xl bg-emerald-50 border border-emerald-100 flex items-center justify-center mx-auto text-emerald-600 shadow-soft">
+            <Stethoscope className="h-8 w-8" />
           </div>
           <div className="space-y-1.5 max-w-lg mx-auto">
-            <h2 className="text-base font-bold text-[#152B42]">No Examination Selected</h2>
-            <p className="text-xs text-[#65758A] leading-relaxed">
+            <h2 className="text-base font-extrabold text-slate-900">No Examination Selected</h2>
+            <p className="text-xs text-slate-500 font-medium leading-relaxed">
               Select a completed examination from the Radiologist Worklist to launch OHIF viewer integration, attach measurements and key images, author structured findings, and sign finalized reports.
             </p>
           </div>
           <div className="pt-2">
             <Button
               onClick={() => navigate('/radiologist/worklist')}
-              className="bg-[#174A70] hover:bg-[#133E5E] text-white font-semibold text-xs px-4 h-9 shadow-xs inline-flex items-center gap-2"
+              className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-5 h-9 shadow-soft rounded-full inline-flex items-center gap-2"
             >
-              <Layers className="h-4 w-4" />
+              <Layers className="h-4 w-4 text-emerald-400" />
               Open Radiologist Worklist
               <ArrowRight className="h-3.5 w-3.5" />
             </Button>
@@ -95,12 +97,12 @@ function NoStudyReportingEntry() {
       {readyWorklist && readyWorklist.items.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[#65758A]">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
               Ready Studies Awaiting Reporting ({readyWorklist.pagination.total})
             </h3>
             <button
               onClick={() => navigate('/radiologist/worklist')}
-              className="text-xs text-[#227DA5] hover:text-[#174A70] font-semibold flex items-center gap-1"
+              className="text-xs text-emerald-800 hover:text-emerald-900 font-bold flex items-center gap-1 cursor-pointer"
             >
               View all in worklist <ChevronRight className="h-3.5 w-3.5" />
             </button>
@@ -111,29 +113,29 @@ function NoStudyReportingEntry() {
               <div
                 key={item.imagingOrderId}
                 onClick={() => navigate(`/reporting/${item.imagingOrderId}`)}
-                className="p-3.5 rounded-lg border border-slate-200 bg-white hover:border-[#227DA5]/50 hover:shadow-xs cursor-pointer transition-all space-y-2 group"
+                className="p-4 rounded-2xl border border-[#dce6e0] bg-[#f8faf8]/70 hover:bg-white hover:border-emerald-300 hover:shadow-card cursor-pointer transition-all space-y-2.5 group"
               >
                 <div className="flex items-start justify-between gap-2">
-                  <div className="font-semibold text-xs text-[#152B42] group-hover:text-[#227DA5] transition-colors">
+                  <div className="font-bold text-xs text-slate-900 group-hover:text-emerald-800 transition-colors">
                     {item.patientName}
                   </div>
                   <PriorityBadge priority={item.priority} />
                 </div>
 
-                <div className="flex items-center gap-2 text-[11px] text-[#65758A]">
+                <div className="flex items-center gap-2 text-[11px] text-slate-600 font-medium">
                   <IdentifierPill type="accession" value={item.accessionNumber} />
-                  <Badge variant="outline" className="font-mono text-[10px] px-1 py-0 border-slate-200 text-slate-700 bg-slate-50">
+                  <Badge variant="outline" className="font-mono text-[10px] px-2 py-0.5 border-slate-200 text-slate-700 bg-white rounded-full">
                     {item.modality}
                   </Badge>
                   <span className="truncate text-slate-600">{item.procedureName}</span>
                 </div>
 
-                <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-[#65758A]">
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-medium">
                   <span className="flex items-center gap-1 font-mono">
                     <Clock className="h-3 w-3 text-slate-400" />
                     {formatWaitingDuration(item.waitingMinutes)}
                   </span>
-                  <span className="text-[#227DA5] font-semibold group-hover:underline flex items-center gap-1">
+                  <span className="text-emerald-700 font-bold group-hover:underline flex items-center gap-1">
                     Open Workspace <ArrowRight className="h-3 w-3" />
                   </span>
                 </div>

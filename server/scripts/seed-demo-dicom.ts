@@ -268,7 +268,7 @@ async function main() {
   console.log(`- StudyInstanceUID: ${reconciliationResult.link.studyInstanceUid}`);
   console.log(`- Verified By User: ${reviewerUser.firstName} ${reviewerUser.lastName} (${reviewerUser.id})`);
   console.log(
-    `- OHIF Viewer Direct URL: http://localhost:3000/viewer?StudyInstanceUIDs=${encodeURIComponent(
+    `- OHIF Viewer Direct URL: http://localhost:3002/viewer?StudyInstanceUIDs=${encodeURIComponent(
       studyInstanceUid
     )}`
   );
@@ -493,7 +493,7 @@ async function main() {
   console.log('Structured reporting templates ensured (CT Chest, CT Head, MRI Brain, MRI Spine, CT Abdomen).');
 
   console.log(
-    `- Multi-Study OHIF Comparison URL: http://localhost:3000/viewer?StudyInstanceUIDs=${encodeURIComponent(
+    `- Multi-Study OHIF Comparison URL: http://localhost:3002/viewer?StudyInstanceUIDs=${encodeURIComponent(
       studyInstanceUid
     )},${encodeURIComponent(priorStudyInstanceUid)}`
   );

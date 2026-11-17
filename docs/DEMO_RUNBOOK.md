@@ -14,8 +14,8 @@ This runbook guides evaluators and interviewers through a complete, live walkthr
 | **Radiologist** | `http://localhost:5173/login` | `rad@ris.local` / `<DEMO_PASSWORD>` | Diagnostic reporting, OHIF launch, peer review |
 | **Patient Self-Service** | `http://localhost:5173/patient-portal`| Mobile: `555-0199` / OTP: `<DEMO_OTP>` | Appointment booking, prep rules, report download |
 | **External Care Recipient**| `http://localhost:5173/share/:token` | Share Token: `<DEMO_SHARE_TOKEN>` | Clinical study sharing, OTP gate, OHIF viewer |
-| **OHIF Imaging Viewer** | `http://localhost:3000` | Integrated Web Client | Zero-footprint web DICOM viewer |
-| **Orthanc PACS Console** | `http://localhost:8042` | `orthanc` / `orthanc` | PACS archive management & DICOMweb |
+| **OHIF Imaging Viewer** | `http://localhost:3002` | Integrated Web Client | Zero-footprint web DICOM viewer |
+| **Orthanc PACS Console** | `http://localhost:8044` | `orthanc` / `orthanc` | PACS archive management & DICOMweb |
 
 ---
 

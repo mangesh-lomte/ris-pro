@@ -107,7 +107,7 @@ export const ReportAmendmentModal: React.FC<ReportAmendmentModalProps> = ({
                 className={`p-2 rounded-full ${
                   amendmentType === 'CORRECTION'
                     ? 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400'
-                    : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-400'
+                    : 'bg-indigo-100 text-blue-700 dark:bg-indigo-950 dark:text-indigo-400'
                 }`}
               >
                 {amendmentType === 'CORRECTION' ? (
@@ -185,14 +185,14 @@ export const ReportAmendmentModal: React.FC<ReportAmendmentModalProps> = ({
                 type="button"
                 className={`p-3 text-left border rounded-lg transition-all flex items-start gap-2.5 ${
                   amendmentType === 'ADDENDUM'
-                    ? 'border-indigo-500 bg-indigo-50/40 dark:bg-indigo-950/30 ring-1 ring-indigo-400'
+                    ? 'border-indigo-500 bg-blue-50/40 dark:bg-indigo-950/30 ring-1 ring-indigo-400'
                     : 'border-border hover:bg-muted/50'
                 }`}
                 onClick={() => setAmendmentType('ADDENDUM')}
               >
                 <PlusCircle
                   className={`h-4 w-4 mt-0.5 ${
-                    amendmentType === 'ADDENDUM' ? 'text-indigo-600' : 'text-muted-foreground'
+                    amendmentType === 'ADDENDUM' ? 'text-[#2563EB]' : 'text-muted-foreground'
                   }`}
                 />
                 <div>
@@ -278,7 +278,7 @@ export const ReportAmendmentModal: React.FC<ReportAmendmentModalProps> = ({
               className={
                 amendmentType === 'CORRECTION'
                   ? 'bg-amber-600 hover:bg-amber-700 text-white'
-                  : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                  : 'bg-[#2563EB] hover:bg-blue-700 text-white'
               }
               disabled={mutation.isPending || !reason.trim() || !content.trim()}
             >

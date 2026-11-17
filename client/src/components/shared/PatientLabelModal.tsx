@@ -3,6 +3,35 @@ import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from '
 import { Button } from '../ui/button';
 import { calculateAge, formatDate } from '../../utils/formatters';
 
+const CODE39: Record<string, string> = {
+  '0':'nnnwwnwnn','1':'wnnwnnnnw','2':'nnwwnnnnw','3':'wnwwnnnnn','4':'nnnwwnnnw','5':'wnnwwnnnn','6':'nnwwwnnnn','7':'nnnwnnwnw','8':'wnnwnnwnn','9':'nnwwnnwnn',
+  A:'wnnnnwnnw',B:'nnwnnwnnw',C:'wnwnnwnnn',D:'nnnnwwnnw',E:'wnnnwwnnn',F:'nnwnwwnnn',G:'nnnnnwwnw',H:'wnnnnwwnn',I:'nnwnnwwnn',J:'nnnnwwwnn',
+  K:'wnnnnnnww',L:'nnwnnnnww',M:'wnwnnnnwn',N:'nnnnwnnww',O:'wnnnwnnwn',P:'nnwnwnnwn',Q:'nnnnnnwww',R:'wnnnnnwwn',S:'nnwnnnwwn',T:'nnnnwnwwn',
+  U:'wwnnnnnnw',V:'nwwnnnnnw',W:'wwwnnnnnn',X:'nwnnwnnnw',Y:'wwnnwnnnn',Z:'nwwnwnnnn','-':'nwnnnnwnw','.':'wwnnnnwnn',' ':'nwwnnnwnn','*':'nwnnwnwnn',
+};
+
+function Code39Barcode({ value }: { value: string }) {
+  const safeValue = value.toUpperCase().replace(/[^0-9A-Z. -]/g, '-');
+  const encoded = `*${safeValue}*`;
+  let cursor = 0;
+  const bars: Array<{ x: number; width: number }> = [];
+  for (const character of encoded) {
+    const pattern = CODE39[character];
+    pattern.split('').forEach((widthCode, index) => {
+      const width = widthCode === 'w' ? 3 : 1;
+      if (index % 2 === 0) bars.push({ x: cursor, width });
+      cursor += width;
+    });
+    cursor += 1;
+  }
+  return (
+    <svg role="img" aria-label={`Code 39 barcode encoding ${safeValue}`} viewBox={`0 0 ${cursor} 40`} className="h-10 w-full max-w-sm" preserveAspectRatio="none">
+      <title>{`Scannable Code 39: ${safeValue}`}</title>
+      {bars.map((bar, index) => <rect key={`${bar.x}-${index}`} x={bar.x} y="0" width={bar.width} height="40" fill="currentColor" />)}
+    </svg>
+  );
+}
+
 interface PatientLabelModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -29,7 +58,11 @@ export function PatientLabelModal({
   examination,
 }: PatientLabelModalProps) {
   const handlePrint = () => {
+    const cleanup = () => document.body.classList.remove('printing-patient-label');
+    document.body.classList.add('printing-patient-label');
+    window.addEventListener('afterprint', cleanup, { once: true });
     window.print();
+    window.setTimeout(cleanup, 1000);
   };
 
   return (
@@ -92,20 +125,9 @@ export function PatientLabelModal({
               </div>
             )}
 
-            {/* Visual Barcode Representation */}
+            {/* Scannable Code 39 barcode */}
             <div className="pt-2 border-t flex flex-col items-center justify-center space-y-1">
-              <div className="flex items-center gap-0.5 h-8">
-                {Array.from({ length: 42 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="bg-slate-900 h-full"
-                    style={{
-                      width: i % 3 === 0 ? '3px' : i % 2 === 0 ? '1px' : '2px',
-                      opacity: i % 5 === 0 ? 0.7 : 1,
-                    }}
-                  />
-                ))}
-              </div>
+              <Code39Barcode value={accessionNumber || patient.patientId} />
               <span className="text-[9px] text-slate-500">*{accessionNumber || patient.patientId}*</span>
             </div>
           </div>

@@ -25,7 +25,7 @@ export function LocationsTab({ items, locationData, onRefresh, isAdmin }: Props)
   return (
     <div className="space-y-4">
       {/* Location selector pills & Action Buttons */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded border border-slate-200 shadow-sm">
         <div className="flex items-center gap-1.5 overflow-x-auto text-xs scrollbar-thin">
           {locations.map((loc: string) => (
             <button
@@ -67,7 +67,7 @@ export function LocationsTab({ items, locationData, onRefresh, isAdmin }: Props)
       </div>
 
       {/* Stocks Table for Selected Location */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+      <div className="bg-white rounded border border-slate-200 overflow-hidden shadow-sm">
         <div className="bg-slate-50/70 px-4 py-3 border-b border-slate-200 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-sky-600" />

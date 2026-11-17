@@ -199,6 +199,8 @@ export interface Appointment {
   cancelledAt?: string | null;
   createdAt: string;
   updatedAt: string;
+  movementStage?: 'RECEPTION' | 'DRESSING_PREPARATION' | 'SCANNER' | 'POST_SCAN';
+  movementUpdatedAt?: string | null;
   imagingOrder?: {
     id: string;
     accessionNumber: string;
@@ -393,6 +395,19 @@ export interface TechnologistExamDetail {
   status: AppointmentStatus;
   notes: string | null;
   waitingMinutes: number;
+  priorStudies: Array<{
+    orderId: string;
+    accessionNumber: string;
+    examinationName: string;
+    modality: ModalityType;
+    bodyPart: string;
+    clinicalIndication: string;
+    orderStatus: OrderStatus;
+    performedAt: string;
+    reportStatus: string | null;
+    reportImpression: string | null;
+    reportFinalizedAt: string | null;
+  }>;
   patient: {
     id: string;
     patientId: string;
@@ -494,6 +509,16 @@ export interface SafetyScreeningContext {
     location: string;
   } | null;
   screening: TechnologistSafetyScreening | null;
+  patientPreVisitScreening: {
+    hasMetalImplants?: boolean;
+    hasAllergies?: boolean;
+    isPregnant?: boolean;
+    hasKidneyDisease?: boolean;
+    notes?: string;
+    risksIdentified?: string[];
+    status?: 'NO_RISKS_REPORTED' | 'REQUIRES_TECH_REVIEW';
+    completedAt?: string;
+  } | null;
 }
 
 export interface ImagingProtocol {
@@ -505,6 +530,9 @@ export interface ImagingProtocol {
   bodyPart?: string | null;
   description?: string | null;
   isActive: boolean;
+  approvalStatus: 'DRAFT' | 'APPROVED' | 'RETIRED';
+  version: number;
+  approvedAt: string;
 }
 
 export interface PreparationRequirements {
@@ -601,6 +629,9 @@ export interface ConfirmProtocolResult {
     name: string;
     modality: ModalityType;
     bodyPart?: string | null;
+    approvalStatus: 'DRAFT' | 'APPROVED' | 'RETIRED';
+    version: number;
+    approvedAt: string;
   };
   orderStatus: OrderStatus;
 }
@@ -702,6 +733,8 @@ export interface ScanLifecycleContext {
   bodyPart: string;
   priority: Priority;
   contrastRequired: boolean;
+  mwlSyncedAt: string | null;
+  mwlStationAETitle: string | null;
   patient: {
     id: string;
     patientId: string;
@@ -725,6 +758,9 @@ export interface ScanLifecycleContext {
     modality: ModalityType;
     bodyPart?: string | null;
     description?: string | null;
+    approvalStatus: 'DRAFT' | 'APPROVED' | 'RETIRED';
+    version: number;
+    approvedAt: string;
   } | null;
   safetyStatus: SafetyStatus;
   isSafetyCleared: boolean;
@@ -864,8 +900,8 @@ export interface RecordContrastPayload {
   volumeUnit?: string;
   route: ContrastRoute;
   routeNotes?: string;
-  batchLotNumber?: string;
-  expirationDate?: string;
+  batchLotNumber: string;
+  expirationDate: string;
   administrationNotes?: string;
 }
 
@@ -924,6 +960,10 @@ export interface ImageQualityReviewData {
   } | null;
   reasonCode?: ImageQualityReason | null;
   notes?: string | null;
+  completenessConfirmed: boolean;
+  coverageConfirmed: boolean;
+  orientationConfirmed: boolean;
+  artifactReviewConfirmed: boolean;
   repeatAuthorizedAt?: string | null;
   repeatAuthorizedBy?: {
     id: string;
@@ -1061,6 +1101,10 @@ export interface PacsHandoffContext {
 }
 
 export interface AcceptImageQualityPayload {
+  completenessConfirmed: true;
+  coverageConfirmed: true;
+  orientationConfirmed: true;
+  artifactReviewConfirmed: true;
   notes?: string;
 }
 
@@ -1173,6 +1217,9 @@ export interface RadiologistWorklistItem {
   };
   priorStudyCount: number;
   priorAvailable: boolean;
+  reportStatus: string | null;
+  finalizedAt: string | null;
+  isReported: boolean;
 }
 
 export interface RadiologistWorklistData {
@@ -1191,6 +1238,14 @@ export interface RadiologistWorklistData {
     urgent: number;
     routine: number;
   };
+  turnaround: {
+    pendingCount: number;
+    averagePendingMinutes: number;
+    longestPendingMinutes: number;
+    finalizedCount: number;
+    averageFinalizedMinutes: number;
+    measuredFrom: string;
+  };
 }
 
 export interface RadiologistWorklistFilters {
@@ -1198,6 +1253,7 @@ export interface RadiologistWorklistFilters {
   priority?: Priority | '';
   date?: string;
   assignmentStatus?: 'UNASSIGNED' | 'ASSIGNED' | 'ALL';
+  reportStatus?: 'UNREPORTED' | 'REPORTED' | 'ALL';
   assignedTo?: string;
   search?: string;
   page?: number;
@@ -1492,7 +1548,7 @@ export interface MeasurementReference {
   sopInstanceUid: string;
   frameNumber?: number;
   instanceNumber?: number;
-  sliceLocation?: string;
+  sliceLocation?: number | string;
   findingText?: string;
   notes?: string;
   createdAt: string;
@@ -1507,14 +1563,14 @@ export interface KeyImageReference {
   sopInstanceUid: string;
   frameNumber?: number;
   instanceNumber?: number;
-  sliceLocation?: string;
+  sliceLocation?: number | string;
   createdAt: string;
 }
 
 export interface DicomInstanceSummary {
   sopInstanceUid: string;
   instanceNumber: number;
-  sliceLocation?: string;
+  sliceLocation?: number | string;
 }
 
 export interface DicomSeriesSummary {
@@ -1682,7 +1738,7 @@ export interface ClinicianItem {
 
 export type ReportDeliveryMethodType = 'RECEPTION_HANDOVER' | 'PATIENT_PORTAL' | 'REFERRING_PHYSICIAN' | 'PRINT';
 export type NotificationChannelType = 'SMS' | 'EMAIL';
-export type NotificationStatusType = 'SENT' | 'DELIVERED' | 'FAILED';
+export type NotificationStatusType = 'SENT' | 'DELIVERED' | 'FAILED' | 'SIMULATED';
 
 export interface ReportDeliveryRecord {
   id: string;
@@ -1697,13 +1753,13 @@ export interface ReportDeliveryRecord {
 }
 
 export interface ReportNotificationRecord {
-  id: string;
+  id: string | null;
   channel: NotificationChannelType;
   recipientContact: string;
   messageBody: string;
   status: NotificationStatusType;
   provider: string;
-  sentAt: string;
+  sentAt: string | null;
   sentBy?: string | null;
 }
 

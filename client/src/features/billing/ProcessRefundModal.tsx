@@ -98,7 +98,7 @@ export function ProcessRefundModal({
 
         <DialogContent className="p-6 space-y-4 text-xs">
           {!isAdmin && (
-            <div className="p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl flex items-center gap-2">
+            <div className="p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded flex items-center gap-2">
               <ShieldAlert className="w-5 h-5 shrink-0" />
               <span>
                 <strong>Admin Clearance Required:</strong> Only users with the ADMIN role can execute payment refunds.
@@ -113,7 +113,7 @@ export function ProcessRefundModal({
             </div>
           )}
 
-          <div className="grid grid-cols-3 gap-2 p-3 bg-slate-50 rounded-xl border border-slate-200 text-center">
+          <div className="grid grid-cols-3 gap-2 p-3 bg-slate-50 rounded border border-slate-200 text-center">
             <div>
               <span className="text-3xs uppercase font-bold text-slate-400 block">Total Paid</span>
               <span className="font-mono font-bold text-slate-800">{formatINR(totalPaid)}</span>

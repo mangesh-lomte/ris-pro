@@ -45,7 +45,7 @@ export const PmTemplatesTab: React.FC<PmTemplatesTabProps> = ({
   return (
     <div className="space-y-4">
       {/* Controls & Modality Rail */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-3">
+      <div className="bg-white p-4 rounded shadow-sm border border-slate-200 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-3">
             <div className="relative">
@@ -101,7 +101,7 @@ export const PmTemplatesTab: React.FC<PmTemplatesTabProps> = ({
           filtered.map((t) => (
             <div
               key={t.id}
-              className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 hover:border-sky-400 transition-colors flex flex-col justify-between"
+              className="bg-white rounded shadow-sm border border-slate-200 p-4 hover:border-sky-400 transition-colors flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between mb-2">

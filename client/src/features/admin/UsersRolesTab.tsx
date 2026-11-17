@@ -143,8 +143,8 @@ export const UsersRolesTab: React.FC<UsersRolesTabProps> = ({
     switch (role) {
       case 'ADMIN':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
-            <Shield className="w-3.5 h-3.5 text-indigo-600" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+            <Shield className="w-3.5 h-3.5 text-[#2563EB]" />
             ADMIN
           </span>
         );
@@ -253,7 +253,7 @@ export const UsersRolesTab: React.FC<UsersRolesTabProps> = ({
           </button>
           <button
             onClick={() => setIsAddUserOpen(true)}
-            className="inline-flex items-center px-4 py-1.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:outline-none shadow-sm transition-colors"
+            className="inline-flex items-center px-4 py-1.5 text-sm font-medium text-white bg-[#2563EB] hover:bg-blue-700 rounded-md focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:outline-none shadow-sm transition-colors"
           >
             <Plus className="w-4 h-4 mr-1.5" />
             Add Staff User
@@ -357,7 +357,7 @@ export const UsersRolesTab: React.FC<UsersRolesTabProps> = ({
           <div className="bg-white rounded-lg max-w-md w-full p-6 shadow-xl border border-slate-200">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200 mb-4">
               <div className="flex items-center gap-2">
-                <div className="p-2 bg-indigo-50 text-indigo-700 rounded-lg">
+                <div className="p-2 bg-blue-50 text-blue-700 rounded-lg">
                   <Users className="w-5 h-5" />
                 </div>
                 <div>
@@ -447,7 +447,7 @@ export const UsersRolesTab: React.FC<UsersRolesTabProps> = ({
                 <button
                   type="submit"
                   disabled={creating}
-                  className="px-4 py-2 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:outline-none transition-colors disabled:opacity-50"
+                  className="px-4 py-2 text-xs font-medium text-white bg-[#2563EB] hover:bg-blue-700 rounded-md focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:outline-none transition-colors disabled:opacity-50"
                 >
                   {creating ? 'Creating User...' : 'Create Staff User'}
                 </button>

@@ -2,7 +2,7 @@ interface RadAxisLogoProps {
   variant?: 'light' | 'dark';
   size?: 'sm' | 'md' | 'lg' | 'xl';
   showDescriptor?: boolean;
-  fullImage?: boolean;
+  iconOnly?: boolean;
   className?: string;
 }
 
@@ -10,102 +10,52 @@ export function RadAxisLogo({
   variant = 'dark',
   size = 'md',
   showDescriptor = false,
-  fullImage = false,
+  iconOnly = false,
   className = '',
 }: RadAxisLogoProps) {
   const isLight = variant === 'light';
 
   const iconSizes = {
-    sm: 'h-7 w-7',
-    md: 'h-9 w-9',
-    lg: 'h-11 w-11',
-    xl: 'h-14 w-14',
+    sm: 'w-7 h-7',
+    md: 'w-9 h-9',
+    lg: 'w-10 h-10',
+    xl: 'w-12 h-12',
   };
 
   const textSizes = {
-    sm: 'text-sm',
-    md: 'text-base',
-    lg: 'text-xl',
-    xl: 'text-2xl',
+    sm: 'text-xs',
+    md: 'text-sm font-extrabold',
+    lg: 'text-base font-extrabold',
+    xl: 'text-lg font-extrabold',
   };
-
-  const badgeSizes = {
-    sm: 'text-[9px] px-1 py-0.2',
-    md: 'text-[10px] px-1.5 py-0.5',
-    lg: 'text-xs px-2 py-0.5',
-    xl: 'text-xs px-2.5 py-1',
-  };
-
-  if (fullImage) {
-    const fullSizes = {
-      sm: 'h-8',
-      md: 'h-10',
-      lg: 'h-14',
-      xl: 'h-20',
-    };
-    return (
-      <div className={`flex items-center select-none ${className}`}>
-        <img
-          src="/radaxis-logo.png"
-          alt="RadAxis — Radiology Information System"
-          className={`${fullSizes[size]} object-contain filter drop-shadow-sm`}
-        />
-      </div>
-    );
-  }
 
   return (
-    <div className={`flex items-center gap-2.5 select-none ${className}`}>
-      {/* Approved Precision Radiology Symbol */}
-      <div
-        className={`relative flex items-center justify-center shrink-0 rounded-lg overflow-hidden transition-transform ${iconSizes[size]} ${
-          isLight
-            ? 'bg-[#0b1329]/80 ring-1 ring-white/15 shadow-sm'
-            : 'bg-[#0f172a] shadow-xs'
-        }`}
-      >
+    <div className={`flex items-center gap-3 select-none ${className}`}>
+      {/* Brand Icon */}
+      <div className={`${iconSizes[size]} shrink-0 flex items-center justify-center`}>
         <img
           src="/radaxis-symbol.png"
           alt="RadAxis"
-          className="w-full h-full object-contain p-0.5"
-          onError={(e) => {
-            // Fallback to high-contrast SVG if image fails to load
-            (e.currentTarget as HTMLElement).style.display = 'none';
-          }}
+          className="w-full h-full object-contain drop-shadow-xs"
         />
       </div>
 
-      {/* Brand Wordmark & Descriptor */}
-      <div className="flex flex-col leading-none">
-        <div className="flex items-center gap-1.5">
-          <span
-            className={`font-extrabold tracking-tight ${textSizes[size]} ${
-              isLight ? 'text-white' : 'text-[#15233B]'
-            }`}
-          >
-            Rad<span className={isLight ? 'text-[#38BDF8]' : 'text-[#33398A]'}>Axis</span>
-          </span>
-          <span
-            className={`font-bold tracking-wider rounded font-mono ${badgeSizes[size]} ${
-              isLight
-                ? 'bg-blue-500/20 text-sky-200 border border-sky-400/30'
-                : 'bg-[#F3F6FC] text-[#33398A] border border-[#DCE2EC]'
-            }`}
-          >
-            RIS
-          </span>
+      {!iconOnly && (
+        <div className="flex flex-col leading-tight">
+          <div className={`flex items-center gap-1.5 ${textSizes[size]} tracking-tight ${isLight ? 'text-white' : 'text-slate-900'}`}>
+            <span>RADAXIS</span>
+            <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100/90 px-1.5 py-0.5 rounded-full">
+              RIS
+            </span>
+          </div>
+          {showDescriptor && (
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[10px] text-slate-400 font-medium">v2.4.1 Production</span>
+            </div>
+          )}
         </div>
-        {showDescriptor && (
-          <span
-            className={`text-[10px] font-medium tracking-wider uppercase mt-1 ${
-              isLight ? 'text-slate-400' : 'text-[#64748B]'
-            }`}
-          >
-            Radiology Information System
-          </span>
-        )}
-      </div>
+      )}
     </div>
   );
 }
-export default RadAxisLogo;

@@ -40,7 +40,7 @@ export function ReportHistoryModal({ orderId, open, onOpenChange }: ReportHistor
       <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col p-0 overflow-hidden">
         <DialogHeader className="p-4 border-b bg-muted/20 shrink-0">
           <div className="flex items-center gap-2">
-            <History className="h-5 w-5 text-indigo-600" />
+            <History className="h-5 w-5 text-[#2563EB]" />
             <DialogTitle className="text-base font-bold text-foreground">
               Report Delivery & Dispatch History
             </DialogTitle>
@@ -60,7 +60,7 @@ export function ReportHistoryModal({ orderId, open, onOpenChange }: ReportHistor
         <div className="flex-1 overflow-y-auto p-4 space-y-5">
           {isLoading ? (
             <div className="py-12 flex flex-col items-center justify-center text-muted-foreground text-sm">
-              <Loader2 className="h-6 w-6 animate-spin text-indigo-600 mb-2" />
+              <Loader2 className="h-6 w-6 animate-spin text-[#2563EB] mb-2" />
               <span>Loading delivery audit log...</span>
             </div>
           ) : !history ? (
@@ -85,7 +85,7 @@ export function ReportHistoryModal({ orderId, open, onOpenChange }: ReportHistor
               {/* 1. Physical / Portal Deliveries */}
               <div className="space-y-2">
                 <h4 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
-                  <User className="h-3.5 w-3.5 text-indigo-600" />
+                  <User className="h-3.5 w-3.5 text-[#2563EB]" />
                   <span>Delivery & Acknowledgment Log ({history.deliveries.length})</span>
                 </h4>
                 {history.deliveries.length === 0 ? (
@@ -96,7 +96,7 @@ export function ReportHistoryModal({ orderId, open, onOpenChange }: ReportHistor
                       <div key={del.id} className="p-3 border rounded-lg bg-card text-xs flex items-start justify-between gap-3 shadow-xs">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
-                            <Badge className="text-[10px] font-bold bg-indigo-50 text-indigo-800 border-indigo-200">
+                            <Badge className="text-[10px] font-bold bg-blue-50 text-indigo-800 border-blue-200">
                               {del.deliveryMethod}
                             </Badge>
                             <span className="font-semibold text-foreground">
@@ -122,7 +122,7 @@ export function ReportHistoryModal({ orderId, open, onOpenChange }: ReportHistor
               {/* 2. Patient SMS / Email Notifications */}
               <div className="space-y-2">
                 <h4 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
-                  <Send className="h-3.5 w-3.5 text-indigo-600" />
+                  <Send className="h-3.5 w-3.5 text-[#2563EB]" />
                   <span>Dispatched Notifications ({history.notifications.length})</span>
                 </h4>
                 {history.notifications.length === 0 ? (
@@ -159,7 +159,7 @@ export function ReportHistoryModal({ orderId, open, onOpenChange }: ReportHistor
               {/* 3. Physical Reprints Log */}
               <div className="space-y-2">
                 <h4 className="text-xs font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
-                  <Printer className="h-3.5 w-3.5 text-indigo-600" />
+                  <Printer className="h-3.5 w-3.5 text-[#2563EB]" />
                   <span>Physical Print / Reprint Log ({history.reprints.length})</span>
                 </h4>
                 {history.reprints.length === 0 ? (

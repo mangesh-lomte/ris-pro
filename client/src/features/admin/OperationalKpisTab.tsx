@@ -42,7 +42,7 @@ export const OperationalKpisTab: React.FC<OperationalKpisTabProps> = ({
       {/* Header Bar */}
       <div className="flex items-center justify-between bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 bg-indigo-50 text-indigo-700 rounded-lg">
+          <div className="p-2 bg-blue-50 text-blue-700 rounded-lg">
             <BarChart2 className="w-5 h-5" />
           </div>
           <div>
@@ -83,7 +83,7 @@ export const OperationalKpisTab: React.FC<OperationalKpisTabProps> = ({
             <span>Scheduled Intake</span>
             <Calendar className="w-4 h-4 text-indigo-500" />
           </div>
-          <p className="text-2xl font-bold text-indigo-700 font-mono">
+          <p className="text-2xl font-bold text-blue-700 font-mono">
             {appointments?.totalAppointments ?? 0}
           </p>
           <div className="text-[11px] text-slate-500 pt-1 border-t border-slate-100">
@@ -125,7 +125,7 @@ export const OperationalKpisTab: React.FC<OperationalKpisTabProps> = ({
       {/* Modality Volume Breakdown Grid */}
       <div className="p-6 bg-white border border-slate-200 rounded-lg shadow-sm space-y-4">
         <div className="flex items-center gap-2 pb-3 border-b border-slate-200">
-          <Activity className="w-5 h-5 text-indigo-600" />
+          <Activity className="w-5 h-5 text-[#2563EB]" />
           <div>
             <h3 className="text-sm font-bold text-slate-900 uppercase">
               Modality Throughput Distribution
@@ -146,7 +146,7 @@ export const OperationalKpisTab: React.FC<OperationalKpisTabProps> = ({
                 className="p-4 bg-slate-50 border border-slate-200 rounded-lg space-y-1"
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-indigo-700 uppercase">{m.modality}</span>
+                  <span className="text-xs font-bold text-blue-700 uppercase">{m.modality}</span>
                   <span className="w-2 h-2 rounded-full bg-emerald-500" />
                 </div>
                 <p className="text-2xl font-bold text-slate-900 font-mono">{m.orderCount}</p>

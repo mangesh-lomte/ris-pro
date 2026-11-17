@@ -4,169 +4,153 @@
 
 @layer base {
   :root {
-    /* RadAxis Surfaces */
-    --background: 220 20% 98%; /* #F7F8FB */
-    --foreground: 218 47% 16%; /* #15233B */
+    /* Serene Mint Health Tokens */
+    --background: 154 22% 93%;
+    /* #e9f1ed */
+    --foreground: 222 47% 11%;
+    /* #0f172a */
 
-    --card: 0 0% 100%; /* #FFFFFF */
-    --card-foreground: 218 47% 16%;
+    --card: 0 0% 100%;
+    /* #ffffff */
+    --card-foreground: 222 47% 11%;
 
-    /* RadAxis Primary: #33398A */
-    --primary: 236 46% 37%;
+    /* Primary Mint/Emerald: #10b981 */
+    --primary: 160 84% 39%;
     --primary-foreground: 0 0% 100%;
 
-    /* RadAxis Soft Blue: #F3F6FC */
-    --secondary: 220 50% 97%;
-    --secondary-foreground: 218 47% 16%;
+    /* Secondary surface: #f4f8f5 */
+    --secondary: 140 18% 96%;
+    --secondary-foreground: 222 47% 11%;
 
-    --muted: 220 50% 97%;
-    --muted-foreground: 215 16% 47%; /* #64748B */
+    --muted: 140 18% 96%;
+    --muted-foreground: 215 16% 47%;
+    /* #64748b */
 
-    --accent: 220 50% 97%;
-    --accent-foreground: 236 46% 37%;
+    --accent: 140 33% 92%;
+    --accent-foreground: 160 84% 39%;
 
-    /* Semantic Critical / STAT: #D92D4C */
-    --destructive: 349 71% 51%;
+    /* Semantic Critical / Destructive: #dc2626 */
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    /* RadAxis Border: #DCE2EC */
-    --border: 218 31% 89%;
-    --input: 218 31% 89%;
-    --ring: 236 46% 37%;
+    /* Standard Separator Border: #dce6e0 */
+    --border: 144 14% 87%;
+    --input: 144 14% 87%;
+    --ring: 160 84% 39%;
 
-    --radius: 0.5rem;
+    /* Soft curved geometry */
+    --radius: 1.25rem;
   }
 
-  /* Accessible focus ring in RadAxis Blue */
+  /* Accessible focus ring in Emerald/Slate */
   :focus-visible {
-    outline: 2px solid #33398A;
+    outline: 2px solid #10b981;
     outline-offset: 2px;
   }
 }
 
-/* ─── RadAxis Enterprise Typography ─────────────────────── */
+/* ─── RadAxis Plus Jakarta Sans Typography ─────────────────── */
 html {
   font-size: 14px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-    Oxygen, Ubuntu, Cantarell, sans-serif;
-  color: #15233B;
-  background-color: #F7F8FB;
+body,
+.clinical-grid-bg {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #0f172a;
+  background-color: #e9f1ed;
+  background-image:
+    linear-gradient(to right, rgba(16, 185, 129, 0.018) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(16, 185, 129, 0.018) 1px, transparent 1px),
+    linear-gradient(to right, rgba(16, 185, 129, 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(16, 185, 129, 0.045) 1px, transparent 1px);
+  background-size: 20px 20px, 20px 20px, 100px 100px, 100px 100px;
   line-height: 1.5;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+  letter-spacing: -0.02em;
+}
+
+::selection {
+  color: #065f46;
+  background: #dff3e8;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* ─── Tabular numbers for clinical and telemetry data ──── */
 .tabular-nums,
-.font-mono {
+.font-mono,
+.font-clinical-mono {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
 }
 
-code, kbd, samp, pre {
-  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco,
-    Consolas, monospace;
+code,
+kbd,
+samp,
+pre {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
-/* ─── RadAxis Sidebar Navigation: visually hidden scrollbar, fully scrollable ─── */
-.sidebar-navigation,
-.custom-sidebar-scroll {
-  overflow-y: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.sidebar-navigation::-webkit-scrollbar,
-.custom-sidebar-scroll::-webkit-scrollbar {
-  display: none;
-}
-
-/* ─── Global Enterprise Contained Scrollbars ───────────── */
-.table-scroll-container,
-.thin-scroll,
-.overflow-x-auto,
-[data-scroll-container] {
-  scrollbar-width: thin;
-  scrollbar-color: #CBD5E1 transparent;
-  -webkit-overflow-scrolling: touch;
-}
-
-.table-scroll-container:hover,
-.thin-scroll:hover,
-.overflow-x-auto:hover {
-  scrollbar-color: #94A3B8 transparent;
-}
-
-.table-scroll-container::-webkit-scrollbar,
-.thin-scroll::-webkit-scrollbar,
-.overflow-x-auto::-webkit-scrollbar {
+/* ─── Smooth rounded scrollbar ─── */
+::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
-.table-scroll-container::-webkit-scrollbar-track,
-.thin-scroll::-webkit-scrollbar-track,
-.overflow-x-auto::-webkit-scrollbar-track {
+::-webkit-scrollbar-track {
+  background: #e9f1ed;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd7d0;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #aabeb2;
+}
+
+.custom-sidebar-scroll {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd7d0 transparent;
+}
+
+.thin-scroll::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.thin-scroll::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.table-scroll-container::-webkit-scrollbar-thumb,
-.thin-scroll::-webkit-scrollbar-thumb,
-.overflow-x-auto::-webkit-scrollbar-thumb {
-  background-color: #CBD5E1;
+.thin-scroll::-webkit-scrollbar-thumb {
+  background: #cbd7d0;
   border-radius: 9999px;
-  transition: background-color 0.15s ease-in-out;
 }
 
-.table-scroll-container:hover::-webkit-scrollbar-thumb,
-.thin-scroll:hover::-webkit-scrollbar-thumb,
-.overflow-x-auto:hover::-webkit-scrollbar-thumb,
-.table-scroll-container::-webkit-scrollbar-thumb:hover,
-.thin-scroll::-webkit-scrollbar-thumb:hover,
-.overflow-x-auto::-webkit-scrollbar-thumb:hover {
-  background-color: #94A3B8;
-}
-
-.table-scroll-container::-webkit-scrollbar-thumb:active,
-.thin-scroll::-webkit-scrollbar-thumb:active,
-.overflow-x-auto::-webkit-scrollbar-thumb:active {
-  background-color: #64748B;
-}
-
-/* ─── Table horizontal scroll container ─────────────── */
-.table-scroll-container {
-  overflow-x: auto;
-  overflow-y: visible;
-  position: relative;
-  max-width: 100%;
-}
-
-/* ─── Animate-in utilities ───────────────────────────── */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-4px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-.animate-in {
-  animation: fadeIn 0.15s ease-out both;
-}
-
-.fade-in {
-  animation: fadeIn 0.15s ease-out both;
-}
-
-/* ─── Stat tile ──────────────────────────────────────── */
-.stat-tile {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-/* ─── Print helpers ──────────────────────────────────── */
-@media print {
-  .no-print { display: none !important; }
-  body { background: white; }
+/* Clinical worklist row density */
+.worklist-row {
+  height: 2.5rem;
+  transition: background-color 150ms ease;
 }

@@ -233,9 +233,9 @@ export const MaintenancePage: React.FC = () => {
     }
   };
 
-  const handleUpdateTicketStatus = async (id: string, status: string, notes?: string) => {
+  const handleUpdateTicketStatus = async (id: string, status: string, notes?: string, rootCause?: string) => {
     try {
-      const res = await maintenanceService.updateServiceTicketStatus(id, { status, resolutionNotes: notes });
+      const res = await maintenanceService.updateServiceTicketStatus(id, { status, resolutionNotes: notes, rootCause });
       if (res.success) {
         notify(`Service ticket '${res.data?.ticketNumber}' updated to ${status}`);
         loadInitialData();
@@ -337,26 +337,26 @@ export const MaintenancePage: React.FC = () => {
   return (
     <div className="space-y-6 max-w-[1500px] mx-auto pb-12">
       {/* Page Title & Clinical Scope Authority */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-[#DCE2EC]">
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#dce6e0]">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl sm:text-[28px] font-bold text-[#15233B] tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
               Equipment Maintenance &amp; Biomedical Engineering
             </h1>
-            <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-[#33398A]/10 text-[#33398A] border border-[#33398A]/20">
+            <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-100/70 text-emerald-800 border border-emerald-200">
               Biomedical Fleet
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-[#64748B] mt-1 max-w-3xl">
+          <p className="text-xs text-slate-500 font-medium mt-1 max-w-3xl">
             Clinical asset lifecycle, preventive maintenance calendars, daily QC checks, breakdown tickets, downtime logs, spare parts, calibration certificates &amp; 24×7 escalation contacts.
           </p>
         </div>
 
         <button
           onClick={loadInitialData}
-          className="px-3 py-1.5 text-xs font-semibold bg-white text-slate-700 border border-slate-300 rounded hover:bg-slate-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#227DA5] flex items-center gap-1.5 cursor-pointer"
+          className="px-4 py-1.5 text-xs font-bold bg-white text-slate-800 border border-[#dce6e0] rounded-full hover:bg-[#f8faf8] transition-colors shadow-soft flex items-center gap-1.5 cursor-pointer"
         >
-          <RefreshCw className="w-3.5 h-3.5 text-[#174A70]" />
+          <RefreshCw className="w-3.5 h-3.5 text-emerald-600" />
           Sync Fleet State
         </button>
       </div>
@@ -364,7 +364,7 @@ export const MaintenancePage: React.FC = () => {
       {/* Alert Banner */}
       {bannerMessage && (
         <div
-          className={`p-3 rounded-lg text-xs font-semibold flex items-center justify-between shadow-sm border ${
+          className={`p-3.5 rounded-2xl text-xs font-bold flex items-center justify-between shadow-soft border ${
             bannerMessage.type === 'success'
               ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
               : 'bg-rose-50 text-rose-800 border-rose-200'
@@ -379,98 +379,100 @@ export const MaintenancePage: React.FC = () => {
 
       {/* Fleet Overview Tiles */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <div className="bg-white p-3.5 rounded-lg border border-slate-200/90 shadow-sm">
-          <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+        <div className="bg-white p-4 rounded-3xl border border-[#dce6e0] shadow-soft">
+          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
             Total Equipment
           </div>
-          <div className="text-xl font-bold text-slate-900 mt-1 tabular-nums">{totalAssets} Units</div>
-          <div className="text-xs text-emerald-600 font-medium mt-1 tabular-nums">
+          <div className="text-xl font-extrabold text-slate-900 mt-1 font-mono">{totalAssets} Units</div>
+          <div className="text-xs text-emerald-700 font-bold mt-1 font-mono">
             {operationalAssets} Operational ({((operationalAssets / (totalAssets || 1)) * 100).toFixed(0)}%)
           </div>
         </div>
 
-        <div className="bg-white p-3.5 rounded-lg border border-slate-200/90 shadow-sm">
-          <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+        <div className="bg-white p-4 rounded-3xl border border-[#dce6e0] shadow-soft">
+          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
             Active Outages
           </div>
-          <div className={`text-xl font-bold mt-1 tabular-nums ${activeDowntimesCount > 0 ? 'text-rose-600' : 'text-slate-800'}`}>
+          <div className={`text-xl font-extrabold mt-1 font-mono ${activeDowntimesCount > 0 ? 'text-rose-600' : 'text-slate-800'}`}>
             {activeDowntimesCount} Offline
           </div>
-          <div className="text-xs text-slate-400 mt-1">
+          <div className="text-xs text-slate-500 font-medium mt-1">
             {activeDowntimesCount === 0 ? 'Zero clinical downtime' : 'Front desk rescheduling active'}
           </div>
         </div>
 
-        <div className="bg-white p-3.5 rounded-lg border border-slate-200/90 shadow-sm">
-          <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+        <div className="bg-white p-4 rounded-3xl border border-[#dce6e0] shadow-soft">
+          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
             Pending / Due PMs
           </div>
-          <div className="text-xl font-bold text-[#174A70] mt-1 tabular-nums">{upcomingPmsCount} Slots</div>
-          <div className="text-xs text-slate-400 mt-1">
-            Quarterly & annual cycles
+          <div className="text-xl font-extrabold text-emerald-700 mt-1 font-mono">{upcomingPmsCount} Slots</div>
+          <div className="text-xs text-slate-500 font-medium mt-1">
+            Quarterly &amp; annual cycles
           </div>
         </div>
 
-        <div className="bg-white p-3.5 rounded-lg border border-slate-200/90 shadow-sm">
-          <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+        <div className="bg-white p-4 rounded-3xl border border-[#dce6e0] shadow-soft">
+          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
             QA / AERB Compliance
           </div>
-          <div className="text-xl font-bold text-slate-900 mt-1 tabular-nums">{validCertsCount} Valid</div>
-          <div className="text-xs text-slate-400 mt-1">
-            Radiation safety & dosimetry
+          <div className="text-xl font-extrabold text-slate-900 mt-1 font-mono">{validCertsCount} Valid</div>
+          <div className="text-xs text-slate-500 font-medium mt-1">
+            Radiation safety &amp; dosimetry
           </div>
         </div>
 
-        <div className="bg-white p-3.5 rounded-lg border border-slate-200/90 shadow-sm">
-          <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+        <div className="bg-white p-4 rounded-3xl border border-[#dce6e0] shadow-soft">
+          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
             Breakdown Tickets
           </div>
-          <div className="text-2xl font-bold text-amber-600 mt-1 tabular-nums">
+          <div className="text-xl font-extrabold text-amber-700 mt-1 font-mono">
             {openTicketsCount} Open
           </div>
-          <div className="text-xs text-slate-400 mt-1">
+          <div className="text-xs text-slate-500 font-medium mt-1">
             {reminders?.openTickets?.length || 0} Critical / High
           </div>
         </div>
       </div>
 
       {/* Ergonomic Grouped Navigation Header */}
-      <div className="bg-white rounded-lg border border-slate-200/90 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-3xl border border-[#dce6e0] shadow-soft overflow-hidden p-2">
         {/* Category Filter Chips & Quick Jump Selector */}
-        <div className="bg-slate-50/80 px-3.5 py-2 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+        <div className="bg-[#f8faf8] px-4 py-2.5 rounded-2xl flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-1.5 overflow-x-auto text-xs">
-            <span className="text-slate-500 font-semibold flex items-center gap-1 mr-1 shrink-0 text-[11px]">
+            <span className="text-slate-400 font-bold flex items-center gap-1 mr-1 shrink-0 text-[10px] uppercase tracking-wider">
               <Filter className="w-3.5 h-3.5 text-slate-400" /> Focus Group:
             </span>
-            {[
-              { key: 'ALL', label: 'All Sections (13)' },
-              { key: 'ASSETS', label: 'Fleet & Assets' },
-              { key: 'PREVENTIVE', label: 'Preventive & QC' },
-              { key: 'BREAKDOWN', label: 'Breakdowns & Spares' },
-              { key: 'COMPLIANCE', label: 'Compliance & Vendors' },
-            ].map((cat) => (
-              <button
-                key={cat.key}
-                onClick={() => setActiveCategory(cat.key as any)}
-                className={`px-2.5 py-0.5 rounded-md text-xs font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#227DA5] shrink-0 ${
-                  activeCategory === cat.key
-                    ? 'bg-[#174A70] text-white shadow-sm'
-                    : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
-                }`}
-              >
-                {cat.label}
-              </button>
-            ))}
+            <div className="flex items-center gap-1 bg-[#f0f4f1] p-1 rounded-full">
+              {[
+                { key: 'ALL', label: 'All Sections (13)' },
+                { key: 'ASSETS', label: 'Fleet & Assets' },
+                { key: 'PREVENTIVE', label: 'Preventive & QC' },
+                { key: 'BREAKDOWN', label: 'Breakdowns & Spares' },
+                { key: 'COMPLIANCE', label: 'Compliance & Vendors' },
+              ].map((cat) => (
+                <button
+                  key={cat.key}
+                  onClick={() => setActiveCategory(cat.key as any)}
+                  className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                    activeCategory === cat.key
+                      ? 'bg-slate-900 text-white shadow-soft font-extrabold'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Quick Jump Dropdown for Narrow Breakpoints (1024px) */}
           <div className="flex items-center gap-2">
-            <span className="text-[11px] text-slate-500 font-medium hidden sm:inline">Jump to section:</span>
+            <span className="text-[11px] text-slate-500 font-bold hidden sm:inline">Jump to section:</span>
             <select
-              value={activeTab}
               aria-label="Direct section navigation selector"
+              value={activeTab}
               onChange={(e) => setActiveTab(e.target.value as MaintenanceTabKey)}
-              className="text-xs font-semibold border border-slate-300 rounded-md px-2 py-1 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#227DA5] shadow-sm"
+              className="py-1 px-3 text-xs font-bold rounded-full border border-[#dce6e0] bg-white text-slate-800 shadow-soft focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
             >
               {ALL_TABS.map((t) => (
                 <option key={t.key} value={t.key}>
@@ -492,18 +494,18 @@ export const MaintenancePage: React.FC = () => {
                 role="tab"
                 aria-selected={isActive}
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold whitespace-nowrap border-b-2 transition-colors rounded-t-md cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#227DA5] shrink-0 ${
+                className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold whitespace-nowrap border-b-2 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] shrink-0 ${
                   isActive
-                    ? 'border-[#174A70] text-[#174A70] bg-[#174A70]/10'
+                    ? 'border-[#2563EB] text-[#2563EB] bg-[#2563EB]/10'
                     : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                 }`}
               >
-                <IconComponent className={`w-3.5 h-3.5 ${isActive ? 'text-[#174A70]' : 'text-slate-400'}`} />
+                <IconComponent className={`w-3.5 h-3.5 ${isActive ? 'text-[#2563EB]' : 'text-slate-400'}`} />
                 <span>{tab.label}</span>
                 {tab.badge !== undefined && (
                   <span
                     className={`ml-1 px-1.5 py-0.2 text-[10px] rounded-full font-bold tabular-nums ${
-                      isActive ? 'bg-[#174A70] text-white' : 'bg-slate-100 text-slate-600'
+                      isActive ? 'bg-[#2563EB] text-white' : 'bg-slate-100 text-slate-600'
                     }`}
                   >
                     {tab.badge}

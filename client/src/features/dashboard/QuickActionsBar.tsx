@@ -1,20 +1,19 @@
-import { UserPlus, CalendarPlus, CreditCard, Layers, Smartphone, FileText } from 'lucide-react';
+import { UserPlus, CalendarPlus, CreditCard, Layers, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { UserRole } from '../../types';
 
 interface Props {
   userRole?: UserRole;
-  onOpenPatientPortal?: () => void;
 }
 
-export function QuickActionsBar({ userRole, onOpenPatientPortal }: Props) {
+export function QuickActionsBar({ userRole }: Props) {
   // Select appropriate worklist destination according to user role
   const worklistDestination =
     userRole === 'RADIOLOGIST'
       ? '/radiologist/worklist'
       : userRole === 'TECHNOLOGIST'
-      ? '/technologist/worklist'
-      : '/reception';
+        ? '/technologist/worklist'
+        : '/reception';
 
   // Role-customized action buttons
   let actions: Array<{
@@ -29,28 +28,28 @@ export function QuickActionsBar({ userRole, onOpenPatientPortal }: Props) {
     actions = [
       {
         label: 'Open Worklist',
-        description: 'Technologist scan acquisition queue',
+        description: 'Scan acquisition queue',
         icon: Layers,
         to: '/technologist/worklist',
         isPrimary: true,
       },
       {
         label: 'Imaging Orders',
-        description: 'Review assigned examination orders',
+        description: 'Review assigned exams',
         icon: FileText,
         to: '/orders',
         isPrimary: false,
       },
       {
         label: 'Patient Registry',
-        description: 'View patient clinical records',
+        description: 'Demographics & safety',
         icon: UserPlus,
         to: '/patients',
         isPrimary: false,
       },
       {
-        label: 'Inventory & Contrast',
-        description: 'Contrast lots & consumables',
+        label: 'Inventory & Lots',
+        description: 'Contrast & consumables',
         icon: CreditCard,
         to: '/inventory',
         isPrimary: false,
@@ -59,29 +58,29 @@ export function QuickActionsBar({ userRole, onOpenPatientPortal }: Props) {
   } else if (userRole === 'RADIOLOGIST') {
     actions = [
       {
-        label: 'Open Worklist',
-        description: 'Diagnostic reporting worklist',
+        label: 'Reading Worklist',
+        description: 'Diagnostic interpretation queue',
         icon: Layers,
         to: '/radiologist/worklist',
         isPrimary: true,
       },
       {
-        label: 'Reporting',
-        description: 'Diagnostic report authoring queue',
+        label: 'Diagnostic Reporting',
+        description: 'Authoring & digital sign',
         icon: FileText,
         to: '/reporting',
         isPrimary: false,
       },
       {
         label: 'Imaging Orders',
-        description: 'Review patient imaging orders',
+        description: 'Review study protocols',
         icon: FileText,
         to: '/orders',
         isPrimary: false,
       },
       {
         label: 'Patient Registry',
-        description: 'Master patient demographic index',
+        description: 'Demographics & history',
         icon: UserPlus,
         to: '/patients',
         isPrimary: false,
@@ -105,15 +104,15 @@ export function QuickActionsBar({ userRole, onOpenPatientPortal }: Props) {
         isPrimary: false,
       },
       {
-        label: 'Collect Payment',
-        description: 'Accept deposit or scan billing',
+        label: 'Billing & POS',
+        description: 'Accept deposit or scan invoice',
         icon: CreditCard,
         to: '/billing',
         isPrimary: false,
       },
       {
-        label: 'Open Worklist',
-        description: userRole === 'RECEPTION' ? 'Front desk queue & check-in' : 'Operational clinical queue',
+        label: 'Open Queue',
+        description: userRole === 'RECEPTION' ? 'Front desk check-in queue' : 'Operational clinical queue',
         icon: Layers,
         to: worklistDestination,
         isPrimary: false,
@@ -122,51 +121,41 @@ export function QuickActionsBar({ userRole, onOpenPatientPortal }: Props) {
   }
 
   return (
-    <div className="bg-white p-3.5 sm:p-4 rounded-lg border border-slate-200/90 shadow-2xs">
-      <div className="flex items-center justify-between mb-2.5">
-        <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-          Quick Actions & Clinical Launchpad
+    <div className="bg-white p-5 rounded-3xl border border-[#dce6e0] shadow-soft">
+      <div className="mb-3.5">
+        <div className="text-xs font-bold text-slate-900 tracking-tight">
+          Fast Clinical Actions
         </div>
-        {onOpenPatientPortal && (
-          <button
-            onClick={onOpenPatientPortal}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold border border-slate-200 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#227DA5]"
-          >
-            <Smartphone className="w-3.5 h-3.5 text-[#174A70]" />
-            <span>Online Patient Portal</span>
-          </button>
-        )}
+        <p className="text-[11px] text-slate-500 font-medium">Frequent shortcuts for {userRole || 'operational'} workflows</p>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {actions.map((act) => {
           const Icon = act.icon;
           return (
             <Link
               key={act.label}
               to={act.to}
-              className={`p-2.5 sm:p-3 rounded-lg transition-all flex items-center gap-2.5 sm:gap-3 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#227DA5] ${
-                act.isPrimary
-                  ? 'bg-[#174A70] hover:bg-[#123855] text-white shadow-2xs'
-                  : 'bg-white hover:bg-slate-50 border border-slate-200/90 hover:border-slate-300 text-[#152B42] shadow-2xs'
-              }`}
+              className={`p-3.5 rounded-2xl transition-all duration-200 flex items-center gap-3 group ${act.isPrimary
+                ? 'bg-slate-900 hover:bg-slate-800 text-white shadow-soft'
+                : 'bg-[#f8faf8]/80 hover:bg-white border border-[#dce6e0] hover:border-emerald-300 hover:shadow-card text-slate-800'
+                }`}
             >
               <div
-                className={`p-2 rounded-md shrink-0 transition-colors ${
-                  act.isPrimary
-                    ? 'bg-white/15 text-white'
-                    : 'bg-slate-100 text-slate-600 group-hover:bg-[#174A70]/10 group-hover:text-[#174A70]'
-                }`}
+                className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-colors ${act.isPrimary
+                  ? 'bg-white/10 text-emerald-400'
+                  : 'bg-white text-slate-600 group-hover:bg-emerald-50 group-hover:text-emerald-700 border border-slate-100'
+                  }`}
               >
                 <Icon className="w-4 h-4" />
               </div>
               <div className="min-w-0">
-                <div className={`font-semibold text-xs truncate ${act.isPrimary ? 'text-white' : 'text-[#152B42]'}`}>
+                <div className={`font-bold text-xs truncate ${act.isPrimary ? 'text-white' : 'text-slate-900'}`}>
                   {act.label}
                 </div>
                 <div
-                  className={`text-[10px] line-clamp-1 ${
-                    act.isPrimary ? 'text-white/80' : 'text-slate-500'
-                  }`}
+                  className={`text-[11px] line-clamp-1 font-medium mt-0.5 ${act.isPrimary ? 'text-slate-400' : 'text-slate-500'
+                    }`}
                 >
                   {act.description}
                 </div>

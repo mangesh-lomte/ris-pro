@@ -26,7 +26,6 @@ import {
   LogOut,
   Download,
   Stethoscope,
-  Activity,
 } from 'lucide-react';
 import { formatINR } from '../utils/formatters';
 
@@ -36,16 +35,16 @@ export function PatientPortalPage() {
   const [activeTab, setActiveTab] = useState<TabType>('BOOKING');
 
   // Auth state
-  const [phone, setPhone] = useState('555-0199');
+  const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
-  const [firstName, setFirstName] = useState('Eleanor');
-  const [lastName, setLastName] = useState('Vance');
-  const [dob, setDob] = useState('1985-04-12');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [dob, setDob] = useState('');
   const [gender, setGender] = useState('FEMALE');
   const [otpSent, setOtpSent] = useState(false);
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem('manrad_patient_token'));
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem('radaxis_patient_token'));
   const [patient, setPatient] = useState<any>(() => {
-    const saved = localStorage.getItem('manrad_patient_data');
+    const saved = localStorage.getItem('radaxis_patient_data');
     return saved ? JSON.parse(saved) : null;
   });
 
@@ -63,14 +62,15 @@ export function PatientPortalPage() {
   });
   const [slotsData, setSlotsData] = useState<SlotsResponse | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  const [selectedEquipmentId, setSelectedEquipmentId] = useState<string | null>(null);
   const [clinicalNotes, setClinicalNotes] = useState('');
   const [bookedAppointment, setBookedAppointment] = useState<any>(null);
 
   // Post-booking: Referral prescription upload
   const [prescriptionFile, setPrescriptionFile] = useState<File | null>(null);
   const [prescriptionBase64, setPrescriptionBase64] = useState<string | null>(null);
-  const [prescriptionDoctor, setPrescriptionDoctor] = useState('Dr. Robert Sterling');
-  const [prescriptionNotes, setPrescriptionNotes] = useState('Persistent non-productive cough, evaluate pulmonary parenchyma.');
+  const [prescriptionDoctor, setPrescriptionDoctor] = useState('');
+  const [prescriptionNotes, setPrescriptionNotes] = useState('');
   const [prescriptionUploaded, setPrescriptionUploaded] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -84,6 +84,7 @@ export function PatientPortalPage() {
   // Post-booking: Deposit
   const [paymentMethod, setPaymentMethod] = useState('UPI');
   const [paymentReceipt, setPaymentReceipt] = useState<any>(null);
+  const [paymentIdempotencyKey] = useState(() => crypto.randomUUID());
 
   // My Appointments list
   const [myAppointments, setMyAppointments] = useState<PortalAppointmentSummary[]>([]);
@@ -125,10 +126,11 @@ export function PatientPortalPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await patientPortalBookingService.getSlots(selectedModality, selectedDate);
+      const res = await patientPortalBookingService.getSlots(selectedModality, selectedDate, selectedExam?.id);
       setSlotsData(res);
       const firstAvail = res.slots.find((s) => s.isAvailable);
-      if (firstAvail) setSelectedSlot(firstAvail.startTime);
+      setSelectedSlot(firstAvail?.startTime || null);
+      setSelectedEquipmentId(firstAvail?.equipmentId || null);
     } catch (err: any) {
       setError(err?.message || 'Failed to load time slots');
     } finally {
@@ -152,8 +154,8 @@ export function PatientPortalPage() {
     try {
       const res = await patientPortalBookingService.requestOtp(phone);
       setOtpSent(true);
-      setOtp(res.demoOtp || '123456');
-      setSuccessMsg(`Verification code dispatched to ${phone}. Enter the 6-digit code below.`);
+      setOtp('');
+      setSuccessMsg(res.message);
     } catch (err: any) {
       setError(err?.message || 'Failed to request verification code');
     } finally {
@@ -175,8 +177,8 @@ export function PatientPortalPage() {
       });
       setToken(res.token);
       setPatient(res.patient);
-      localStorage.setItem('manrad_patient_token', res.token);
-      localStorage.setItem('manrad_patient_data', JSON.stringify(res.patient));
+      localStorage.setItem('radaxis_patient_token', res.token);
+      localStorage.setItem('radaxis_patient_data', JSON.stringify(res.patient));
       setSuccessMsg(`Welcome, ${res.patient.firstName}! Patient ID: ${res.patient.patientId}`);
       setBookingStep(1);
     } catch (err: any) {
@@ -189,25 +191,27 @@ export function PatientPortalPage() {
   const handleSignOut = () => {
     setToken(null);
     setPatient(null);
-    localStorage.removeItem('manrad_patient_token');
-    localStorage.removeItem('manrad_patient_data');
+    localStorage.removeItem('radaxis_patient_token');
+    localStorage.removeItem('radaxis_patient_data');
     setBookedAppointment(null);
     setBookingStep(1);
     setSuccessMsg('You have been signed out securely.');
   };
 
   const handleBookAppointment = async () => {
-    if (!token || !selectedExam || !selectedSlot) return;
+    if (!token || !selectedExam || !selectedSlot || !selectedEquipmentId) return;
     setLoading(true);
     setError(null);
     try {
       const res = await patientPortalBookingService.bookAppointment(token, {
         examDefinitionId: selectedExam.id,
         scheduledStart: selectedSlot,
+        equipmentId: selectedEquipmentId,
         clinicalNotes,
       });
       setBookedAppointment(res);
-      setSuccessMsg('Appointment confirmed! Multi-channel notifications dispatched.');
+      const queued = res.notificationsSent?.filter((item: any) => item.status === 'QUEUED').length || 0;
+      setSuccessMsg(queued > 0 ? 'Appointment confirmed. Notifications have been queued.' : 'Appointment confirmed. Notifications are simulated in this local environment.');
       setBookingStep(3); // Go to post-booking confirmation
       loadMyAppointments();
     } catch (err: any) {
@@ -293,9 +297,16 @@ export function PatientPortalPage() {
       const res = await patientPortalBookingService.payAdvanceDeposit(token, bookedAppointment.appointment.id, {
         amount: selectedExam.advanceDepositRequired,
         paymentMethod,
+        idempotencyKey: paymentIdempotencyKey,
       });
-      setPaymentReceipt(res);
-      setSuccessMsg(`Advance payment of ${formatINR(res.amountPaid)} confirmed. Receipt #${res.receiptNumber}`);
+      if (res.simulated) {
+        setPaymentReceipt(null);
+        setSuccessMsg(null);
+        setError(res.message);
+      } else {
+        setPaymentReceipt(res);
+        setSuccessMsg(`Advance payment of ${formatINR(res.amountPaid)} confirmed. Receipt #${res.receiptNumber}`);
+      }
       loadMyAppointments();
     } catch (err: any) {
       setError(err?.message || 'Payment processing failed');
@@ -392,23 +403,24 @@ export function PatientPortalPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col">
+    <div className="min-h-screen clinical-grid-bg text-slate-800 flex flex-col selection:bg-emerald-100 selection:text-emerald-900">
       {/* Top Header */}
-      <header className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 sticky top-0 z-30 shadow-2xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <header className="sticky top-3 z-30 px-3 md:px-5 lg:px-6">
+        <div className="max-w-7xl mx-auto rounded-3xl border border-[#dce6e0] bg-white/85 backdrop-blur-md shadow-soft px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-[#33398A] text-white rounded-lg shadow-sm">
-              <Activity className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0">
+              <img
+                src="/radaxis-symbol.png"
+                alt="RadAxis"
+                className="w-full h-full object-contain drop-shadow-xs"
+              />
             </div>
             <div>
-              <div className="font-bold text-lg tracking-tight text-[#15233B] dark:text-slate-100 flex items-center gap-2">
-                RadAxis Radiology
-                <Badge variant="outline" className="text-2xs bg-blue-50 text-[#33398A] border-blue-200">
-                  Patient Portal
-                </Badge>
+              <div className="font-extrabold text-base tracking-tight text-slate-900 flex items-center gap-2">
+                RADAXIS <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-full">Patient Portal</span>
               </div>
-              <p className="text-3xs text-slate-500 hidden sm:block">
-                Online Self-Service Scheduling, Prescription Upload & Diagnostic Reports
+              <p className="text-[11px] text-slate-400 font-medium hidden sm:block">
+                Online Self-Service Scheduling, Prescription Upload &amp; Diagnostic Reports
               </p>
             </div>
           </div>
@@ -417,16 +429,16 @@ export function PatientPortalPage() {
             {token && patient ? (
               <div className="flex items-center gap-3">
                 <div className="hidden sm:block text-right">
-                  <div className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                  <div className="text-xs font-bold text-slate-900">
                     {patient.firstName} {patient.lastName}
                   </div>
-                  <div className="text-3xs font-mono text-slate-500">MRN: {patient.patientId}</div>
+                  <div className="text-[11px] font-mono text-slate-400 font-semibold">MRN: {patient.patientId}</div>
                 </div>
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={handleSignOut}
-                  className="text-xs h-8 text-rose-600 hover:text-rose-700 hover:bg-rose-50"
+                  className="text-xs h-8 text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-full border-rose-200"
                 >
                   <LogOut className="w-3.5 h-3.5 mr-1" /> Sign Out
                 </Button>
@@ -434,7 +446,7 @@ export function PatientPortalPage() {
             ) : (
               <a
                 href="/login"
-                className="text-xs text-[#174A70] hover:underline font-medium"
+                className="text-xs text-slate-700 hover:text-emerald-700 font-bold px-3 py-1.5 rounded-full hover:bg-slate-100 transition"
               >
                 Staff Login &rarr;
               </a>
@@ -444,27 +456,27 @@ export function PatientPortalPage() {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-6">
         {/* Banner Alert Messages */}
         {error && (
-          <div className="mb-4 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center justify-between">
-            <div className="flex items-center gap-2">
+          <div className="mb-4 p-4 rounded-2xl bg-rose-50 border border-rose-200/80 text-rose-900 text-xs flex items-center justify-between shadow-soft">
+            <div className="flex items-center gap-2.5">
               <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600" />
-              <span>{error}</span>
+              <span className="font-semibold">{error}</span>
             </div>
-            <button onClick={() => setError(null)} className="text-rose-500 hover:text-rose-700 text-sm font-bold">
+            <button onClick={() => setError(null)} className="text-rose-700 hover:text-rose-900 text-sm font-bold cursor-pointer">
               &times;
             </button>
           </div>
         )}
 
         {successMsg && (
-          <div className="mb-4 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-between">
-            <div className="flex items-center gap-2">
+          <div className="mb-4 p-4 rounded-2xl bg-emerald-50 border border-emerald-200/80 text-emerald-900 text-xs flex items-center justify-between shadow-soft">
+            <div className="flex items-center gap-2.5">
               <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
-              <span>{successMsg}</span>
+              <span className="font-semibold">{successMsg}</span>
             </div>
-            <button onClick={() => setSuccessMsg(null)} className="text-emerald-500 hover:text-emerald-700 text-sm font-bold">
+            <button onClick={() => setSuccessMsg(null)} className="text-emerald-700 hover:text-emerald-900 text-sm font-bold cursor-pointer">
               &times;
             </button>
           </div>
@@ -473,22 +485,22 @@ export function PatientPortalPage() {
         {/* Unauthenticated View: Patient OTP Login / Registration */}
         {!token ? (
           <div className="max-w-md mx-auto my-8">
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl overflow-hidden">
-              <div className="p-6 bg-gradient-to-br from-[#152B42] to-[#174A70] text-white">
+            <div className="bg-white border border-[#dce6e0] rounded-3xl shadow-soft overflow-hidden">
+              <div className="p-6 bg-slate-900 text-white">
                 <div className="flex items-center gap-2.5 mb-2">
-                  <div className="p-2 bg-white/10 rounded-lg">
-                    <Phone className="w-5 h-5 text-cyan-300" />
+                  <div className="p-2 bg-white/10 rounded-2xl">
+                    <Phone className="w-5 h-5 text-emerald-400" />
                   </div>
-                  <h2 className="text-lg font-bold">Patient Secure Login</h2>
+                  <h2 className="text-lg font-extrabold tracking-tight">Patient Secure Login</h2>
                 </div>
-                <p className="text-xs text-slate-200">
+                <p className="text-xs text-slate-300 leading-relaxed">
                   Access examination booking, view scheduled appointments, and retrieve finalized diagnostic reports.
                 </p>
               </div>
 
               <div className="p-6 space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
                     Mobile Phone Number
                   </label>
                   <div className="flex gap-2">
@@ -497,23 +509,23 @@ export function PatientPortalPage() {
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="e.g. 555-0199"
-                      className="w-full text-sm px-3.5 py-2.5 border border-slate-300 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-[#174A70]"
+                      className="w-full text-xs px-4 py-2 border border-slate-200/80 rounded-full bg-[#f4f7f5] hover:bg-[#edf2ee] focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium"
                     />
                     <Button
                       onClick={handleRequestOtp}
                       disabled={loading || !phone}
-                      className="shrink-0 bg-[#174A70] hover:bg-[#123956] text-white text-xs px-4"
+                      className="shrink-0 bg-slate-900 hover:bg-slate-800 text-white text-xs px-4 rounded-full font-bold shadow-soft"
                     >
                       {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Send Code'}
                     </Button>
                   </div>
-                  <p className="text-3xs text-slate-500 mt-1">Demo code for testing: 123456</p>
+                  <p className="text-[11px] text-slate-400 mt-1 font-medium">The code expires in five minutes. Local development codes appear only in the server console.</p>
                 </div>
 
                 {otpSent && (
-                  <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <div className="space-y-4 pt-3 border-t border-slate-100">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      <label className="block text-xs font-bold text-slate-700 mb-1.5">
                         6-Digit Verification Code
                       </label>
                       <input
@@ -521,13 +533,13 @@ export function PatientPortalPage() {
                         maxLength={6}
                         value={otp}
                         onChange={(e) => setOtp(e.target.value)}
-                        placeholder="123456"
-                        className="w-full text-center tracking-widest text-lg font-mono px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-[#174A70]"
+                        placeholder="Enter 6-digit code"
+                        className="w-full text-center tracking-widest text-lg font-mono px-3 py-2 border border-slate-200/80 rounded-2xl bg-[#f4f7f5] hover:bg-[#edf2ee] focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                       />
                     </div>
 
-                    <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl space-y-2 border border-slate-200 dark:border-slate-700">
-                      <span className="text-2xs font-semibold text-slate-600 dark:text-slate-400 block">
+                    <div className="p-4 bg-[#f4f8f5] rounded-2xl space-y-2.5 border border-[#dce6e0]">
+                      <span className="text-[11px] font-bold text-slate-600 block uppercase tracking-wider">
                         Patient Profile Details
                       </span>
                       <div className="grid grid-cols-2 gap-2">
@@ -536,14 +548,14 @@ export function PatientPortalPage() {
                           value={firstName}
                           onChange={(e) => setFirstName(e.target.value)}
                           placeholder="First Name"
-                          className="text-xs p-2 border rounded bg-white dark:bg-slate-900"
+                          className="text-xs px-3 py-2 border border-slate-200 rounded-full bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium"
                         />
                         <input
                           type="text"
                           value={lastName}
                           onChange={(e) => setLastName(e.target.value)}
                           placeholder="Last Name"
-                          className="text-xs p-2 border rounded bg-white dark:bg-slate-900"
+                          className="text-xs px-3 py-2 border border-slate-200 rounded-full bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium"
                         />
                       </div>
                       <div className="grid grid-cols-2 gap-2">
@@ -551,12 +563,12 @@ export function PatientPortalPage() {
                           type="date"
                           value={dob}
                           onChange={(e) => setDob(e.target.value)}
-                          className="text-xs p-2 border rounded bg-white dark:bg-slate-900"
+                          className="text-xs px-3 py-2 border border-slate-200 rounded-full bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium text-slate-700"
                         />
                         <select
                           value={gender}
                           onChange={(e) => setGender(e.target.value)}
-                          className="text-xs p-2 border rounded bg-white dark:bg-slate-900"
+                          className="text-xs px-3 py-2 border border-slate-200 rounded-full bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-medium text-slate-700"
                         >
                           <option value="FEMALE">Female</option>
                           <option value="MALE">Male</option>
@@ -568,7 +580,7 @@ export function PatientPortalPage() {
                     <Button
                       onClick={handleVerifyOtp}
                       disabled={loading || otp.length < 6}
-                      className="w-full bg-[#174A70] hover:bg-[#123956] text-white text-sm py-2.5 rounded-lg flex items-center justify-center gap-2"
+                      className="w-full bg-slate-900 hover:bg-slate-800 text-white text-xs py-2.5 rounded-full font-bold shadow-soft flex items-center justify-center gap-2 cursor-pointer"
                     >
                       {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Verify Code & Enter Portal'}
                     </Button>
@@ -581,13 +593,17 @@ export function PatientPortalPage() {
           /* Authenticated View */
           <div className="space-y-6">
             {/* Navigation Tabs */}
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-3">
+            <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3 rounded-3xl border border-[#dce6e0] shadow-soft">
               <div className="flex items-center gap-2">
                 <Button
                   variant={activeTab === 'BOOKING' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setActiveTab('BOOKING')}
-                  className={activeTab === 'BOOKING' ? 'bg-[#174A70] hover:bg-[#123956] text-white text-xs' : 'text-xs'}
+                  className={`text-xs rounded-full font-bold shadow-soft ${
+                    activeTab === 'BOOKING'
+                      ? 'bg-slate-900 text-white'
+                      : 'border-[#dce6e0] bg-[#f4f7f5] text-slate-700 hover:bg-[#edf2ee]'
+                  }`}
                 >
                   <Calendar className="w-3.5 h-3.5 mr-1.5" /> Book Examination
                 </Button>
@@ -598,15 +614,19 @@ export function PatientPortalPage() {
                     setActiveTab('MY_APPOINTMENTS');
                     loadMyAppointments();
                   }}
-                  className={activeTab === 'MY_APPOINTMENTS' ? 'bg-[#174A70] hover:bg-[#123956] text-white text-xs' : 'text-xs'}
+                  className={`text-xs rounded-full font-bold shadow-soft ${
+                    activeTab === 'MY_APPOINTMENTS'
+                      ? 'bg-slate-900 text-white'
+                      : 'border-[#dce6e0] bg-[#f4f7f5] text-slate-700 hover:bg-[#edf2ee]'
+                  }`}
                 >
-                  <FileText className="w-3.5 h-3.5 mr-1.5" /> My Appointments & Reports ({myAppointments.length})
+                  <FileText className="w-3.5 h-3.5 mr-1.5" /> My Appointments &amp; Reports ({myAppointments.length})
                 </Button>
               </div>
 
-              <div className="flex items-center gap-2 text-2xs text-slate-500">
+              <div className="flex items-center gap-2 text-xs text-slate-500 pr-2">
                 <span>Logged in as:</span>
-                <span className="font-semibold text-slate-700 dark:text-slate-300">
+                <span className="font-bold text-slate-800">
                   {patient?.firstName} {patient?.lastName} ({patient?.patientId})
                 </span>
               </div>
@@ -617,7 +637,7 @@ export function PatientPortalPage() {
               <div className="space-y-6">
                 {/* STEP 1: SELECT MODALITY & EXAMINATION */}
                 {bookingStep === 1 && (
-                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-5">
+                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded p-6 shadow-sm space-y-5">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-3">
                       <div>
                         <h3 className="font-bold text-base text-slate-900 dark:text-slate-100">
@@ -641,9 +661,9 @@ export function PatientPortalPage() {
                             setSelectedModality(mod);
                             setSelectedExam(null);
                           }}
-                          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
+                          className={`px-4 py-2 rounded text-xs font-bold transition-all border ${
                             selectedModality === mod
-                              ? 'bg-[#174A70] text-white border-[#174A70] shadow-sm'
+                              ? 'bg-[#2563EB] text-white border-[#2563EB] shadow-sm'
                               : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-slate-400'
                           }`}
                         >
@@ -660,7 +680,7 @@ export function PatientPortalPage() {
                           <div
                             key={exam.id}
                             onClick={() => setSelectedExam(exam)}
-                            className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                            className={`p-4 rounded border cursor-pointer transition-all ${
                               isSelected
                                 ? 'bg-cyan-50/70 dark:bg-cyan-950/30 border-cyan-500 shadow-md ring-1 ring-cyan-500'
                                 : 'bg-white dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 hover:border-cyan-300'
@@ -709,7 +729,7 @@ export function PatientPortalPage() {
                           loadSlots();
                         }}
                         disabled={!selectedExam}
-                        className="bg-[#174A70] hover:bg-[#123956] text-white text-xs flex items-center gap-2"
+                        className="bg-[#2563EB] hover:bg-[#123956] text-white text-xs flex items-center gap-2"
                       >
                         Continue to Time Slots <ArrowRight className="w-3.5 h-3.5" />
                       </Button>
@@ -719,7 +739,7 @@ export function PatientPortalPage() {
 
                 {/* STEP 2: SELECT DATE & TIME SLOT */}
                 {bookingStep === 2 && (
-                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-5">
+                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded p-6 shadow-sm space-y-5">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-3">
                       <div>
                         <h3 className="font-bold text-base text-slate-900 dark:text-slate-100">
@@ -741,7 +761,7 @@ export function PatientPortalPage() {
                     </div>
 
                     {/* Date Picker Bar */}
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl border">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800/60 rounded border">
                       <div>
                         <label className="block text-2xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
                           Appointment Date
@@ -767,7 +787,7 @@ export function PatientPortalPage() {
                     {/* Slots Grid */}
                     {loading ? (
                       <div className="py-12 text-center text-xs text-slate-500 flex items-center justify-center gap-2">
-                        <Loader2 className="w-4 h-4 animate-spin text-[#174A70]" />
+                        <Loader2 className="w-4 h-4 animate-spin text-[#2563EB]" />
                         <span>Querying scanner capacity...</span>
                       </div>
                     ) : slotsData ? (
@@ -778,10 +798,13 @@ export function PatientPortalPage() {
                             <button
                               key={idx}
                               disabled={!slot.isAvailable}
-                              onClick={() => setSelectedSlot(slot.startTime)}
-                              className={`p-3 rounded-xl text-xs font-medium border text-center transition-all ${
+                              onClick={() => {
+                                setSelectedSlot(slot.startTime);
+                                setSelectedEquipmentId(slot.equipmentId);
+                              }}
+                              className={`p-3 rounded text-xs font-medium border text-center transition-all ${
                                 isSelected
-                                  ? 'bg-[#174A70] text-white border-[#174A70] shadow-sm'
+                                  ? 'bg-[#2563EB] text-white border-[#2563EB] shadow-sm'
                                   : slot.isAvailable
                                   ? 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:border-cyan-400'
                                   : 'bg-slate-100 dark:bg-slate-800/40 border-slate-200 text-slate-400 cursor-not-allowed line-through'
@@ -820,8 +843,8 @@ export function PatientPortalPage() {
                       </Button>
                       <Button
                         onClick={handleBookAppointment}
-                        disabled={loading || !selectedSlot}
-                        className="bg-[#174A70] hover:bg-[#123956] text-white text-xs flex items-center gap-2"
+                        disabled={loading || !selectedSlot || !selectedEquipmentId}
+                        className="bg-[#2563EB] hover:bg-[#123956] text-white text-xs flex items-center gap-2"
                       >
                         {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirm & Reserve Slot'} <ArrowRight className="w-3.5 h-3.5" />
                       </Button>
@@ -833,9 +856,9 @@ export function PatientPortalPage() {
                 {bookingStep === 3 && bookedAppointment && (
                   <div className="space-y-6">
                     {/* Confirmation Banner */}
-                    <div className="p-6 rounded-2xl border border-emerald-200 bg-emerald-50 dark:bg-emerald-950/20 text-slate-900 dark:text-slate-100 space-y-4">
+                    <div className="p-6 rounded border border-emerald-200 bg-emerald-50 dark:bg-emerald-950/20 text-slate-900 dark:text-slate-100 space-y-4">
                       <div className="flex items-center gap-3">
-                        <div className="p-3 rounded-xl bg-emerald-600 text-white">
+                        <div className="p-3 rounded bg-emerald-600 text-white">
                           <CheckCircle2 className="w-6 h-6" />
                         </div>
                         <div>
@@ -848,7 +871,7 @@ export function PatientPortalPage() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 bg-white/90 dark:bg-slate-900/90 rounded-xl border border-emerald-100 dark:border-emerald-900 text-xs">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 bg-white/90 dark:bg-slate-900/90 rounded border border-emerald-100 dark:border-emerald-900 text-xs">
                         <div>
                           <span className="text-2xs text-slate-500">Patient MRN</span>
                           <div className="font-mono font-bold">{bookedAppointment.patientId}</div>
@@ -873,7 +896,7 @@ export function PatientPortalPage() {
                     {/* Pre-Visit Action Modules (Prescription, Safety Screening, Deposit) */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                       {/* 1. Real Doctor Prescription Upload */}
-                      <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-3 flex flex-col justify-between">
+                      <div className="p-5 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-3 flex flex-col justify-between">
                         <div className="space-y-2">
                           <div className="flex items-center gap-2">
                             <Upload className="w-4 h-4 text-cyan-600" />
@@ -886,7 +909,7 @@ export function PatientPortalPage() {
                           </p>
 
                           {prescriptionUploaded ? (
-                            <div className="p-3 bg-cyan-50 dark:bg-cyan-950/40 rounded-xl border border-cyan-200 text-2xs text-cyan-800 dark:text-cyan-200 flex items-center gap-2">
+                            <div className="p-3 bg-cyan-50 dark:bg-cyan-950/40 rounded border border-cyan-200 text-2xs text-cyan-800 dark:text-cyan-200 flex items-center gap-2">
                               <CheckCircle2 className="w-4 h-4 text-cyan-600 shrink-0" />
                               <span>Prescription attached: {prescriptionFile?.name || 'Uploaded'}</span>
                             </div>
@@ -930,7 +953,7 @@ export function PatientPortalPage() {
                       </div>
 
                       {/* 2. Pre-Visit Safety Screening */}
-                      <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-3 flex flex-col justify-between">
+                      <div className="p-5 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-3 flex flex-col justify-between">
                         <div className="space-y-2">
                           <div className="flex items-center gap-2">
                             <ShieldAlert className="w-4 h-4 text-amber-600" />
@@ -943,9 +966,9 @@ export function PatientPortalPage() {
                           </p>
 
                           {questionnaireSubmitted ? (
-                            <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 text-2xs text-emerald-800 dark:text-emerald-200 flex items-center gap-2">
+                            <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded border border-emerald-200 text-2xs text-emerald-800 dark:text-emerald-200 flex items-center gap-2">
                               <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                              <span>Safety Form Cleared & Recorded</span>
+                              <span>Pre-visit questionnaire recorded. Final safety clearance is completed by the technologist.</span>
                             </div>
                           ) : (
                             <div className="space-y-1.5 text-2xs">
@@ -954,7 +977,7 @@ export function PatientPortalPage() {
                                   type="checkbox"
                                   checked={hasMetal}
                                   onChange={(e) => setHasMetal(e.target.checked)}
-                                  className="rounded text-[#174A70]"
+                                  className="rounded text-[#2563EB]"
                                 />
                                 <span>Metal implants, pacemaker or surgical clips</span>
                               </label>
@@ -963,7 +986,7 @@ export function PatientPortalPage() {
                                   type="checkbox"
                                   checked={hasAllergies}
                                   onChange={(e) => setHasAllergies(e.target.checked)}
-                                  className="rounded text-[#174A70]"
+                                  className="rounded text-[#2563EB]"
                                 />
                                 <span>Prior contrast medium / iodine reaction</span>
                               </label>
@@ -972,7 +995,7 @@ export function PatientPortalPage() {
                                   type="checkbox"
                                   checked={isPregnant}
                                   onChange={(e) => setIsPregnant(e.target.checked)}
-                                  className="rounded text-[#174A70]"
+                                  className="rounded text-[#2563EB]"
                                 />
                                 <span>Possible pregnancy</span>
                               </label>
@@ -981,7 +1004,7 @@ export function PatientPortalPage() {
                                   type="checkbox"
                                   checked={hasKidneyDisease}
                                   onChange={(e) => setHasKidneyDisease(e.target.checked)}
-                                  className="rounded text-[#174A70]"
+                                  className="rounded text-[#2563EB]"
                                 />
                                 <span>Diagnosed kidney disease</span>
                               </label>
@@ -996,13 +1019,13 @@ export function PatientPortalPage() {
                             disabled={loading}
                             className="w-full bg-amber-600 hover:bg-amber-700 text-white text-xs mt-2"
                           >
-                            Submit Safety Clearance
+                            Submit Pre-Visit Questionnaire
                           </Button>
                         )}
                       </div>
 
                       {/* 3. Advance Booking Deposit */}
-                      <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-3 flex flex-col justify-between">
+                      <div className="p-5 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-3 flex flex-col justify-between">
                         <div className="space-y-2">
                           <div className="flex items-center gap-2">
                             <CreditCard className="w-4 h-4 text-emerald-600" />
@@ -1015,7 +1038,7 @@ export function PatientPortalPage() {
                           </p>
 
                           {paymentReceipt ? (
-                            <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 text-2xs text-emerald-800 dark:text-emerald-200 space-y-1">
+                            <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded border border-emerald-200 text-2xs text-emerald-800 dark:text-emerald-200 space-y-1">
                               <div className="flex items-center gap-1.5 font-bold">
                                 <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                                 <span>Payment Confirmed: {formatINR(paymentReceipt.amountPaid)}</span>
@@ -1070,7 +1093,7 @@ export function PatientPortalPage() {
                           setActiveTab('MY_APPOINTMENTS');
                           loadMyAppointments();
                         }}
-                        className="bg-[#174A70] hover:bg-[#123956] text-white text-xs flex items-center gap-2"
+                        className="bg-[#2563EB] hover:bg-[#123956] text-white text-xs flex items-center gap-2"
                       >
                         View My Appointments & Reports <ArrowRight className="w-3.5 h-3.5" />
                       </Button>
@@ -1103,12 +1126,12 @@ export function PatientPortalPage() {
                 </div>
 
                 {myAppointments.length === 0 ? (
-                  <div className="p-12 text-center bg-white dark:bg-slate-900 border border-dashed rounded-2xl text-slate-500 text-xs space-y-2">
+                  <div className="p-12 text-center bg-white dark:bg-slate-900 border border-dashed rounded text-slate-500 text-xs space-y-2">
                     <p>No imaging appointments found for your account.</p>
                     <Button
                       size="sm"
                       onClick={() => setActiveTab('BOOKING')}
-                      className="bg-[#174A70] text-white text-xs"
+                      className="bg-[#2563EB] text-white text-xs"
                     >
                       Book a Scan Now
                     </Button>
@@ -1118,7 +1141,7 @@ export function PatientPortalPage() {
                     {myAppointments.map((appt) => (
                       <div
                         key={appt.id}
-                        className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-2xs hover:border-slate-300 transition-all space-y-3"
+                        className="bg-white dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-800 p-5 shadow-2xs hover:border-slate-300 transition-all space-y-3"
                       >
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
                           <div>
@@ -1167,7 +1190,7 @@ export function PatientPortalPage() {
 
                         {/* Inline Reschedule Dialog */}
                         {reschedulingId === appt.id && (
-                          <div className="p-3 bg-cyan-50 dark:bg-cyan-950/40 rounded-xl border border-cyan-200 text-xs space-y-2">
+                          <div className="p-3 bg-cyan-50 dark:bg-cyan-950/40 rounded border border-cyan-200 text-xs space-y-2">
                             <div className="flex items-center justify-between font-semibold text-cyan-900 dark:text-cyan-200">
                               <span>Select New Appointment Start Date & Time:</span>
                               <button
@@ -1188,7 +1211,7 @@ export function PatientPortalPage() {
                                 size="sm"
                                 onClick={() => handleReschedule(appt.id)}
                                 disabled={actionLoading === appt.id}
-                                className="bg-[#174A70] hover:bg-[#123956] text-white text-xs"
+                                className="bg-[#2563EB] hover:bg-[#123956] text-white text-xs"
                               >
                                 {actionLoading === appt.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Confirm New Time'}
                               </Button>
@@ -1225,7 +1248,7 @@ export function PatientPortalPage() {
                                     setReschedulingId(appt.id);
                                     setRescheduleSlotTime(appt.scheduledStart.slice(0, 16));
                                   }}
-                                  className="text-2xs h-7 text-[#174A70] hover:bg-[#174A70]/10"
+                                  className="text-2xs h-7 text-[#2563EB] hover:bg-[#2563EB]/10"
                                 >
                                   <Clock className="w-3 h-3 mr-1" /> Reschedule
                                 </Button>
@@ -1250,7 +1273,7 @@ export function PatientPortalPage() {
                                 disabled={actionLoading === `img-${appt.accessionNumber}`}
                                 className="text-2xs h-7 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-700"
                               >
-                                <Eye className="w-3 h-3 mr-1 text-[#174A70]" /> View Images
+                                <Eye className="w-3 h-3 mr-1 text-[#2563EB]" /> View Images
                               </Button>
                             )}
 

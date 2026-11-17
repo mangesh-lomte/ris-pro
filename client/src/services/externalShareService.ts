@@ -4,7 +4,7 @@ export interface ExternalShareRecord {
   id: string;
   shareNumber: string;
   shareToken: string;
-  shareType: 'PATIENT_PORTAL' | 'REFERRING_DOCTOR' | 'OUTSIDE_HOSPITAL' | 'LEGAL_AUDIT';
+  shareType: 'PATIENT_LINK' | 'DOCTOR_SHARE' | 'OUTSIDE_HOSPITAL';
   orderId: string;
   accessionNumber: string;
   patientId: string;
@@ -125,6 +125,31 @@ export interface OutsideStudyImportRecord {
   } | null;
 }
 
+function normalizeTransfer(record: any): LargeFileTransferRecord {
+  return {
+    ...record,
+    imagingOrderId: record.imagingOrderId || record.orderId,
+    targetSystem: record.targetSystem || record.destination,
+    transferProtocol: record.transferProtocol || record.packageType,
+    totalSizeBytes: Number(record.totalSizeBytes ?? record.totalBytes ?? 0),
+    transferredBytes: Number(record.transferredBytes ?? 0),
+  };
+}
+
+function normalizeImport(record: any): OutsideStudyImportRecord {
+  return {
+    ...record,
+    patientName: record.patientName || record.patientNameRaw,
+    patientIdOutside: record.patientIdOutside ?? record.patientIdRaw,
+    accessionOutside: record.accessionOutside ?? record.accessionRaw,
+    instancesCount: record.instancesCount ?? record.numberOfInstances,
+    seriesCount: record.seriesCount ?? null,
+    sourceFacility: record.sourceFacility || record.sourceInstitution,
+    reconciledOrderId: record.reconciledOrderId ?? record.matchedOrderId,
+    rejectionReason: record.rejectionReason ?? (record.status === 'REJECTED' ? record.reconciliationNotes : null),
+  };
+}
+
 export interface ShareAccessLogRecord {
   id: string;
   shareId: string;
@@ -143,7 +168,7 @@ export interface CreateSharePayload {
   recipientPhone?: string;
   recipientRole?: string;
   institutionName?: string;
-  shareType?: 'PATIENT_PORTAL' | 'REFERRING_DOCTOR' | 'OUTSIDE_HOSPITAL' | 'LEGAL_AUDIT';
+  shareType?: 'PATIENT_LINK' | 'DOCTOR_SHARE' | 'OUTSIDE_HOSPITAL';
   durationDays?: number;
   requiresOtp?: boolean;
   includeDicom?: boolean;
@@ -152,7 +177,8 @@ export interface CreateSharePayload {
   notes?: string;
   consentPurpose?: string;
   consentedBy?: string;
-  relationToPatient?: string;
+  consentedByRelation?: string;
+  consentNotes?: string;
 }
 
 export interface SharedStudyPublicContext {
@@ -215,10 +241,15 @@ export const externalShareService = {
     if (params?.page) query.append('page', params.page.toString());
     if (params?.limit) query.append('limit', params.limit.toString());
 
-    const res = await apiClient<{ items: ExternalShareRecord[]; total: number }>(
+    const res = await apiClient<any>(
       `/external-shares?${query.toString()}`
     );
-    return res.data;
+    const rawItems = Array.isArray(res.data)
+      ? res.data
+      : Array.isArray(res.data?.items)
+      ? res.data.items
+      : [];
+    return { items: rawItems, total: res.data?.total ?? rawItems.length };
   },
 
   // 2. Create new secure external share
@@ -279,23 +310,29 @@ export const externalShareService = {
     if (params?.page) query.append('page', params.page.toString());
     if (params?.limit) query.append('limit', params.limit.toString());
 
-    const res = await apiClient<{ items: LargeFileTransferRecord[]; total: number }>(
+    const res = await apiClient<any>(
       `/external-shares/transfers?${query.toString()}`
     );
-    return res.data;
+    const rawItems = Array.isArray(res.data)
+      ? res.data
+      : Array.isArray(res.data?.items)
+      ? res.data.items
+      : [];
+    return { items: rawItems.map(normalizeTransfer), total: res.data?.total ?? rawItems.length };
   },
 
   async initiateTransfer(payload: {
     orderId: string;
-    targetSystem: string;
-    transferProtocol: 'DICOM_DIR' | 'C_STORE' | 'TLS_HTTPS' | 'WADO_RS';
-    simulateFailure?: boolean;
+    destination: string;
+    packageType: 'DICOM_ZIP' | 'DICOM_DIR' | 'C_STORE' | 'STOW_RS';
+    totalFiles: number;
+    totalBytes: number;
   }): Promise<LargeFileTransferRecord> {
     const res = await apiClient<LargeFileTransferRecord>('/external-shares/transfers/initiate', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
-    return res.data;
+    return normalizeTransfer(res.data);
   },
 
   async retryTransfer(id: string): Promise<LargeFileTransferRecord> {
@@ -303,7 +340,7 @@ export const externalShareService = {
       method: 'POST',
       body: JSON.stringify({}),
     });
-    return res.data;
+    return normalizeTransfer(res.data);
   },
 
   // 8. Outside DICOM Imports
@@ -319,38 +356,44 @@ export const externalShareService = {
     if (params?.page) query.append('page', params.page.toString());
     if (params?.limit) query.append('limit', params.limit.toString());
 
-    const res = await apiClient<{ items: OutsideStudyImportRecord[]; total: number }>(
+    const res = await apiClient<any>(
       `/external-shares/imports?${query.toString()}`
     );
-    return res.data;
+    const rawItems = Array.isArray(res.data)
+      ? res.data
+      : Array.isArray(res.data?.items)
+      ? res.data.items
+      : [];
+    return { items: rawItems.map(normalizeImport), total: res.data?.total ?? rawItems.length };
   },
 
   async receiveImport(payload: {
-    patientName: string;
-    patientIdOutside?: string;
-    accessionOutside?: string;
-    modality: string;
-    studyDescription?: string;
-    studyDate?: string;
-    sourceFacility: string;
-    studyInstanceUid?: string;
-    seriesCount?: number;
-    instancesCount?: number;
+    patientNameRaw: string;
+    patientIdRaw?: string;
+    accessionRaw?: string;
+    modality: 'CT' | 'MRI' | 'XRAY' | 'ULTRASOUND';
+    studyDescription: string;
+    studyDate: string;
+    sourceInstitution: string;
+    studyInstanceUid: string;
+    numberOfInstances: number;
+    fileSize: number;
+    storagePath: string;
   }): Promise<OutsideStudyImportRecord> {
     const res = await apiClient<OutsideStudyImportRecord>('/external-shares/imports/receive', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
-    return res.data;
+    return normalizeImport(res.data);
   },
 
   async reconcileImport(
     id: string,
     payload: {
-      action: 'ATTACH_TO_PATIENT' | 'REJECT';
-      patientId?: string;
-      notes?: string;
-      rejectionReason?: string;
+      matchedPatientId?: string;
+      matchedOrderId?: string;
+      reconciliationNotes: string;
+      reject: boolean;
     }
   ): Promise<OutsideStudyImportRecord> {
     const res = await apiClient<OutsideStudyImportRecord>(
@@ -360,7 +403,7 @@ export const externalShareService = {
         body: JSON.stringify(payload),
       }
     );
-    return res.data;
+    return normalizeImport(res.data);
   },
 
   // 9. Audit Logs
@@ -374,9 +417,14 @@ export const externalShareService = {
     if (params?.page) query.append('page', params.page.toString());
     if (params?.limit) query.append('limit', params.limit.toString());
 
-    const res = await apiClient<{ items: ShareAccessLogRecord[]; total: number }>(
+    const res = await apiClient<any>(
       `/external-shares/logs?${query.toString()}`
     );
-    return res.data;
+    const rawItems = Array.isArray(res.data)
+      ? res.data
+      : Array.isArray(res.data?.items)
+      ? res.data.items
+      : [];
+    return { items: rawItems, total: res.data?.total ?? rawItems.length };
   },
 };

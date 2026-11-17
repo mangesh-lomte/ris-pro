@@ -22,6 +22,7 @@ export function RecordPaymentModal({
   const [amount, setAmount] = useState<number>(0);
   const [method, setMethod] = useState<'CASH' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'UPI' | 'ONLINE' | 'INSURANCE'>('CASH');
   const [referenceNumber, setReferenceNumber] = useState('');
+  const [authorizationConfirmed, setAuthorizationConfirmed] = useState(false);
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,6 +31,7 @@ export function RecordPaymentModal({
     if (invoice) {
       setAmount(Number(invoice.balance) > 0 ? Number(invoice.balance) : 0);
       setReferenceNumber('');
+      setAuthorizationConfirmed(false);
       setNotes('');
       setError(null);
     }
@@ -51,16 +53,25 @@ export function RecordPaymentModal({
       setError('Please select a payment method.');
       return;
     }
+    if (method !== 'CASH' && !referenceNumber.trim()) {
+      setError('Enter the verified transaction, UTR, authorization, or settlement reference.');
+      return;
+    }
+    if (method !== 'CASH' && !authorizationConfirmed) {
+      setError('Confirm that the external terminal or payer approved this payment.');
+      return;
+    }
 
     setLoading(true);
     setError(null);
 
     try {
-      const idempotencyKey = `PAY-${invoice.id}-${Date.now()}`;
+      const idempotencyKey = crypto.randomUUID();
       const res = await billingService.recordPayment(invoice.id, {
         amount,
         method,
         referenceNumber: referenceNumber || undefined,
+        authorizationConfirmed: method === 'CASH' ? undefined : authorizationConfirmed,
         notes: notes || undefined,
         idempotencyKey,
       });
@@ -101,10 +112,10 @@ export function RecordPaymentModal({
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
+          <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded border border-slate-200">
             <div>
               <span className="text-3xs uppercase font-bold text-slate-400 block">Patient ID</span>
-              <span className="font-mono font-bold text-indigo-700">{invoice.patientId}</span>
+              <span className="font-mono font-bold text-blue-700">{invoice.patientId}</span>
             </div>
             <div>
               <span className="text-3xs uppercase font-bold text-slate-400 block">Accession Number</span>
@@ -178,14 +189,28 @@ export function RecordPaymentModal({
           </div>
 
           <div className="space-y-1.5">
-            <label className="font-semibold text-slate-700">Reference / UTR / Auth Code</label>
+            <label className="font-semibold text-slate-700">Reference / UTR / Auth Code {method !== 'CASH' ? '*' : '(Optional)'}</label>
             <Input
               placeholder={method === 'UPI' ? 'UPI UTR / Transaction ID' : 'Card Auth / Cheque / Ref Number'}
               value={referenceNumber}
               onChange={(e) => setReferenceNumber(e.target.value)}
               className="text-xs font-mono"
+              required={method !== 'CASH'}
             />
           </div>
+
+          {method !== 'CASH' && (
+            <label className="flex min-h-11 items-center gap-3 rounded border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+              <input
+                type="checkbox"
+                checked={authorizationConfirmed}
+                onChange={(event) => setAuthorizationConfirmed(event.target.checked)}
+                className="h-4 w-4 rounded border-slate-300"
+                required
+              />
+              I verified that the external terminal or payer approved this transaction.
+            </label>
+          )}
 
           <div className="space-y-1.5">
             <label className="font-semibold text-slate-700">Notes / Remarks (Optional)</label>
@@ -205,7 +230,7 @@ export function RecordPaymentModal({
           <Button
             size="sm"
             type="submit"
-            disabled={loading || amount <= 0}
+            disabled={loading || amount <= 0 || (method !== 'CASH' && (!referenceNumber.trim() || !authorizationConfirmed))}
             className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5"
           >
             {loading ? 'Recording...' : `Record Payment (${formatINR(amount)})`}

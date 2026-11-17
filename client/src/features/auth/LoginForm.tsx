@@ -6,9 +6,8 @@ import { useAuth } from './AuthContext';
 import { UserRole } from '../../types';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
-import { Alert, AlertDescription } from '../../components/ui/alert';
 import { RoleBadge } from '../../components/shared/RoleBadge';
-import { AlertCircle, ArrowRight, Sparkles } from 'lucide-react';
+import { AlertCircle, ArrowRight, KeyRound, Mail, Sparkles } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const loginSchema = z.object({
@@ -78,82 +77,99 @@ export function LoginForm() {
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-2xl bg-white p-6 sm:p-8 shadow-card border border-[#DCE2EC]">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <div className="w-full">
+      <div className="rounded-3xl sm:rounded-4xl bg-white/95 backdrop-blur-xl p-5 sm:p-7 shadow-soft border border-[#dce6e0] relative">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-3.5">
           {errorMessage && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{errorMessage}</AlertDescription>
-            </Alert>
+            <div className="p-3 rounded-2xl bg-rose-50 border border-rose-200/80 text-rose-800 flex items-center gap-2 text-xs font-semibold animate-in fade-in">
+              <AlertCircle className="h-4 w-4 text-rose-600 shrink-0" />
+              <span>{errorMessage}</span>
+            </div>
           )}
 
           <div>
-            <label className="block text-xs font-bold text-[#15233B] uppercase tracking-wider mb-1.5">
-              Hospital Email
+            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+              Hospital Staff Email
             </label>
-            <Input
-              type="email"
-              placeholder="e.g. reception@ris.local"
-              error={errors.email?.message}
-              {...register('email')}
-            />
+            <div className="relative">
+              <Input
+                type="email"
+                placeholder="e.g. reception@ris.local"
+                error={errors.email?.message}
+                className="h-10 pl-9 rounded-full bg-[#f4f7f5] hover:bg-[#edf2ee] focus:bg-white text-xs font-medium border-slate-200/80 text-slate-800"
+                {...register('email')}
+              />
+              <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none" />
+            </div>
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-bold text-[#15233B] uppercase tracking-wider">
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                 Password
               </label>
-              <span className="text-[11px] text-[#64748B] font-mono">Demo: Demo@123</span>
+              <span className="inline-flex items-center gap-1 font-mono text-[10px] bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-200/60 font-semibold">
+                <Sparkles className="w-2.5 h-2.5 text-emerald-600" />
+                Demo: Demo@123
+              </span>
             </div>
-            <Input
-              type="password"
-              placeholder="••••••••"
-              error={errors.password?.message}
-              {...register('password')}
-            />
+            <div className="relative">
+              <Input
+                type="password"
+                placeholder="••••••••"
+                error={errors.password?.message}
+                className="h-10 pl-9 rounded-full bg-[#f4f7f5] hover:bg-[#edf2ee] focus:bg-white text-xs font-medium border-slate-200/80 text-slate-800 font-mono"
+                {...register('password')}
+              />
+              <KeyRound className="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none" />
+            </div>
           </div>
 
           <Button
             type="submit"
-            className="w-full h-11 text-sm font-semibold shadow-xs"
+            className="w-full h-10 rounded-full bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-soft transition-all flex items-center justify-center gap-2 cursor-pointer mt-1"
             isLoading={isSubmitting}
           >
-            <span>Sign In to RadAxis Portal</span>
-            <ArrowRight className="ml-2 h-4 w-4" />
+            <span>Sign In to Clinical Workspace</span>
+            <ArrowRight className="h-4 w-4" />
           </Button>
         </form>
 
-        {/* Quick 1-Click Role Switcher for Interviewers */}
-        <div className="mt-6 pt-6 border-t border-[#F3F6FC]">
-          <div className="flex items-center gap-1.5 mb-2 text-xs font-bold text-[#15233B] uppercase tracking-wider">
-            <Sparkles className="w-3.5 h-3.5 text-[#F4B629]" />
-            <span>1-Click Role Evaluation Demo</span>
+        {/* 1-Click Role Switch for Demo / Evaluation */}
+        <div className="mt-5 pt-4 border-t border-[#e2ece5]">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+              1-Click Role Switch
+            </span>
+            <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-full">
+              Instant evaluation
+            </span>
           </div>
-          <p className="text-[11px] text-[#64748B] mb-3">
-            Select any role below to instantly authenticate and evaluate role-specific workflows:
+          <p className="text-[11px] text-slate-500 mb-2.5 font-medium">
+            Select an account to test role-specific clinical permissions:
           </p>
 
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-2 gap-2">
             {demoAccounts.map((acc) => (
               <button
                 key={acc.role}
                 type="button"
                 onClick={() => handleQuickLogin(acc.role)}
                 disabled={loadingRole !== null || isSubmitting}
-                className="flex flex-col items-start p-3 rounded-xl border border-[#DCE2EC] bg-[#F3F6FC] hover:bg-[#E8EDF9] hover:border-[#33398A]/30 transition-all text-left cursor-pointer group shadow-2xs"
+                className="flex flex-col items-start p-2.5 rounded-2xl border border-[#dce6e0] bg-[#f8faf8] hover:bg-white hover:border-emerald-300 hover:shadow-soft transition-all duration-150 text-left cursor-pointer group active:scale-[0.98] disabled:opacity-50"
               >
-                <div className="flex items-center justify-between w-full mb-1.5">
+                <div className="flex items-center justify-between w-full mb-1">
                   <RoleBadge role={acc.role} />
-                  {loadingRole === acc.role && (
-                    <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[#33398A] border-t-transparent" />
+                  {loadingRole === acc.role ? (
+                    <span className="h-3 w-3 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
+                  ) : (
+                    <ArrowRight className="w-3 h-3 text-slate-300 group-hover:text-emerald-600 group-hover:translate-x-0.5 transition-all" />
                   )}
                 </div>
-                <span className="text-xs font-semibold text-[#15233B] group-hover:text-[#33398A] leading-tight">
+                <span className="text-xs font-bold text-slate-800 group-hover:text-slate-900 truncate w-full">
                   {acc.name}
                 </span>
-                <span className="text-[10px] text-[#64748B] font-mono mt-0.5 truncate w-full">
+                <span className="text-[10px] font-mono text-slate-400 group-hover:text-slate-600 truncate w-full">
                   {acc.email}
                 </span>
               </button>

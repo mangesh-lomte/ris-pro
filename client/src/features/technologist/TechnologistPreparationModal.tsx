@@ -184,7 +184,7 @@ export function TechnologistPreparationModal({
   const getCategoryBadge = (category: DocumentCategory) => {
     switch (category) {
       case 'REFERRAL':
-        return <Badge variant="outline" className="text-indigo-700 bg-indigo-50 border-indigo-200 text-[10px]">Referral</Badge>;
+        return <Badge variant="outline" className="text-blue-700 bg-blue-50 border-blue-200 text-[10px]">Referral</Badge>;
       case 'LAB_RESULT':
         return <Badge variant="outline" className="text-cyan-700 bg-cyan-50 border-cyan-200 text-[10px]">Lab Value</Badge>;
       case 'CONSENT':
@@ -192,7 +192,7 @@ export function TechnologistPreparationModal({
       case 'PREVIOUS_REPORT':
         return <Badge variant="outline" className="text-blue-700 bg-blue-50 border-blue-200 text-[10px]">Previous Report</Badge>;
       default:
-        return <Badge variant="outline" className="text-slate-700 bg-slate-50 border-slate-200 text-[10px]">Other</Badge>;
+        return <Badge variant="outline" className="text-slate-700 bg-slate-50 border-[#E2E8F0] text-[10px]">Other</Badge>;
     }
   };
 
@@ -299,7 +299,7 @@ export function TechnologistPreparationModal({
         <DialogHeader>
           <div className="flex items-center justify-between pb-2 border-b border-slate-100">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-indigo-50 border border-indigo-200 rounded-lg text-indigo-700">
+              <div className="p-2 bg-blue-50 border border-blue-200 rounded text-blue-700">
                 <FileText className="w-5 h-5" />
               </div>
               <div>
@@ -363,7 +363,7 @@ export function TechnologistPreparationModal({
         ) : (
           <div className="space-y-6 max-h-[75vh] overflow-y-auto pr-1">
             {/* Prominent Metadata Card (Single Source of Truth) */}
-            <div className="p-4 bg-slate-900 text-white rounded-xl shadow-sm border border-slate-800 space-y-3">
+            <div className="p-4 bg-slate-900 text-white rounded shadow-sm border border-slate-800 space-y-3">
               <div className="text-[11px] font-bold tracking-wider text-slate-400 uppercase flex items-center justify-between">
                 <span>Clinical Identifiers & Order Metadata (Immutable)</span>
                 <div className="flex items-center gap-2">
@@ -375,7 +375,7 @@ export function TechnologistPreparationModal({
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                <div className="bg-slate-800/80 p-2.5 rounded-lg border border-slate-700/60">
+                <div className="bg-slate-800/80 p-2.5 rounded border border-slate-700/60">
                   <span className="text-[10px] text-slate-400 uppercase font-semibold block mb-1">
                     Patient Name
                   </span>
@@ -384,21 +384,21 @@ export function TechnologistPreparationModal({
                   </span>
                 </div>
 
-                <div className="bg-slate-800/80 p-2.5 rounded-lg border border-slate-700/60">
+                <div className="bg-slate-800/80 p-2.5 rounded border border-slate-700/60">
                   <span className="text-[10px] text-slate-400 uppercase font-semibold block mb-1">
                     Patient ID (MRN)
                   </span>
                   <IdentifierPill type="patient" value={context.patient.patientId} />
                 </div>
 
-                <div className="bg-slate-800/80 p-2.5 rounded-lg border border-slate-700/60">
+                <div className="bg-slate-800/80 p-2.5 rounded border border-slate-700/60">
                   <span className="text-[10px] text-slate-400 uppercase font-semibold block mb-1">
                     Accession Number
                   </span>
                   <IdentifierPill type="accession" value={context.accessionNumber} />
                 </div>
 
-                <div className="bg-slate-800/80 p-2.5 rounded-lg border border-slate-700/60">
+                <div className="bg-slate-800/80 p-2.5 rounded border border-slate-700/60">
                   <span className="text-[10px] text-slate-400 uppercase font-semibold block mb-1">
                     Date of Birth
                   </span>
@@ -418,7 +418,7 @@ export function TechnologistPreparationModal({
 
             {/* Authoritative Safety Gate Status (Section 4 & Section 34) */}
             {!context.isSafetyCleared ? (
-              <div className="p-4 bg-rose-50 border border-rose-300 rounded-xl space-y-2">
+              <div className="p-4 bg-rose-50 border border-rose-300 rounded space-y-2">
                 <div className="flex items-center gap-2.5 text-rose-900 font-bold text-xs uppercase tracking-wider">
                   <ShieldAlert className="w-5 h-5 text-rose-600 shrink-0" />
                   <span>Clinical Review Required Before Preparation</span>
@@ -433,7 +433,7 @@ export function TechnologistPreparationModal({
                 </div>
               </div>
             ) : isReadyForScan ? (
-              <div className="p-4 bg-emerald-50 border border-emerald-300 rounded-xl space-y-2">
+              <div className="p-4 bg-emerald-50 border border-emerald-300 rounded space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5 text-emerald-950 font-bold text-xs uppercase tracking-wider">
                     <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
@@ -454,7 +454,7 @@ export function TechnologistPreparationModal({
                 </div>
               </div>
             ) : (
-              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center justify-between text-xs text-emerald-900">
+              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded flex items-center justify-between text-xs text-emerald-900">
                 <div className="flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
                   <span>Patient Identity & Safety Screening CLEARED. Authorized for patient preparation.</span>
@@ -466,7 +466,7 @@ export function TechnologistPreparationModal({
             )}
 
             {/* Preparation Requirements & Checklist Form */}
-            <div className="border border-slate-200 rounded-xl p-4 bg-white space-y-4 shadow-2xs">
+            <div className="border border-[#E2E8F0] rounded p-4 bg-white space-y-4 shadow-2xs">
               <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
                   <FileText className="w-4 h-4 text-slate-500" />
@@ -485,7 +485,7 @@ export function TechnologistPreparationModal({
               <div className="space-y-3">
                 {/* 1. Fasting Requirement */}
                 {context.requirements.fastingRequired ? (
-                  <div className="p-3 rounded-lg border border-slate-200 bg-slate-50/70 space-y-2">
+                  <div className="p-3 rounded border border-[#E2E8F0] bg-slate-50/70 space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
                         <span className="text-xs font-semibold text-slate-900 block">
@@ -517,7 +517,7 @@ export function TechnologistPreparationModal({
                     </div>
                   </div>
                 ) : (
-                  <div className="p-2.5 rounded-lg border border-slate-100 bg-slate-50 text-slate-500 text-xs flex items-center justify-between">
+                  <div className="p-2.5 rounded border border-slate-100 bg-slate-50 text-slate-500 text-xs flex items-center justify-between">
                     <span>Fasting Requirement: None required for this examination.</span>
                     <Badge variant="outline" className="text-[10px]">
                       NOT REQUIRED
@@ -527,10 +527,10 @@ export function TechnologistPreparationModal({
 
                 {/* 2. IV Line Readiness */}
                 {context.requirements.ivRequired ? (
-                  <div className="p-3 rounded-lg border border-slate-200 bg-slate-50/70 flex items-center justify-between">
+                  <div className="p-3 rounded border border-[#E2E8F0] bg-slate-50/70 flex items-center justify-between">
                     <div className="space-y-0.5 max-w-md">
                       <div className="flex items-center gap-1.5">
-                        <Syringe className="w-3.5 h-3.5 text-indigo-600" />
+                        <Syringe className="w-3.5 h-3.5 text-[#2563EB]" />
                         <span className="text-xs font-semibold text-slate-900">
                           Intravenous (IV) Access Ready
                         </span>
@@ -554,7 +554,7 @@ export function TechnologistPreparationModal({
                     </button>
                   </div>
                 ) : (
-                  <div className="p-2.5 rounded-lg border border-slate-100 bg-slate-50 text-slate-500 text-xs flex items-center justify-between">
+                  <div className="p-2.5 rounded border border-slate-100 bg-slate-50 text-slate-500 text-xs flex items-center justify-between">
                     <span>Intravenous Access: None required for this examination.</span>
                     <Badge variant="outline" className="text-[10px]">
                       NOT REQUIRED
@@ -564,7 +564,7 @@ export function TechnologistPreparationModal({
 
                 {/* 3. Contrast Preparation Readiness */}
                 {context.requirements.contrastPreparationRequired ? (
-                  <div className="p-3 rounded-lg border border-slate-200 bg-slate-50/70 flex items-center justify-between">
+                  <div className="p-3 rounded border border-[#E2E8F0] bg-slate-50/70 flex items-center justify-between">
                     <div className="space-y-0.5 max-w-md">
                       <span className="text-xs font-semibold text-slate-900 block">
                         Contrast Preparation Ready
@@ -591,7 +591,7 @@ export function TechnologistPreparationModal({
 
                 {/* 4. Informed Consent Confirmation */}
                 {context.requirements.consentRequired ? (
-                  <div className="p-3 rounded-lg border border-slate-200 bg-slate-50/70 flex items-center justify-between">
+                  <div className="p-3 rounded border border-[#E2E8F0] bg-slate-50/70 flex items-center justify-between">
                     <div className="space-y-0.5 max-w-md">
                       <span className="text-xs font-semibold text-slate-900 block">
                         Informed Consent Confirmation
@@ -625,7 +625,7 @@ export function TechnologistPreparationModal({
 
                 {/* 5. Additional Exam Instructions */}
                 {context.requirements.additionalPreparationRequired && (
-                  <div className="p-3 rounded-lg border border-amber-200 bg-amber-50/60 space-y-2">
+                  <div className="p-3 rounded border border-amber-200 bg-amber-50/60 space-y-2">
                     <span className="text-xs font-semibold text-amber-950 block">
                       Special Examination Instructions:
                     </span>
@@ -662,7 +662,7 @@ export function TechnologistPreparationModal({
                     onChange={(e) => setPreparationNotes(e.target.value)}
                     placeholder="Enter accommodations or technologist clinical notes..."
                     rows={2}
-                    className="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 resize-none disabled:bg-slate-50 disabled:text-slate-500"
+                    className="w-full text-xs p-2.5 border border-slate-300 rounded focus:ring-indigo-500 focus:border-indigo-500 resize-none disabled:bg-slate-50 disabled:text-slate-500"
                   />
                 </div>
               </div>
@@ -701,11 +701,11 @@ export function TechnologistPreparationModal({
             </div>
 
             {/* Supporting Documents Section (Requirement 7: Attach referral, lab values, consent and previous reports) */}
-            <div className="border border-slate-200 rounded-xl p-4 bg-white space-y-4 shadow-2xs">
+            <div className="border border-[#E2E8F0] rounded p-4 bg-white space-y-4 shadow-2xs">
               <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                 <div>
                   <span className="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
-                    <Paperclip className="w-4 h-4 text-indigo-600" />
+                    <Paperclip className="w-4 h-4 text-[#2563EB]" />
                     Supporting Clinical Documents
                   </span>
                   <p className="text-[11px] text-slate-500 mt-0.5">
@@ -719,7 +719,7 @@ export function TechnologistPreparationModal({
               </div>
 
               {/* Upload Form */}
-              <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
+              <div className="p-3 bg-slate-50 rounded border border-[#E2E8F0] space-y-3">
                 <div className="text-[11px] font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
                   <FileUp className="w-3.5 h-3.5 text-slate-500" />
                   <span>Attach New Document</span>
@@ -731,7 +731,7 @@ export function TechnologistPreparationModal({
                     <select
                       value={uploadCategory}
                       onChange={(e) => setUploadCategory(e.target.value as DocumentCategory)}
-                      className="w-full text-xs rounded-md border border-slate-200 bg-white px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      className="w-full text-xs rounded-md border border-[#E2E8F0] bg-white px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                     >
                       <option value="REFERRAL">Referral Letter / Order</option>
                       <option value="LAB_RESULT">Lab Value (Creatinine / eGFR)</option>
@@ -749,7 +749,7 @@ export function TechnologistPreparationModal({
                       type="file"
                       accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp"
                       onChange={handleFileChange}
-                      className="w-full text-xs text-slate-600 file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer"
+                      className="w-full text-xs text-slate-600 file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-indigo-100 cursor-pointer"
                     />
                   </div>
 
@@ -763,13 +763,13 @@ export function TechnologistPreparationModal({
                         placeholder="e.g., eGFR 78 mL/min"
                         value={uploadNotes}
                         onChange={(e) => setUploadNotes(e.target.value)}
-                        className="w-full text-xs rounded-md border border-slate-200 bg-white px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        className="w-full text-xs rounded-md border border-[#E2E8F0] bg-white px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                       />
                       <Button
                         size="sm"
                         disabled={!selectedFile || uploadDocMutation.isPending}
                         onClick={() => uploadDocMutation.mutate()}
-                        className="shrink-0 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white gap-1.5"
+                        className="shrink-0 text-xs font-semibold bg-[#2563EB] hover:bg-blue-700 text-white gap-1.5"
                       >
                         {uploadDocMutation.isPending ? (
                           <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -797,11 +797,11 @@ export function TechnologistPreparationModal({
                   Loading attached documents...
                 </div>
               ) : documents.length === 0 ? (
-                <div className="p-4 text-center rounded-lg border border-dashed border-slate-200 bg-slate-50/50 text-slate-500 text-xs">
+                <div className="p-4 text-center rounded border border-dashed border-[#E2E8F0] bg-slate-50/50 text-slate-500 text-xs">
                   No documents attached yet. Technologists can upload patient referrals, lab results, consent, or prior reports above.
                 </div>
               ) : (
-                <div className="divide-y divide-slate-100 border border-slate-200 rounded-lg overflow-hidden">
+                <div className="divide-y divide-slate-100 border border-[#E2E8F0] rounded overflow-hidden">
                   {documents.map((doc: OrderDocumentData) => (
                     <div
                       key={doc.id}
@@ -843,7 +843,7 @@ export function TechnologistPreparationModal({
                           size="sm"
                           disabled={downloadingDocId === doc.id}
                           onClick={() => handleDownloadDoc(doc)}
-                          className="h-7 px-2 text-xs text-slate-700 hover:text-slate-900 border-slate-200 gap-1"
+                          className="h-7 px-2 text-xs text-slate-700 hover:text-slate-900 border-[#E2E8F0] gap-1"
                         >
                           {downloadingDocId === doc.id ? (
                             <Loader2 className="w-3 h-3 animate-spin" />
@@ -875,11 +875,11 @@ export function TechnologistPreparationModal({
             </div>
 
             {/* Approved Workflow Protocol Selection Section (Section 38 & 39) */}
-            <div className="border border-slate-200 rounded-xl p-4 bg-white space-y-4 shadow-2xs">
+            <div className="border border-[#E2E8F0] rounded p-4 bg-white space-y-4 shadow-2xs">
               <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                 <div>
                   <span className="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
-                    <Sparkles className="w-4 h-4 text-indigo-600" />
+                    <Sparkles className="w-4 h-4 text-[#2563EB]" />
                     Approved Workflow Protocol Selection
                   </span>
                   <p className="text-[11px] text-slate-500 mt-0.5">
@@ -907,7 +907,7 @@ export function TechnologistPreparationModal({
 
               {/* Protocol Gate Reminder */}
               {!isReadyForScan && context.preparationStatus !== 'COMPLETE' && (
-                <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-900 text-xs flex items-center gap-2">
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded text-amber-900 text-xs flex items-center gap-2">
                   <Clock className="w-4 h-4 text-amber-600 shrink-0" />
                   <span>
                     Protocol confirmation is locked. Complete all required patient preparation checklist items above to enable confirmation.
@@ -934,12 +934,12 @@ export function TechnologistPreparationModal({
                             setSelectedProtocolId(proto.id);
                           }
                         }}
-                        className={`p-3 rounded-lg border transition-all cursor-pointer ${
+                        className={`p-3 rounded border transition-all cursor-pointer ${
                           isConfirmed
                             ? 'bg-emerald-50 border-emerald-400 ring-1 ring-emerald-400'
                             : isSelected
-                            ? 'bg-indigo-50/80 border-indigo-400 ring-1 ring-indigo-400'
-                            : 'bg-white border-slate-200 hover:border-slate-300'
+                            ? 'bg-blue-50/80 border-indigo-400 ring-1 ring-indigo-400'
+                            : 'bg-white border-[#E2E8F0] hover:border-slate-300'
                         } ${isReadyForScan ? 'cursor-default' : ''}`}
                       >
                         <div className="flex items-start justify-between gap-2">
@@ -950,6 +950,9 @@ export function TechnologistPreparationModal({
                               </span>
                               <Badge variant="outline" className="text-[10px]">
                                 {proto.modality}
+                              </Badge>
+                              <Badge variant="success" className="text-[10px]">
+                                Approved v{proto.version}
                               </Badge>
                               {proto.bodyPart && (
                                 <span className="text-[10px] text-slate-500 font-medium">
@@ -963,6 +966,9 @@ export function TechnologistPreparationModal({
                                 {proto.description}
                               </p>
                             )}
+                            <p className="text-[10px] text-slate-500">
+                              Approved {new Date(proto.approvedAt).toLocaleDateString()}
+                            </p>
                           </div>
 
                           <div className="shrink-0 pt-0.5">
@@ -977,7 +983,7 @@ export function TechnologistPreparationModal({
                                 checked={isSelected}
                                 disabled={isReadyForScan || !context.isSafetyCleared}
                                 onChange={() => setSelectedProtocolId(proto.id)}
-                                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
+                                className="h-4 w-4 text-[#2563EB] focus:ring-indigo-500"
                               />
                             )}
                           </div>
@@ -990,7 +996,7 @@ export function TechnologistPreparationModal({
 
               {/* Final Confirmation CTA Card (Section 39) */}
               {!isReadyForScan && (
-                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3 pt-3">
+                <div className="p-4 bg-slate-50 border border-[#E2E8F0] rounded space-y-3 pt-3">
                   <div className="text-xs space-y-1 text-slate-700">
                     <div className="font-semibold text-slate-900">Pre-Acquisition Gate Summary:</div>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] text-slate-600 pt-1">
@@ -1046,7 +1052,7 @@ export function TechnologistPreparationModal({
 
             {/* Error Banner */}
             {submissionError && (
-              <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 text-xs flex items-center gap-2">
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded text-rose-700 text-xs flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{submissionError}</span>
               </div>

@@ -35,7 +35,7 @@ PORT=5000
 CLIENT_PORT=5173
 
 # Database (PostgreSQL 16)
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/radaxis_ris?schema=public"
+DATABASE_URL="postgresql://postgres:postgres@localhost:5434/radaxis_ris?schema=public"
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres
 POSTGRES_DB=radaxis_ris
@@ -45,14 +45,14 @@ JWT_SECRET=radaxis_enterprise_secure_jwt_secret_dev_2026
 JWT_EXPIRES_IN=8h
 
 # Orthanc PACS DICOM Archive
-ORTHANC_URL=http://localhost:8042
+ORTHANC_URL=http://localhost:8044
 ORTHANC_USERNAME=orthanc
 ORTHANC_PASSWORD=orthanc
-ORTHANC_DICOM_AET=MANRAD
-ORTHANC_DICOM_PORT=4242
+ORTHANC_DICOM_AET=RADAXIS
+ORTHANC_DICOM_PORT=4244
 
 # OHIF Medical Imaging Viewer
-OHIF_VIEWER_URL=http://localhost:3000
+OHIF_VIEWER_URL=http://localhost:3002
 ```
 
 ---
@@ -80,9 +80,9 @@ docker compose ps
 ```
 
 Expected running containers:
-- `manrad-db` (PostgreSQL 16 on port `5432`)
-- `manrad-orthanc` (Orthanc PACS on port `8042` HTTP / `4242` DICOM)
-- `manrad-ohif` (OHIF Viewer v3 on port `3000`)
+- `radaxis-db` (PostgreSQL 16 on port `5434`)
+- `radaxis-orthanc` (Orthanc PACS on port `8044` HTTP / `4244` DICOM)
+- `radaxis-ohif` (OHIF Viewer v3 on port `3002`)
 
 ### Step 3.3: Initialize Database Schema
 Generate the Prisma client and apply database migrations:
@@ -142,10 +142,10 @@ npm run dev
 | **RadAxis Web Client** | `5173` | `http://localhost:5173` | Main clinical web workstation interface |
 | **RadAxis Core API** | `5000` | `http://localhost:5000/api/v1` | Express REST API server |
 | **API Health Check** | `5000` | `http://localhost:5000/api/v1/health` | Uptime and database health ping |
-| **OHIF Medical Viewer** | `3000` | `http://localhost:3000` | Zero-footprint DICOMweb diagnostic viewer |
-| **Orthanc PACS Web** | `8042` | `http://localhost:8042` | Orthanc administrative console & REST API |
-| **Orthanc DICOM Port** | `4242` | `localhost:4242` | DICOM C-STORE and C-FIND listener |
-| **PostgreSQL Database** | `5432` | `localhost:5432` | Relational clinical database |
+| **OHIF Medical Viewer** | `3002` | `http://localhost:3002` | Zero-footprint DICOMweb diagnostic viewer |
+| **Orthanc PACS Web** | `8044` | `http://localhost:8044` | Orthanc administrative console & REST API |
+| **Orthanc DICOM Port** | `4244` | `localhost:4244` | DICOM C-STORE and C-FIND listener |
+| **PostgreSQL Database** | `5434` | `localhost:5434` | Relational clinical database |
 
 ---
 

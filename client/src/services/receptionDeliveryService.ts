@@ -50,13 +50,12 @@ export const receptionDeliveryService = {
   },
 
   /**
-   * Sends a safe patient notification via SMS or Email (local adapter).
+   * Sends a safe patient notification via the configured adapter.
    */
   async sendPatientNotification(
     orderId: string,
     data: {
       channel: 'SMS' | 'EMAIL';
-      destinationOverride?: string;
     }
   ): Promise<ReportNotificationRecord> {
     const response = await apiClient<ReportNotificationRecord>(

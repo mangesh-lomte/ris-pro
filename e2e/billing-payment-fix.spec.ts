@@ -4,8 +4,8 @@ test.describe('Billing Payment Flow - P0 Bug Fix', () => {
   test.beforeEach(async ({ page }) => {
     // Login as admin
     await page.goto('/login');
-    await page.fill('input[type="email"]', 'admin@manrad.local');
-    await page.fill('input[type="password"]', 'ManRadRIS2024!');
+    await page.fill('input[type="email"]', 'admin@ris.local');
+    await page.fill('input[type="password"]', 'Demo@123');
     await page.click('button[type="submit"]');
     await page.waitForURL('/dashboard');
   });

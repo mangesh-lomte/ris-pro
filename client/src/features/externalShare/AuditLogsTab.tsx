@@ -50,7 +50,7 @@ export const AuditLogsTab: React.FC<AuditLogsTabProps> = ({ logs, loading, onRef
         );
       case 'DICOM_DOWNLOADED':
         return (
-          <span className="flex items-center gap-1 text-xs font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
+          <span className="flex items-center gap-1 text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
             DICOM ZIP Downloaded
           </span>
         );
@@ -66,7 +66,7 @@ export const AuditLogsTab: React.FC<AuditLogsTabProps> = ({ logs, loading, onRef
   return (
     <div className="space-y-4">
       {/* Control Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded border border-gray-200 shadow-sm">
         <div className="flex items-center gap-3 flex-1 min-w-[280px]">
           <input
             type="text"
@@ -85,7 +85,7 @@ export const AuditLogsTab: React.FC<AuditLogsTabProps> = ({ logs, loading, onRef
       </div>
 
       {/* Log Table */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded border border-gray-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-gray-600">
             <thead className="bg-gray-50 text-xs font-semibold uppercase text-gray-500 border-b border-gray-200">

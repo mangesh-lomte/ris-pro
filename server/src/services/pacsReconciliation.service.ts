@@ -21,7 +21,7 @@ export async function getPacsStatus() {
   return {
     adapter: caps.adapter,
     connected: health.connected,
-    serverName: health.serverName || caps.serverName || 'Manrad RIS PACS',
+    serverName: health.serverName || caps.serverName || 'RadAxis RIS PACS',
     version: health.version || caps.version || 'Unknown',
     apiVersion: health.apiVersion,
     dicomAet: health.dicomAet,

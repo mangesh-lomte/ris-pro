@@ -26,9 +26,10 @@ import { CancelAppointmentModal } from '../features/scheduling/CancelAppointment
 import { ReceptionCheckInModal } from '../features/reception/ReceptionCheckInModal';
 import { PatientLabelModal } from '../components/shared/PatientLabelModal';
 import { StaffAllocationModal } from '../features/scheduling/StaffAllocationModal';
+import { toLocalDateString } from '../utils/formatters';
 
 export function AppointmentsPage() {
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = toLocalDateString();
   const [selectedDate, setSelectedDate] = useState<string>(todayStr);
   const [selectedModality, setSelectedModality] = useState<ModalityType | undefined>('MRI');
   const [selectedEquipmentId, setSelectedEquipmentId] = useState<string>('');
@@ -97,15 +98,15 @@ export function AppointmentsPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-[1500px] mx-auto pb-12">
+    <div className="space-y-4 max-w-[1500px] mx-auto pb-10">
       {/* Header and Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-2 border-b border-[#DCE2EC]">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-[#dce6e0]">
         <div>
-          <h1 className="text-2xl sm:text-[28px] font-bold tracking-tight text-[#15233B]">
+          <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900">
             Clinical Calendar &amp; Scanner Scheduling
           </h1>
-          <p className="text-xs sm:text-sm text-[#64748B] mt-1">
-            Scanner and room allocation, double-booking prevention, real-time slot availability
+          <p className="text-xs text-slate-500 font-medium mt-0.5">
+            Modality suite allocation, double-booking prevention, and real-time slot availability
           </p>
         </div>
 
@@ -116,32 +117,32 @@ export function AppointmentsPage() {
               setSelectedSlotForBooking(null);
               setBookModalOpen(true);
             }}
-            className="gap-1.5"
+            className="gap-1.5 px-4 py-1.5 text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white rounded-full shadow-soft"
           >
-            <CalendarPlus className="w-3.5 h-3.5" />
+            <CalendarPlus className="w-3.5 h-3.5 text-emerald-400" />
             Book Appointment
           </Button>
         </div>
       </div>
 
       {/* Filter Bar */}
-      <Card className="border-slate-200 shadow-sm p-4">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <Card className="border border-[#dce6e0] shadow-soft p-4 rounded-3xl bg-white">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-slate-600 flex items-center gap-1">
-                <CalendarIcon className="w-3.5 h-3.5 text-cyan-600" />
+              <span className="text-xs font-bold text-slate-600 flex items-center gap-1.5">
+                <CalendarIcon className="w-3.5 h-3.5 text-slate-400" />
                 Date:
               </span>
               <Input
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="h-8 text-xs font-medium w-36"
+                className="py-1 px-3 text-xs font-semibold w-36 rounded-full border-[#dce6e0] bg-[#f8faf8]"
               />
             </div>
 
-            <div role="group" aria-label="Filter by Modality" className="flex items-center gap-1 bg-[#F3F6FC] border border-[#DCE2EC] p-1 rounded-lg">
+            <div role="group" aria-label="Filter by Modality" className="flex items-center gap-1 bg-[#f0f4f1] p-1 rounded-full">
               {(['MRI', 'CT', 'XRAY'] as ModalityType[]).map((mod) => (
                 <button
                   key={mod}
@@ -151,11 +152,10 @@ export function AppointmentsPage() {
                     setSelectedModality(mod);
                     setSelectedEquipmentId('');
                   }}
-                  className={`px-3 py-1.5 rounded-md text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#33398A] cursor-pointer ${
-                    selectedModality === mod
-                      ? 'bg-[#33398A] text-white shadow-xs'
-                      : 'text-[#64748B] hover:text-[#15233B]'
-                  }`}
+                  className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${selectedModality === mod
+                    ? 'bg-slate-900 text-white shadow-soft font-extrabold'
+                    : 'text-slate-600 hover:text-slate-900'
+                    }`}
                 >
                   {mod}
                 </button>
@@ -163,15 +163,15 @@ export function AppointmentsPage() {
             </div>
 
             {equipmentList.length > 0 && (
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs font-semibold text-slate-600 flex items-center gap-1">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-slate-600 flex items-center gap-1.5">
                   <Monitor className="w-3.5 h-3.5 text-slate-400" />
                   Scanner:
                 </span>
                 <select
                   value={selectedEquipmentId}
                   onChange={(e) => setSelectedEquipmentId(e.target.value)}
-                  className="h-8 rounded-md border border-slate-300 bg-white px-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-cyan-500 font-medium"
+                  className="rounded-full border border-[#dce6e0] bg-[#f8faf8] px-3 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 font-bold cursor-pointer"
                 >
                   <option value="">All Scanners in Modality</option>
                   {equipmentList.map((eq) => (
@@ -185,14 +185,13 @@ export function AppointmentsPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <div role="group" aria-label="View Mode" className="flex rounded-lg border border-slate-200 bg-slate-50 p-0.5 text-xs">
+            <div role="group" aria-label="View Mode" className="flex rounded-full border border-[#dce6e0] bg-[#f0f4f1] p-1 text-xs">
               <button
                 type="button"
                 aria-pressed={viewMode === 'timeline'}
                 onClick={() => setViewMode('timeline')}
-                className={`px-3 py-1 rounded font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 ${
-                  viewMode === 'timeline' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
-                }`}
+                className={`px-3 py-1.5 rounded-full font-bold transition-all ${viewMode === 'timeline' ? 'bg-slate-900 text-white shadow-soft' : 'text-slate-600 hover:text-slate-900'
+                  }`}
               >
                 Slot Timeline
               </button>
@@ -200,9 +199,8 @@ export function AppointmentsPage() {
                 type="button"
                 aria-pressed={viewMode === 'table'}
                 onClick={() => setViewMode('table')}
-                className={`px-3 py-1 rounded font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 ${
-                  viewMode === 'table' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-900'
-                }`}
+                className={`px-3 py-1.5 rounded-full font-bold transition-all ${viewMode === 'table' ? 'bg-slate-900 text-white shadow-soft' : 'text-slate-600 hover:text-slate-900'
+                  }`}
               >
                 List View ({appointments.length})
               </button>
@@ -213,54 +211,54 @@ export function AppointmentsPage() {
 
       {/* Main View Area */}
       {viewMode === 'timeline' ? (
-        <Card className="border-slate-200 shadow-sm">
-          <CardHeader className="pb-3 border-b border-slate-100 flex flex-row items-center justify-between">
+        <Card className="border border-[#dce6e0] shadow-soft rounded-3xl bg-white overflow-hidden">
+          <CardHeader className="p-5 border-b border-[#e9f1ed] flex flex-row items-center justify-between bg-white">
             <div>
-              <h3 className="text-sm font-bold text-slate-900">
-                Real-Time Scanner Capacity & Slot Availability
+              <h3 className="text-sm font-extrabold text-slate-900">
+                Real-Time Scanner Capacity &amp; Slot Availability
               </h3>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 font-medium mt-0.5">
                 Operating hours 08:00 – 18:00 with conflict validation against booked equipment windows
               </p>
             </div>
-            <div className="flex items-center gap-4 text-xs">
-              <span className="flex items-center gap-1.5 text-slate-600">
+            <div className="flex items-center gap-4 text-xs font-semibold">
+              <span className="flex items-center gap-1.5 text-slate-700">
                 <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-                Available Slot (Click to Book)
+                Available Slot
               </span>
-              <span className="flex items-center gap-1.5 text-slate-600">
+              <span className="flex items-center gap-1.5 text-slate-700">
                 <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
                 Scheduled Window
               </span>
             </div>
           </CardHeader>
 
-          <CardContent className="p-6">
+          <CardContent className="p-5 sm:p-6">
             {isAvailabilityLoading ? (
               <div className="flex h-64 items-center justify-center">
-                <div className="h-7 w-7 animate-spin rounded-full border-2 border-cyan-600 border-t-transparent" />
+                <div className="h-7 w-7 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
               </div>
             ) : machines.length === 0 ? (
-              <div className="text-center py-12 text-xs text-slate-500">
+              <div className="text-center py-12 text-xs text-slate-400 font-medium">
                 No active equipment configured for modality {selectedModality}.
               </div>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-4">
                 {(machines as Equipment[]).map((machine: Equipment) => {
                   const machineSlots = (slots as SlotCandidate[]).filter((s: SlotCandidate) => s.equipmentId === machine.id);
                   return (
-                    <div key={machine.id} className="rounded-xl border border-slate-200 p-4 space-y-3 bg-white">
+                    <div key={machine.id} className="rounded-2xl border border-[#dce6e0] p-4 space-y-3 bg-[#f8faf8]/70">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-xs text-slate-900">{machine.name}</span>
-                          <Badge variant="outline" className="text-[10px] font-mono">
+                          <span className="font-extrabold text-xs text-slate-900">{machine.name}</span>
+                          <Badge variant="outline" className="text-[10px] font-mono rounded-full border-slate-200">
                             {machine.location || 'Suite'}
                           </Badge>
-                          <Badge variant={machine.status === 'OPERATIONAL' ? 'success' : 'secondary'} className="text-[10px]">
+                          <Badge variant={machine.status === 'OPERATIONAL' ? 'success' : 'secondary'} className="text-[10px] rounded-full">
                             {machine.status}
                           </Badge>
                         </div>
-                        <span className="text-[11px] text-slate-500 font-mono">
+                        <span className="text-[11px] text-slate-500 font-mono font-medium">
                           {machineSlots.filter((s: SlotCandidate) => s.available).length} slots available today
                         </span>
                       </div>
@@ -281,18 +279,16 @@ export function AppointmentsPage() {
                               type="button"
                               onClick={() => isAvail && handleSlotClick(slot.start, slot.equipmentId)}
                               disabled={!isAvail}
-                              className={`rounded-lg p-2 text-left transition border text-xs ${
-                                isAvail
-                                  ? 'bg-emerald-50/70 border-emerald-200 text-emerald-950 hover:bg-emerald-100 hover:border-emerald-300 cursor-pointer shadow-xs'
-                                  : 'bg-amber-50/70 border-amber-200 text-amber-950 opacity-90 cursor-not-allowed'
-                              }`}
+                              className={`rounded-xl p-2.5 text-left transition border text-xs ${isAvail
+                                ? 'bg-emerald-50/70 border-emerald-200 text-emerald-950 hover:bg-emerald-100 hover:border-emerald-300 cursor-pointer shadow-soft'
+                                : 'bg-amber-50/70 border-amber-200 text-amber-950 opacity-90 cursor-not-allowed'
+                                }`}
                             >
                               <div className="flex items-center justify-between mb-0.5">
-                                <span className="font-mono font-bold text-xs">{slotTime}</span>
+                                <span className="font-mono font-extrabold text-xs">{slotTime}</span>
                                 <span
-                                  className={`h-2 w-2 rounded-full ${
-                                    isAvail ? 'bg-emerald-500' : 'bg-amber-500'
-                                  }`}
+                                  className={`h-2 w-2 rounded-full ${isAvail ? 'bg-emerald-500' : 'bg-amber-500'
+                                    }`}
                                 />
                               </div>
                               <span className="text-[10px] block truncate font-medium">
@@ -311,93 +307,93 @@ export function AppointmentsPage() {
         </Card>
       ) : (
         /* List View */
-        <Card className="border-slate-200 shadow-sm">
-          <CardHeader className="pb-3 border-b border-slate-100">
-            <h3 className="text-sm font-bold text-slate-900">
+        <Card className="border border-[#dce6e0] shadow-soft rounded-3xl bg-white overflow-hidden">
+          <CardHeader className="p-5 border-b border-[#e9f1ed] bg-white">
+            <h3 className="text-sm font-extrabold text-slate-900">
               Scheduled Appointments for {new Date(selectedDate).toLocaleDateString()}
             </h3>
           </CardHeader>
           <CardContent className="p-0">
             {isApptsLoading ? (
               <div className="flex h-48 items-center justify-center">
-                <div className="h-6 w-6 animate-spin rounded-full border-2 border-cyan-600 border-t-transparent" />
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
               </div>
             ) : appointments.length === 0 ? (
-              <div className="text-center py-12 text-slate-500 text-xs">
+              <div className="text-center py-12 text-slate-400 text-xs font-medium">
                 No appointments found for the selected criteria.
               </div>
             ) : (
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Appt #</TableHead>
-                    <TableHead>Time Slot</TableHead>
-                    <TableHead>Patient / MRN</TableHead>
-                    <TableHead>Modality & Suite</TableHead>
-                    <TableHead>Examination</TableHead>
-                    <TableHead>Queue Token</TableHead>
-                    <TableHead>Priority</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                  <TableRow className="border-b border-[#e9f1ed] bg-[#f8faf8] text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    <TableHead className="py-3 px-4">Appt #</TableHead>
+                    <TableHead className="py-3 px-4">Time Slot</TableHead>
+                    <TableHead className="py-3 px-4">Patient / MRN</TableHead>
+                    <TableHead className="py-3 px-4">Modality &amp; Suite</TableHead>
+                    <TableHead className="py-3 px-4">Examination</TableHead>
+                    <TableHead className="py-3 px-4">Queue Token</TableHead>
+                    <TableHead className="py-3 px-4">Priority</TableHead>
+                    <TableHead className="py-3 px-4">Status</TableHead>
+                    <TableHead className="py-3 px-4 text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {appointments.map((apt: Appointment) => (
-                    <TableRow key={apt.id} className="hover:bg-slate-50/70 transition">
-                      <TableCell className="font-mono text-xs font-semibold">
+                    <TableRow key={apt.id} className="hover:bg-[#f8faf8] transition border-b border-[#f0f4f1]">
+                      <TableCell className="py-3 px-4 font-mono text-xs font-bold text-slate-900">
                         {apt.appointmentNumber}
                       </TableCell>
-                      <TableCell className="text-xs font-mono font-medium text-slate-900">
+                      <TableCell className="py-3 px-4 text-xs font-mono font-medium text-slate-700">
                         {new Date(apt.scheduledStart).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} –{' '}
                         {new Date(apt.scheduledEnd).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="py-3 px-4">
                         {apt.patient ? (
                           <Link
                             to={`/patients/${apt.patient.patientId}`}
-                            className="font-semibold text-slate-900 text-xs hover:text-cyan-700 hover:underline block"
+                            className="font-bold text-slate-900 text-xs hover:text-emerald-700 block"
                           >
                             {apt.patient.lastName}, {apt.patient.firstName}
                           </Link>
                         ) : (
-                          <span className="font-semibold text-slate-900 text-xs">Unknown Patient</span>
+                          <span className="font-bold text-slate-900 text-xs">Unknown Patient</span>
                         )}
                         <div className="mt-0.5">
                           <IdentifierPill type="patient" value={apt.patient?.patientId || ''} />
                         </div>
                       </TableCell>
-                      <TableCell className="text-xs">
-                        <Badge variant="outline" className="mr-1.5 font-mono text-[10px]">
+                      <TableCell className="py-3 px-4 text-xs">
+                        <Badge variant="outline" className="mr-1.5 font-mono text-[10px] rounded-full border-slate-200">
                           {apt.modality}
                         </Badge>
-                        <span className="text-slate-700">{apt.equipment?.name || apt.location || 'Suite'}</span>
+                        <span className="text-slate-700 font-medium">{apt.equipment?.name || apt.location || 'Suite'}</span>
                       </TableCell>
-                      <TableCell className="text-xs font-medium text-slate-800">
+                      <TableCell className="py-3 px-4 text-xs font-medium text-slate-800">
                         {apt.examination}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap">
+                      <TableCell className="py-3 px-4 whitespace-nowrap">
                         {apt.tokenNumber ? (
-                          <span className="font-mono text-xs font-bold text-[#174A70] bg-[#174A70]/10 border border-[#174A70]/25 px-2.5 py-1 rounded-md tracking-wider shadow-2xs">
+                          <span className="font-mono text-xs font-extrabold text-emerald-900 bg-emerald-100/70 border border-emerald-200 px-3 py-1 rounded-full tracking-wider shadow-soft">
                             {apt.tokenNumber}
                           </span>
                         ) : (
                           <span className="text-slate-400 text-xs">—</span>
                         )}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="py-3 px-4">
                         <PriorityBadge priority={apt.priority} />
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="py-3 px-4">
                         <StatusBadge status={apt.status} />
                       </TableCell>
-                      <TableCell className="text-right whitespace-nowrap">
+                      <TableCell className="py-3 px-4 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1.5">
                           {apt.status === 'SCHEDULED' && (
                             <>
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="text-xs h-7 border-emerald-300 text-emerald-800 hover:bg-emerald-50"
+                                className="text-xs h-7 px-3 border-emerald-300 text-emerald-800 hover:bg-emerald-50 rounded-full font-bold"
                                 onClick={() => setCheckInAppt(apt)}
                               >
                                 Check In
@@ -405,7 +401,7 @@ export function AppointmentsPage() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="text-xs h-7 border-slate-300 hover:bg-slate-100"
+                                className="text-xs h-7 px-3 border-[#dce6e0] text-slate-700 hover:bg-[#f8faf8] rounded-full font-bold"
                                 onClick={() => setRescheduleAppt(apt)}
                               >
                                 Reschedule
@@ -413,17 +409,17 @@ export function AppointmentsPage() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="text-xs h-7 border-indigo-200 text-indigo-700 hover:bg-indigo-50 gap-1"
+                                className="text-xs h-7 px-3 border-[#dce6e0] text-slate-700 hover:bg-[#f8faf8] gap-1 rounded-full font-bold"
                                 onClick={() => setAllocateAppt(apt)}
                                 title="Assign Staff & Machine"
                               >
-                                <Users className="w-3 h-3 text-indigo-600" />
+                                <Users className="w-3 h-3 text-emerald-600" />
                                 <span>Staff</span>
                               </Button>
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="text-xs h-7 border-red-200 text-red-700 hover:bg-red-50"
+                                className="text-xs h-7 px-3 border-rose-200 text-rose-700 hover:bg-rose-50 rounded-full font-bold"
                                 onClick={() => setCancelModalData({ appt: apt, type: 'CANCEL' })}
                               >
                                 Cancel
@@ -433,7 +429,7 @@ export function AppointmentsPage() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="text-xs h-7 p-1 text-slate-500 hover:text-slate-800"
+                            className="text-xs h-7 w-7 p-0 rounded-full text-slate-500 hover:text-slate-800 hover:bg-slate-100"
                             onClick={() => setLabelAppt(apt)}
                           >
                             <Printer className="w-3.5 h-3.5" />

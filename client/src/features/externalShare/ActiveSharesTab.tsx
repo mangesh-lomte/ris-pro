@@ -96,14 +96,12 @@ export const ActiveSharesTab: React.FC<ActiveSharesTabProps> = ({
 
   const getTypeBadge = (type: string) => {
     switch (type) {
-      case 'PATIENT_PORTAL':
-        return <span className="text-xs font-medium text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">Patient Portal</span>;
-      case 'REFERRING_DOCTOR':
+      case 'PATIENT_LINK':
+        return <span className="text-xs font-medium text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">Patient Portal</span>;
+      case 'DOCTOR_SHARE':
         return <span className="text-xs font-medium text-sky-700 bg-sky-50 px-2 py-0.5 rounded border border-sky-200">Referring Doctor</span>;
       case 'OUTSIDE_HOSPITAL':
         return <span className="text-xs font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">Outside Hospital</span>;
-      case 'LEGAL_AUDIT':
-        return <span className="text-xs font-medium text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">Legal / Audit</span>;
       default:
         return <span className="text-xs text-slate-600">{type}</span>;
     }
@@ -112,7 +110,7 @@ export const ActiveSharesTab: React.FC<ActiveSharesTabProps> = ({
   return (
     <div className="space-y-4">
       {/* Controls Bar - Single Search & Filter Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded border border-slate-200 shadow-sm">
         <div className="flex flex-wrap items-center gap-3 flex-1 min-w-[280px]">
           <input
             type="text"
@@ -138,10 +136,9 @@ export const ActiveSharesTab: React.FC<ActiveSharesTabProps> = ({
             className="px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
           >
             <option value="ALL">All Recipient Types</option>
-            <option value="PATIENT_PORTAL">Patient Portal</option>
-            <option value="REFERRING_DOCTOR">Referring Doctor</option>
+            <option value="PATIENT_LINK">Patient Link</option>
+            <option value="DOCTOR_SHARE">Doctor Share</option>
             <option value="OUTSIDE_HOSPITAL">Outside Hospital</option>
-            <option value="LEGAL_AUDIT">Legal / Audit</option>
           </select>
         </div>
 
@@ -156,7 +153,7 @@ export const ActiveSharesTab: React.FC<ActiveSharesTabProps> = ({
       </div>
 
       {/* Share Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded border border-slate-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-slate-600">
             <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500 border-b border-slate-200">
@@ -223,7 +220,7 @@ export const ActiveSharesTab: React.FC<ActiveSharesTabProps> = ({
                           </span>
                         )}
                         {share.includeDicom && (
-                          <span title="DICOM package included" className="p-1 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
+                          <span title="DICOM package included" className="p-1 rounded bg-blue-50 text-blue-700 border border-blue-200">
                             <Film className="w-3.5 h-3.5" />
                           </span>
                         )}

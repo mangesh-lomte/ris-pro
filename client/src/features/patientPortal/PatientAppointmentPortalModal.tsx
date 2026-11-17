@@ -15,7 +15,6 @@ import {
   PortalAppointmentSummary,
 } from '../../services/patientPortalBookingService';
 import {
-  Calendar,
   Clock,
   FileText,
   Upload,
@@ -47,11 +46,11 @@ export function PatientAppointmentPortalModal({ open, onOpenChange }: Props) {
   const [activeTab, setActiveTab] = useState<TabType>('BOOKING');
 
   // Auth state
-  const [phone, setPhone] = useState('555-0199');
+  const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
-  const [firstName, setFirstName] = useState('Eleanor');
-  const [lastName, setLastName] = useState('Vance');
-  const [dob, setDob] = useState('1985-04-12');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [dob, setDob] = useState('');
   const [gender, setGender] = useState('FEMALE');
   const [otpSent, setOtpSent] = useState(false);
   const [token, setToken] = useState<string | null>(null);
@@ -72,14 +71,15 @@ export function PatientAppointmentPortalModal({ open, onOpenChange }: Props) {
   });
   const [slotsData, setSlotsData] = useState<SlotsResponse | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  const [selectedEquipmentId, setSelectedEquipmentId] = useState<string | null>(null);
   const [clinicalNotes, setClinicalNotes] = useState('');
   const [bookedAppointment, setBookedAppointment] = useState<any>(null);
 
   // Post-booking modules
   const [prescriptionFile, setPrescriptionFile] = useState<File | null>(null);
   const [prescriptionBase64, setPrescriptionBase64] = useState<string | null>(null);
-  const [prescriptionDoctor, setPrescriptionDoctor] = useState('Dr. Robert Sterling');
-  const [prescriptionNotes, setPrescriptionNotes] = useState('Persistent non-productive cough, evaluate pulmonary parenchyma.');
+  const [prescriptionDoctor, setPrescriptionDoctor] = useState('');
+  const [prescriptionNotes, setPrescriptionNotes] = useState('');
   const [prescriptionUploaded, setPrescriptionUploaded] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -93,6 +93,7 @@ export function PatientAppointmentPortalModal({ open, onOpenChange }: Props) {
   // Deposit
   const [paymentMethod, setPaymentMethod] = useState('UPI');
   const [paymentReceipt, setPaymentReceipt] = useState<any>(null);
+  const [paymentIdempotencyKey] = useState(() => crypto.randomUUID());
 
   // My Appointments list
   const [myAppointments, setMyAppointments] = useState<PortalAppointmentSummary[]>([]);
@@ -129,10 +130,11 @@ export function PatientAppointmentPortalModal({ open, onOpenChange }: Props) {
     setLoading(true);
     setError(null);
     try {
-      const res = await patientPortalBookingService.getSlots(selectedModality, selectedDate);
+      const res = await patientPortalBookingService.getSlots(selectedModality, selectedDate, selectedExam?.id);
       setSlotsData(res);
       const firstAvail = res.slots.find((s) => s.isAvailable);
-      if (firstAvail) setSelectedSlot(firstAvail.startTime);
+      setSelectedSlot(firstAvail?.startTime || null);
+      setSelectedEquipmentId(firstAvail?.equipmentId || null);
     } catch (err: any) {
       setError(err?.response?.data?.message || err.message || 'Failed to load time slots');
     } finally {
@@ -157,8 +159,8 @@ export function PatientAppointmentPortalModal({ open, onOpenChange }: Props) {
     try {
       const res = await patientPortalBookingService.requestOtp(phone);
       setOtpSent(true);
-      setOtp(res.demoOtp); // pre-populate with local demo adapter code
-      setSuccessMsg(`A 6-digit verification code has been sent to ${phone}. Enter the code below to proceed.`);
+      setOtp('');
+      setSuccessMsg(res.message);
     } catch (err: any) {
       setError(err?.response?.data?.message || err.message || 'Failed to request OTP');
     } finally {
@@ -191,17 +193,19 @@ export function PatientAppointmentPortalModal({ open, onOpenChange }: Props) {
 
   // Booking Handler
   const handleBookAppointment = async () => {
-    if (!token || !selectedExam || !selectedSlot) return;
+    if (!token || !selectedExam || !selectedSlot || !selectedEquipmentId) return;
     setLoading(true);
     setError(null);
     try {
       const res = await patientPortalBookingService.bookAppointment(token, {
         examDefinitionId: selectedExam.id,
         scheduledStart: selectedSlot,
+        equipmentId: selectedEquipmentId,
         clinicalNotes,
       });
       setBookedAppointment(res);
-      setSuccessMsg('Booking confirmed! Instant SMS and WhatsApp confirmation dispatched.');
+      const queued = res.notificationsSent?.filter((item: any) => item.status === 'QUEUED').length || 0;
+      setSuccessMsg(queued > 0 ? 'Booking confirmed. Notifications have been queued.' : 'Booking confirmed. Notifications are simulated in this local environment.');
       setBookingStep(4); // Booking Confirmed overview
       loadMyAppointments();
     } catch (err: any) {
@@ -341,9 +345,16 @@ export function PatientAppointmentPortalModal({ open, onOpenChange }: Props) {
       const res = await patientPortalBookingService.payAdvanceDeposit(token, bookedAppointment.appointment.id, {
         amount: selectedExam.advanceDepositRequired,
         paymentMethod,
+        idempotencyKey: paymentIdempotencyKey,
       });
-      setPaymentReceipt(res);
-      setSuccessMsg(`Payment of ${formatINR(res.amountPaid)} verified! Receipt: ${res.receiptNumber}`);
+      if (res.simulated) {
+        setPaymentReceipt(null);
+        setSuccessMsg(null);
+        setError(res.message);
+      } else {
+        setPaymentReceipt(res);
+        setSuccessMsg(`Payment of ${formatINR(res.amountPaid)} verified. Receipt: ${res.receiptNumber}`);
+      }
       loadMyAppointments();
     } catch (err: any) {
       setError(err?.response?.data?.message || err.message || 'Payment failed');
@@ -390,17 +401,17 @@ export function PatientAppointmentPortalModal({ open, onOpenChange }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl rounded-2xl">
+      <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl rounded">
         <DialogHeader className="border-b border-slate-100 dark:border-slate-800 pb-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-[#174A70] text-white rounded-md shadow-2xs">
-                <Calendar className="w-5 h-5" />
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0">
+                <img src="/radaxis-symbol.png" alt="RadAxis" className="w-full h-full object-contain drop-shadow-xs" />
               </div>
               <div>
                 <DialogTitle className="text-xl font-bold tracking-tight text-[#152B42] dark:text-slate-100 flex items-center gap-2">
                   Online Patient Appointment Portal
-                  <Badge variant="outline" className="text-[#174A70] bg-[#174A70]/10 border-[#174A70]/20 rounded-full text-[10px]">
+                  <Badge variant="outline" className="text-[#2563EB] bg-[#2563EB]/10 border-[#2563EB]/20 rounded-full text-[10px]">
                     Self-Service
                   </Badge>
                 </DialogTitle>
@@ -455,7 +466,7 @@ export function PatientAppointmentPortalModal({ open, onOpenChange }: Props) {
           <div className="mt-4 space-y-6">
             {/* Step 1: Mobile OTP Authentication */}
             {bookingStep === 1 && (
-              <div className="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 space-y-4">
+              <div className="p-5 rounded border border-slate-200 dark:border-slate-800 bg-slate-50/50 space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-200 pb-3">
                   <div className="flex items-center gap-2">
                     <Phone className="w-5 h-5 text-cyan-600" />
@@ -563,10 +574,10 @@ export function PatientAppointmentPortalModal({ open, onOpenChange }: Props) {
 
             {/* Step 2: Select Examination */}
             {bookingStep === 2 && (
-              <div className="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 space-y-4">
+              <div className="p-5 rounded border border-slate-200 dark:border-slate-800 bg-slate-50/50 space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-200 pb-3">
                   <div className="flex items-center gap-2">
-                    <FileText className="w-5 h-5 text-indigo-600" />
+                    <FileText className="w-5 h-5 text-[#2563EB]" />
                     <h3 className="font-bold text-slate-900 text-sm">Step 2: Choose Radiology Examination</h3>
                   </div>
                   <span className="text-xs text-slate-500">Patient: {patient?.firstName} {patient?.lastName} ({patient?.patientId})</span>
@@ -600,9 +611,9 @@ export function PatientAppointmentPortalModal({ open, onOpenChange }: Props) {
                       <div
                         key={exam.id}
                         onClick={() => setSelectedExam(exam)}
-                        className={`p-3.5 rounded-xl border cursor-pointer transition-all ${
+                        className={`p-3.5 rounded border cursor-pointer transition-all ${
                           isSelected
-                            ? 'border-indigo-600 bg-indigo-50/60 shadow-xs ring-1 ring-indigo-500'
+                            ? 'border-indigo-600 bg-blue-50/60 shadow-xs ring-1 ring-indigo-500'
                             : 'border-slate-200 bg-white hover:border-indigo-300'
                         }`}
                       >
@@ -634,11 +645,11 @@ export function PatientAppointmentPortalModal({ open, onOpenChange }: Props) {
                 {selectedExam && (
                   <div className="space-y-2 pt-1">
                     <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                      <Info className="w-4 h-4 text-indigo-600" />
+                      <Info className="w-4 h-4 text-[#2563EB]" />
                       Patient Preparation & Clinical Instructions
                     </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                      <div className="p-2.5 bg-indigo-50/60 rounded-lg border border-indigo-100">
+                      <div className="p-2.5 bg-blue-50/60 rounded-lg border border-indigo-100">
                         <span className="font-semibold text-indigo-950 block text-[11px] uppercase tracking-wide">
                           Before your examination
                         </span>
@@ -686,7 +697,7 @@ export function PatientAppointmentPortalModal({ open, onOpenChange }: Props) {
                       loadSlots();
                     }}
                     disabled={!selectedExam}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs flex items-center gap-2"
+                    className="bg-[#2563EB] hover:bg-blue-700 text-white text-xs flex items-center gap-2"
                   >
                     Continue to Slot Selection <ArrowRight className="w-3.5 h-3.5" />
                   </Button>
@@ -696,13 +707,13 @@ export function PatientAppointmentPortalModal({ open, onOpenChange }: Props) {
 
             {/* Step 3: Select Date & Time Slot */}
             {bookingStep === 3 && (
-              <div className="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 space-y-4">
+              <div className="p-5 rounded border border-slate-200 dark:border-slate-800 bg-slate-50/50 space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-200 pb-3">
                   <div className="flex items-center gap-2">
-                    <Clock className="w-5 h-5 text-indigo-600" />
+                    <Clock className="w-5 h-5 text-[#2563EB]" />
                     <h3 className="font-bold text-slate-900 text-sm">Step 3: Select Date & Scanner Slot</h3>
                   </div>
-                  <Badge variant="outline" className="text-indigo-700 bg-indigo-50 border-indigo-200">
+                  <Badge variant="outline" className="text-blue-700 bg-blue-50 border-blue-200">
                     {selectedExam?.name}
                   </Badge>
                 </div>
@@ -744,7 +755,10 @@ export function PatientAppointmentPortalModal({ open, onOpenChange }: Props) {
                           <button
                             key={idx}
                             disabled={!slot.isAvailable}
-                            onClick={() => setSelectedSlot(slot.startTime)}
+                            onClick={() => {
+                              setSelectedSlot(slot.startTime);
+                              setSelectedEquipmentId(slot.equipmentId);
+                            }}
                             className={`p-2.5 rounded-lg text-xs font-medium border text-center transition-all ${
                               isSelected
                                 ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
@@ -784,8 +798,8 @@ export function PatientAppointmentPortalModal({ open, onOpenChange }: Props) {
                   </Button>
                   <Button
                     onClick={handleBookAppointment}
-                    disabled={loading || !selectedSlot}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs flex items-center gap-2"
+                    disabled={loading || !selectedSlot || !selectedEquipmentId}
+                    className="bg-[#2563EB] hover:bg-blue-700 text-white text-xs flex items-center gap-2"
                   >
                     Confirm & Reserve Appointment <ArrowRight className="w-3.5 h-3.5" />
                   </Button>
@@ -797,9 +811,9 @@ export function PatientAppointmentPortalModal({ open, onOpenChange }: Props) {
             {bookingStep === 4 && bookedAppointment && (
               <div className="space-y-5">
                 {/* Confirmation Banner */}
-                <div className="p-5 rounded-xl border border-emerald-200 bg-emerald-50/60 text-slate-900 space-y-3">
+                <div className="p-5 rounded border border-emerald-200 bg-emerald-50/60 text-slate-900 space-y-3">
                   <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-emerald-600 text-white">
+                    <div className="p-2.5 rounded bg-emerald-600 text-white">
                       <CheckCircle2 className="w-6 h-6" />
                     </div>
                     <div>
@@ -833,7 +847,7 @@ export function PatientAppointmentPortalModal({ open, onOpenChange }: Props) {
                 {/* Sub-steps Accordion: Prescription, Questionnaire, Advance Deposit */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* Upload Doctor Prescription */}
-                  <div className="p-4 rounded-xl border border-slate-200 bg-white space-y-3 flex flex-col justify-between">
+                  <div className="p-4 rounded border border-slate-200 bg-white space-y-3 flex flex-col justify-between">
                     <div>
                       <div className="flex items-center gap-2 mb-2">
                         <Upload className="w-4 h-4 text-cyan-600" />
@@ -888,7 +902,7 @@ export function PatientAppointmentPortalModal({ open, onOpenChange }: Props) {
                   </div>
 
                   {/* Pre-Visit Safety Questionnaire */}
-                  <div className="p-4 rounded-xl border border-slate-200 bg-white space-y-3 flex flex-col justify-between">
+                  <div className="p-4 rounded border border-slate-200 bg-white space-y-3 flex flex-col justify-between">
                     <div>
                       <div className="flex items-center gap-2 mb-2">
                         <ShieldAlert className="w-4 h-4 text-amber-600" />
@@ -958,7 +972,7 @@ export function PatientAppointmentPortalModal({ open, onOpenChange }: Props) {
                   </div>
 
                   {/* Online Advance Deposit */}
-                  <div className="p-4 rounded-xl border border-slate-200 bg-white space-y-3 flex flex-col justify-between">
+                  <div className="p-4 rounded border border-slate-200 bg-white space-y-3 flex flex-col justify-between">
                     <div>
                       <div className="flex items-center gap-2 mb-2">
                         <CreditCard className="w-4 h-4 text-emerald-600" />
@@ -1033,7 +1047,7 @@ export function PatientAppointmentPortalModal({ open, onOpenChange }: Props) {
             </div>
 
             {myAppointments.length === 0 ? (
-              <div className="p-8 text-center border border-dashed rounded-xl text-slate-500 text-xs">
+              <div className="p-8 text-center border border-dashed rounded text-slate-500 text-xs">
                 No appointment history found for this account.
               </div>
             ) : (
@@ -1041,7 +1055,7 @@ export function PatientAppointmentPortalModal({ open, onOpenChange }: Props) {
                 {myAppointments.map((appt) => (
                   <div
                     key={appt.id}
-                    className="p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition-all shadow-2xs space-y-3"
+                    className="p-4 rounded border border-slate-200 bg-white hover:border-slate-300 transition-all shadow-2xs space-y-3"
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
                       <div>
@@ -1075,10 +1089,10 @@ export function PatientAppointmentPortalModal({ open, onOpenChange }: Props) {
 
                     {/* Reschedule inline drawer */}
                     {reschedulingId === appt.id && (
-                      <div className="p-3 bg-indigo-50 rounded-lg border border-indigo-200 space-y-2">
+                      <div className="p-3 bg-blue-50 rounded-lg border border-blue-200 space-y-2">
                         <div className="flex items-center justify-between text-xs font-semibold text-indigo-900">
                           <span>Select New Appointment Start Time:</span>
-                          <button onClick={() => setReschedulingId(null)} className="text-indigo-600 hover:text-indigo-800">
+                          <button onClick={() => setReschedulingId(null)} className="text-[#2563EB] hover:text-indigo-800">
                             Cancel
                           </button>
                         </div>
@@ -1092,7 +1106,7 @@ export function PatientAppointmentPortalModal({ open, onOpenChange }: Props) {
                           <Button
                             size="sm"
                             onClick={() => handleReschedule(appt.id)}
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs"
+                            className="bg-[#2563EB] hover:bg-blue-700 text-white text-xs"
                           >
                             Confirm Reschedule
                           </Button>
@@ -1120,7 +1134,7 @@ export function PatientAppointmentPortalModal({ open, onOpenChange }: Props) {
                                 setReschedulingId(appt.id);
                                 setRescheduleSlotTime(appt.scheduledStart.slice(0, 16));
                               }}
-                              className="text-2xs h-7 text-[#174A70] hover:bg-[#174A70]/10 border-slate-300"
+                              className="text-2xs h-7 text-[#2563EB] hover:bg-[#2563EB]/10 border-slate-300"
                             >
                               <Clock className="w-3 h-3 mr-1" /> Reschedule
                             </Button>
@@ -1156,7 +1170,7 @@ export function PatientAppointmentPortalModal({ open, onOpenChange }: Props) {
                             disabled={actionLoading === `img-${appt.accessionNumber}`}
                             className="text-2xs h-7 bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-300"
                           >
-                            <Eye className="w-3 h-3 mr-1 text-[#174A70]" /> View Images
+                            <Eye className="w-3 h-3 mr-1 text-[#2563EB]" /> View Images
                           </Button>
                         )}
 

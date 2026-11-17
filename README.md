@@ -152,10 +152,10 @@ flowchart TD
 | **RadAxis Web Interface** | `5173` | `http://localhost:5173` | HTTP / HTML5 |
 | **RadAxis Core REST API** | `5000` | `http://localhost:5000/api/v1` | HTTP / JSON |
 | **API Health Ping** | `5000` | `http://localhost:5000/api/v1/health` | HTTP / JSON |
-| **OHIF Medical Viewer** | `3000` | `http://localhost:3000` | HTTP / Web |
-| **Orthanc PACS Web & API**| `8042` | `http://localhost:8042` | HTTP / DICOMweb |
-| **Orthanc DICOM Port** | `4242` | `localhost:4242` | DICOM C-STORE |
-| **PostgreSQL Database** | `5432` | `localhost:5432` | TCP / PostgreSQL |
+| **OHIF Medical Viewer** | `3002` | `http://localhost:3002` | HTTP / Web |
+| **Orthanc PACS Web & API**| `8044` | `http://localhost:8044` | HTTP / DICOMweb |
+| **Orthanc DICOM Port** | `4244` | `localhost:4244` | DICOM C-STORE |
+| **PostgreSQL Database** | `5434` | `localhost:5434` | TCP / PostgreSQL |
 
 ---
 

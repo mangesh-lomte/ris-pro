@@ -116,51 +116,51 @@ export function OrdersPage() {
   const orders: ImagingOrder[] = data?.data?.items || (Array.isArray(data?.data) ? data.data : []);
 
   return (
-    <div className="space-y-6 max-w-[1500px] mx-auto pb-12">
+    <div className="space-y-4 max-w-[1500px] mx-auto pb-10">
       {/* 1. PAGE HEADER & RESPONSIVE ACTIONS */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-2 border-b border-[#DCE2EC]">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-[#dce6e0]">
         <div>
-          <h1 className="text-2xl sm:text-[28px] font-bold tracking-tight text-[#15233B]">
+          <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900">
             Imaging Orders &amp; Accession Registry
           </h1>
-          <p className="text-xs sm:text-sm text-[#64748B] mt-1">
-            Track imaging orders from scheduling through acquisition, PACS, and reporting.
+          <p className="text-xs text-slate-500 font-medium mt-0.5">
+            Track diagnostic imaging orders across scheduling, scanner acquisition, PACS handoff, and reporting.
           </p>
         </div>
 
-        {/* Top Action Buttons (Section 4) */}
+        {/* Top Action Buttons */}
         <div className="flex items-center gap-2 shrink-0">
-          {/* Tertiary & Secondary Actions (Desktop) */}
+          {/* Desktop Secondary Actions */}
           <div className="hidden lg:flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={handleGenerateNextAccession}
               isLoading={generating}
-              className="h-8 px-2.5 text-xs gap-1.5 border-slate-300 text-slate-700 hover:bg-slate-50 whitespace-nowrap rounded-md cursor-pointer"
+              className="px-3.5 py-1.5 text-xs font-bold gap-1.5 border-emerald-300 text-emerald-800 hover:bg-emerald-50 whitespace-nowrap rounded-full shadow-soft"
             >
-              <Sparkles className="w-3.5 h-3.5 text-[#174A70]" />
-              <span>Generate Next Accession</span>
+              <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Preview Next Accession</span>
             </Button>
 
             <Button
               size="sm"
               onClick={() => setHisImportOpen(true)}
               variant="outline"
-              className="h-8 px-2.5 text-xs border-indigo-200 text-indigo-700 hover:bg-indigo-50 gap-1.5 shadow-2xs whitespace-nowrap rounded-md cursor-pointer"
+              className="px-3.5 py-1.5 text-xs font-bold border-[#dce6e0] text-slate-700 hover:bg-[#f8faf8] gap-1.5 shadow-soft whitespace-nowrap rounded-full"
             >
-              <Building2 className="w-3.5 h-3.5 text-indigo-600" />
+              <Building2 className="w-3.5 h-3.5 text-slate-500" />
               <span>Import HIS / EMR</span>
             </Button>
           </div>
 
-          {/* More Actions Dropdown for smaller screens (Section 4) */}
+          {/* More Actions Dropdown for smaller screens */}
           <div className="relative lg:hidden">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setActionsMenuOpen(!actionsMenuOpen)}
-              className="h-8 px-2.5 text-xs border-slate-300 text-slate-700 gap-1 whitespace-nowrap rounded-md cursor-pointer"
+              className="px-3 py-1.5 text-xs font-bold border-[#dce6e0] text-slate-700 gap-1 whitespace-nowrap rounded-full"
               aria-label="More actions menu"
               aria-expanded={actionsMenuOpen}
             >
@@ -170,7 +170,7 @@ export function OrdersPage() {
 
             {actionsMenuOpen && (
               <div
-                className="absolute right-0 mt-1 w-52 rounded-md border border-slate-200 bg-white p-1.5 shadow-lg z-30 space-y-1 animate-in fade-in"
+                className="absolute right-0 mt-2 w-56 rounded-2xl border border-[#dce6e0] bg-white p-1.5 shadow-soft z-30 space-y-1 animate-in fade-in"
                 onMouseLeave={() => setActionsMenuOpen(false)}
               >
                 <button
@@ -179,10 +179,10 @@ export function OrdersPage() {
                     setActionsMenuOpen(false);
                     handleGenerateNextAccession();
                   }}
-                  className="flex w-full items-center gap-2 rounded px-2.5 py-1.5 text-xs text-slate-700 hover:bg-slate-50 text-left font-medium cursor-pointer"
+                  className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs text-slate-700 hover:bg-[#f8faf8] text-left font-bold cursor-pointer"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-[#174A70]" />
-                  <span>Generate Next Accession</span>
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Preview Next Accession</span>
                 </button>
                 <button
                   type="button"
@@ -190,37 +190,37 @@ export function OrdersPage() {
                     setActionsMenuOpen(false);
                     setHisImportOpen(true);
                   }}
-                  className="flex w-full items-center gap-2 rounded px-2.5 py-1.5 text-xs text-indigo-700 hover:bg-indigo-50 text-left font-medium cursor-pointer"
+                  className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs text-slate-700 hover:bg-[#f8faf8] text-left font-bold cursor-pointer"
                 >
-                  <Building2 className="w-3.5 h-3.5 text-indigo-600" />
+                  <Building2 className="w-3.5 h-3.5 text-slate-500" />
                   <span>Import HIS / EMR</span>
                 </button>
               </div>
             )}
           </div>
 
-          {/* Primary Action Button (Always prominent) */}
+          {/* Primary Action Button */}
           <Button
             size="sm"
             onClick={() => setCreateOrderOpen(true)}
-            className="h-8 px-3 text-xs bg-[#174A70] hover:bg-[#123855] text-white gap-1.5 shadow-2xs whitespace-nowrap rounded-md cursor-pointer font-semibold"
+            className="px-4 py-1.5 text-xs bg-slate-900 hover:bg-slate-800 text-white gap-1.5 shadow-soft whitespace-nowrap rounded-full font-bold"
           >
-            <FilePlus className="w-3.5 h-3.5" />
-            <span>+ Create Imaging Order</span>
+            <FilePlus className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Create Imaging Order</span>
           </Button>
         </div>
       </div>
 
       {/* Generated Accession Preview Callout */}
       {previewAccession && (
-        <div className="rounded-lg border border-[#174A70]/30 bg-[#174A70]/5 p-3 flex items-center justify-between shadow-2xs animate-in fade-in">
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3.5 flex items-center justify-between shadow-soft animate-in fade-in">
           <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-[#174A70] text-white font-bold text-xs">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-600 text-white font-extrabold text-xs">
               ACC
             </div>
             <div>
-              <p className="text-xs font-bold text-[#152B42]">Next Sequence Accession Number Generated</p>
-              <p className="text-[11px] text-[#174A70] font-mono mt-0.5">
+              <p className="text-xs font-bold text-slate-900">Next Sequence Accession Number Preview</p>
+              <p className="text-[11px] text-emerald-800 font-mono mt-0.5">
                 Value: <span className="font-bold underline">{previewAccession}</span> (Format: ACC-YYYYMMDD-[MOD]-XXXX)
               </p>
             </div>

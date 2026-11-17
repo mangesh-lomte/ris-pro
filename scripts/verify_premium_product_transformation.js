@@ -5,7 +5,7 @@ const path = require('path');
 const ARTIFACT_DIR = 'C:\\Users\\mange\\.gemini\\antigravity\\brain\\797b42dd-d491-4463-b8a8-1f02276b71ae';
 
 async function run() {
-  console.log('=== STARTING MANRAD RIS PREMIUM PRODUCT TRANSFORMATION VERIFICATION ===\n');
+  console.log('=== STARTING RADAXIS RIS PREMIUM PRODUCT TRANSFORMATION VERIFICATION ===\n');
 
   const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext({

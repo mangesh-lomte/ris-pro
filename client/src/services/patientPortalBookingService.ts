@@ -4,8 +4,8 @@ export interface OtpRequestResponse {
   success: boolean;
   message: string;
   phone: string;
-  isExistingPatient: boolean;
-  demoOtp: string;
+  deliveryStatus: 'QUEUED' | 'SIMULATED';
+  expiresInSeconds: number;
 }
 
 export interface OtpVerifyResponse {
@@ -44,6 +44,7 @@ export interface TimeSlot {
   displayTime: string;
   equipmentId: string;
   equipmentName: string;
+  location: string;
   isAvailable: boolean;
 }
 
@@ -123,8 +124,8 @@ export const patientPortalBookingService = {
   },
 
   // 4. Get available slots
-  async getSlots(modality: string, date: string): Promise<SlotsResponse> {
-    const query = `?modality=${encodeURIComponent(modality)}&date=${encodeURIComponent(date)}`;
+  async getSlots(modality: string, date: string, examDefinitionId?: string): Promise<SlotsResponse> {
+    const query = `?modality=${encodeURIComponent(modality)}&date=${encodeURIComponent(date)}${examDefinitionId ? `&examDefinitionId=${encodeURIComponent(examDefinitionId)}` : ''}`;
     const res = await apiClient<SlotsResponse>(`/portal/patient/slots${query}`);
     return res.data;
   },
@@ -224,6 +225,7 @@ export const patientPortalBookingService = {
     payload: {
       amount: number;
       paymentMethod: string;
+      idempotencyKey?: string;
     }
   ): Promise<any> {
     const res = await apiClient<any>(

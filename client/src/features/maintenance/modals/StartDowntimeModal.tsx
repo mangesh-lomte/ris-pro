@@ -47,7 +47,7 @@ export const StartDowntimeModal: React.FC<StartDowntimeModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl shadow-xl max-w-lg w-full flex flex-col overflow-hidden">
+      <div className="bg-white rounded shadow-xl max-w-lg w-full flex flex-col overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-200 bg-rose-50 flex items-center justify-between">
           <h3 className="text-base font-bold text-rose-800">Log Machine Downtime Outage</h3>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600 font-bold">✕</button>

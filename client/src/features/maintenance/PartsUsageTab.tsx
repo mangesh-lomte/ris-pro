@@ -42,7 +42,7 @@ export const PartsUsageTab: React.FC<PartsUsageTabProps> = ({
   return (
     <div className="space-y-4">
       {/* Module 11 Inventory Linkage Traceability Banner */}
-      <div className="bg-sky-50/70 border border-sky-200/80 rounded-xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs">
+      <div className="bg-sky-50/70 border border-sky-200/80 rounded p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs">
         <div className="space-y-0.5">
           <div className="flex items-center gap-1.5 font-bold text-sky-950">
             <Boxes className="w-4 h-4 text-sky-600" />
@@ -64,7 +64,7 @@ export const PartsUsageTab: React.FC<PartsUsageTabProps> = ({
       </div>
 
       {/* Controls Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded shadow-sm border border-slate-200">
         <div className="flex flex-wrap items-center gap-4">
           <div className="relative">
             <Search className="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5" />
@@ -100,7 +100,7 @@ export const PartsUsageTab: React.FC<PartsUsageTabProps> = ({
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded shadow-sm border border-slate-200 overflow-hidden">
         {loading ? (
           <div className="p-12 text-center text-slate-500 text-xs">Loading maintenance parts consumption ledger...</div>
         ) : filtered.length === 0 ? (

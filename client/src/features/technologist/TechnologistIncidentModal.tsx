@@ -170,7 +170,7 @@ export function TechnologistIncidentModal({
         <DialogHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-amber-50 border border-amber-200 rounded-lg text-amber-700">
+              <div className="p-2 bg-amber-50 border border-amber-200 rounded text-amber-700">
                 <AlertTriangle className="w-5 h-5" />
               </div>
               <div>
@@ -191,7 +191,7 @@ export function TechnologistIncidentModal({
         <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
           {/* Prominent Identifiers Banner */}
           {contrastContext && (
-            <div className="p-3 bg-slate-900 text-white rounded-xl text-xs space-y-2">
+            <div className="p-3 bg-slate-900 text-white rounded text-xs space-y-2">
               <div className="flex items-center justify-between text-slate-400 text-[10px] uppercase font-bold">
                 <span>Patient & Examination Context</span>
                 <span className="font-mono text-emerald-400">IMMUTABLE IDENTIFIERS</span>
@@ -222,7 +222,7 @@ export function TechnologistIncidentModal({
           )}
 
           {/* Critical Operational Boundary Notice */}
-          <div className="p-3.5 bg-amber-50 border border-amber-300 rounded-xl text-xs text-amber-900 space-y-1 leading-relaxed">
+          <div className="p-3.5 bg-amber-50 border border-amber-300 rounded text-xs text-amber-900 space-y-1 leading-relaxed">
             <strong className="font-bold flex items-center gap-1.5 text-amber-950">
               <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
               Operational Boundary Notice
@@ -235,7 +235,7 @@ export function TechnologistIncidentModal({
 
           {/* Disallowed State Notice */}
           {!isPermittedState && (
-            <div className="p-4 bg-slate-100 border border-slate-200 rounded-xl text-center text-xs text-slate-600 space-y-1">
+            <div className="p-4 bg-slate-100 border border-[#E2E8F0] rounded text-center text-xs text-slate-600 space-y-1">
               <p className="font-bold text-slate-800">Incident Creation Locked</p>
               <p className="text-[11px] text-slate-500">
                 New incidents can only be recorded during active acquisition (SCAN_IN_PROGRESS or SCAN_INTERRUPTED).
@@ -246,7 +246,7 @@ export function TechnologistIncidentModal({
 
           {/* Incident Recording Form */}
           {isPermittedState && (
-            <form onSubmit={handleSubmit} className="border border-amber-200 rounded-xl p-5 bg-amber-50/30 space-y-4">
+            <form onSubmit={handleSubmit} className="border border-amber-200 rounded p-5 bg-amber-50/30 space-y-4">
               <div className="flex items-center justify-between border-b border-amber-100 pb-2.5">
                 <span className="text-xs font-bold uppercase tracking-wider text-amber-950 flex items-center gap-1.5">
                   <AlertTriangle className="w-4 h-4 text-amber-600" />
@@ -256,7 +256,7 @@ export function TechnologistIncidentModal({
               </div>
 
               {formError && (
-                <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700 flex items-center gap-2">
+                <div className="p-3 bg-rose-50 border border-rose-200 rounded text-xs text-rose-700 flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
                   <span>{formError}</span>
                 </div>
@@ -271,7 +271,7 @@ export function TechnologistIncidentModal({
                   <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value as IncidentCategory)}
-                    className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white"
+                    className="w-full text-xs px-3 py-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white"
                     disabled={recordMutation.isPending}
                   >
                     {INCIDENT_CATEGORIES_LIST.map((cat) => (
@@ -290,7 +290,7 @@ export function TechnologistIncidentModal({
                   <select
                     value={contrastAdministrationId}
                     onChange={(e) => setContrastAdministrationId(e.target.value)}
-                    className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white"
+                    className="w-full text-xs px-3 py-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white"
                     disabled={recordMutation.isPending}
                   >
                     <option value="">None / Not Contrast Related</option>
@@ -316,13 +316,13 @@ export function TechnologistIncidentModal({
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Provide concise, objective clinical description of symptoms, observations, or equipment behavior (no medical diagnosis)."
-                    className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full text-xs px-3 py-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-amber-500"
                     disabled={recordMutation.isPending}
                   />
                 </div>
 
                 {/* Clinician Notification Checkbox */}
-                <div className="md:col-span-2 p-3 bg-white border border-slate-200 rounded-lg space-y-3">
+                <div className="md:col-span-2 p-3 bg-white border border-[#E2E8F0] rounded space-y-3">
                   <label className="flex items-center gap-2 cursor-pointer font-semibold text-slate-800">
                     <input
                       type="checkbox"
@@ -344,7 +344,7 @@ export function TechnologistIncidentModal({
                         value={notificationNotes}
                         onChange={(e) => setNotificationNotes(e.target.value)}
                         placeholder="e.g. Dr. Roberts (Radiologist on duty) paged and notified at bedside."
-                        className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                        className="w-full text-xs px-3 py-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-amber-500"
                         disabled={recordMutation.isPending}
                       />
                     </div>
@@ -359,7 +359,7 @@ export function TechnologistIncidentModal({
                   <select
                     value={workflowActionTaken}
                     onChange={(e) => setWorkflowActionTaken(e.target.value as IncidentWorkflowAction)}
-                    className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white"
+                    className="w-full text-xs px-3 py-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white"
                     disabled={recordMutation.isPending}
                   >
                     <option value="">Select operational action...</option>
@@ -381,7 +381,7 @@ export function TechnologistIncidentModal({
                     value={workflowActionNotes}
                     onChange={(e) => setWorkflowActionNotes(e.target.value)}
                     placeholder="e.g. IV line secured, saline flush held."
-                    className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    className="w-full text-xs px-3 py-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-amber-500"
                     disabled={recordMutation.isPending}
                   />
                 </div>
@@ -407,7 +407,7 @@ export function TechnologistIncidentModal({
 
           {/* Incident Chronological History */}
           <div className="space-y-3 pt-2">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+            <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-2">
               <span className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5 text-slate-500" />
                 Chronological Incident History ({incidents.length})
@@ -417,7 +417,7 @@ export function TechnologistIncidentModal({
             {isLoading ? (
               <div className="p-4 text-center text-xs text-slate-400">Loading incident records...</div>
             ) : incidents.length === 0 ? (
-              <div className="p-4 bg-slate-50 border border-dashed border-slate-200 rounded-lg text-center text-xs text-slate-500">
+              <div className="p-4 bg-slate-50 border border-dashed border-[#E2E8F0] rounded text-center text-xs text-slate-500">
                 No clinical incidents or adverse events documented for this examination.
               </div>
             ) : (
@@ -425,7 +425,7 @@ export function TechnologistIncidentModal({
                 {incidents.map((inc) => (
                   <div
                     key={inc.id}
-                    className="p-3.5 bg-white border border-slate-200 rounded-lg shadow-xs space-y-2 text-xs"
+                    className="p-3.5 bg-white border border-[#E2E8F0] rounded shadow-xs space-y-2 text-xs"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">

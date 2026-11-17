@@ -17,17 +17,8 @@ export const RecordQcModal: React.FC<RecordQcModalProps> = ({
   const [formData, setFormData] = useState({
     equipmentId: equipment[0]?.id || '',
     frequency: 'DAILY',
-    overallResult: 'PASS',
-    temperatureC: '21.0',
-    humidityPercent: '45.0',
-    chillerTempC: '8.5',
-    ctNumberWaterHu: '0.2',
-    noiseVariance: '1.2',
-    heliumLevelPercent: '88.0',
-    phantomScanPassed: true,
-    laserAlignmentPassed: true,
-    emergencyStopPassed: true,
-    notes: 'Standard morning AAPM / ACR QA protocol verified within tolerance limits',
+    temperatureC: '', humidityPercent: '', chillerTempC: '', ctNumberWaterHu: '', noiseVariance: '', heliumLevelPercent: '',
+    phantomScanPassed: false, laserAlignmentPassed: false, emergencyStopPassed: false, notes: '',
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -45,13 +36,20 @@ export const RecordQcModal: React.FC<RecordQcModalProps> = ({
       setSaving(true);
       setError('');
       await onSubmit({
-        ...formData,
+        equipmentId: formData.equipmentId,
+        frequency: formData.frequency,
+        checklistData: [
+          { item: 'Phantom scan and geometric accuracy', status: formData.phantomScanPassed ? 'PASS' : 'FAIL' },
+          { item: 'Laser crosshair and gantry alignment', status: formData.laserAlignmentPassed ? 'PASS' : 'FAIL' },
+          { item: 'Emergency stop cutoff circuit', status: formData.emergencyStopPassed ? 'PASS' : 'FAIL' },
+        ],
         temperatureC: formData.temperatureC ? parseFloat(formData.temperatureC) : undefined,
         humidityPercent: formData.humidityPercent ? parseFloat(formData.humidityPercent) : undefined,
         chillerTempC: formData.chillerTempC ? parseFloat(formData.chillerTempC) : undefined,
         ctNumberWaterHu: formData.ctNumberWaterHu ? parseFloat(formData.ctNumberWaterHu) : undefined,
         noiseVariance: formData.noiseVariance ? parseFloat(formData.noiseVariance) : undefined,
         heliumLevelPercent: formData.heliumLevelPercent ? parseFloat(formData.heliumLevelPercent) : undefined,
+        notes: formData.notes.trim() || undefined,
       });
       onClose();
     } catch (err: any) {
@@ -63,7 +61,7 @@ export const RecordQcModal: React.FC<RecordQcModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden">
+      <div className="bg-white rounded shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
           <h3 className="text-base font-bold text-slate-800">Record Daily / Weekly QC Inspection</h3>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600 font-bold">✕</button>
@@ -179,19 +177,6 @@ export const RecordQcModal: React.FC<RecordQcModalProps> = ({
                 className="w-full px-3 py-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
             </div>
-          </div>
-
-          <div>
-            <label className="block font-semibold text-slate-700 mb-1">Overall QC Result *</label>
-            <select
-              value={formData.overallResult}
-              onChange={(e) => setFormData({ ...formData, overallResult: e.target.value })}
-              className="w-full px-3 py-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none font-bold"
-            >
-              <option value="PASS">PASS (Within AAPM / OEM Tolerance)</option>
-              <option value="WARNING">WARNING (Monitor Drift)</option>
-              <option value="FAIL">FAIL (Immediate Service Action Required)</option>
-            </select>
           </div>
 
           <div>

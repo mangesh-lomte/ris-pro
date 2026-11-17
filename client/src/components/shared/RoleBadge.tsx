@@ -3,10 +3,10 @@ import { cn } from '../../lib/utils';
 import { ShieldCheck, UserCog, Stethoscope, Sliders } from 'lucide-react';
 
 const roleConfig: Record<UserRole, { label: string; icon: typeof ShieldCheck; cls: string }> = {
-  ADMIN:        { label: 'Admin',        icon: ShieldCheck,  cls: 'bg-[#E8EDF9] text-[#33398A] border-[#33398A]/30' },
-  RECEPTION:    { label: 'Reception',    icon: UserCog,      cls: 'bg-blue-50 text-[#2563B8] border-blue-200' },
-  TECHNOLOGIST: { label: 'Technologist', icon: Sliders,      cls: 'bg-emerald-50 text-[#15966A] border-emerald-200' },
-  RADIOLOGIST:  { label: 'Radiologist',  icon: Stethoscope,  cls: 'bg-purple-50 text-purple-700 border-purple-200' },
+  ADMIN:        { label: 'Admin',        icon: ShieldCheck,  cls: 'bg-slate-900 text-white border-transparent' },
+  RECEPTION:    { label: 'Reception',    icon: UserCog,      cls: 'bg-sky-100 text-sky-800 border-sky-200/60' },
+  TECHNOLOGIST: { label: 'Technologist', icon: Sliders,      cls: 'bg-emerald-100 text-emerald-800 border-emerald-200/60' },
+  RADIOLOGIST:  { label: 'Radiologist',  icon: Stethoscope,  cls: 'bg-purple-100 text-purple-800 border-purple-200/60' },
 };
 
 export function RoleBadge({ role, className }: { role: UserRole; className?: string }) {
@@ -14,12 +14,12 @@ export function RoleBadge({ role, className }: { role: UserRole; className?: str
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] font-bold leading-none select-none',
+        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10px] font-bold leading-none select-none shadow-2xs',
         cls,
         className
       )}
     >
-      <Icon className="w-3 h-3 shrink-0" aria-hidden="true" />
+      <Icon className="w-2.5 h-2.5 shrink-0 opacity-80" aria-hidden="true" />
       {label}
     </span>
   );

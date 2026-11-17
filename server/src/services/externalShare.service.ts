@@ -421,7 +421,7 @@ export class ExternalShareService {
         includeWebViewer: share.includeWebViewer,
       },
       webViewerUrl: share.includeWebViewer && share.studyInstanceUid
-        ? `${(env.OHIF_BASE_URL || 'http://localhost:3000').replace(/\/+$/, '')}/viewer?StudyInstanceUIDs=${encodeURIComponent(share.studyInstanceUid)}`
+        ? `${(env.OHIF_BASE_URL || 'http://localhost:3002').replace(/\/+$/, '')}/viewer?StudyInstanceUIDs=${encodeURIComponent(share.studyInstanceUid)}`
         : null,
       reportSummary: share.order.report && share.order.report.status === 'FINAL' && share.order.report.isLocked
         ? {
@@ -1107,9 +1107,9 @@ export class ExternalShareService {
   /**
    * 12. Get Access Logs for Share Audit Review
    */
-  static async getShareLogs(shareId: string) {
+  static async getShareLogs(shareId?: string) {
     return prisma.shareAccessLog.findMany({
-      where: { shareId },
+      where: shareId ? { shareId } : undefined,
       orderBy: { createdAt: 'desc' },
     });
   }

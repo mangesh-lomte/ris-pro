@@ -14,7 +14,7 @@ interface StatusBadgeProps {
   className?: string;
 }
 
-type BadgeVariant = 'default' | 'secondary' | 'outline' | 'success' | 'warning' | 'destructive' | 'info' | 'cyan';
+type BadgeVariant = 'default' | 'secondary' | 'outline' | 'success' | 'warning' | 'destructive' | 'info' | 'cyan' | 'neutral';
 
 function resolve(status: string): { variant: BadgeVariant; Icon: typeof HelpCircle } {
   switch (status) {
@@ -37,14 +37,14 @@ function resolve(status: string): { variant: BadgeVariant; Icon: typeof HelpCirc
     case 'ARRIVED':
     case 'CHECKED_IN':
     case 'PACS_HANDOFF_PENDING':
-      return { variant: 'cyan', Icon: Clock };
+      return { variant: 'info', Icon: Clock };
 
     case 'READY_FOR_REPORTING':
     case 'READY_FOR_TECH':
     case 'SENT_TO_PACS':
     case 'IMAGE_QA_PENDING':
     case 'PACS_READY':
-      return { variant: 'info', Icon: FileText };
+      return { variant: 'neutral', Icon: FileText };
 
     case 'SCHEDULED':
     case 'CONFIRMED':
@@ -76,10 +76,10 @@ export function StatusBadge({ status, className = '' }: StatusBadgeProps) {
   return (
     <Badge
       variant={variant}
-      className={`capitalize whitespace-nowrap inline-flex items-center gap-1 ${className}`}
+      className={`capitalize whitespace-nowrap inline-flex items-center gap-1 text-[11px] font-medium py-0.5 px-1.5 ${className}`}
       aria-label={`Status: ${label}`}
     >
-      <Icon className="w-3 h-3 shrink-0 opacity-75" aria-hidden="true" />
+      <Icon className="w-2.5 h-2.5 shrink-0 opacity-70" aria-hidden="true" />
       <span>{label}</span>
     </Badge>
   );

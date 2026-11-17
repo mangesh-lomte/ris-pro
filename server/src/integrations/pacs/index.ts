@@ -9,7 +9,7 @@ export function createPacsGateway(adapter?: 'mock' | 'orthanc'): PacsGateway {
   const chosenAdapter = adapter || (process.env.PACS_ADAPTER as 'mock' | 'orthanc') || 'mock';
 
   if (chosenAdapter === 'orthanc') {
-    const baseUrl = process.env.ORTHANC_URL || 'http://localhost:8042';
+    const baseUrl = process.env.ORTHANC_URL || 'http://localhost:8044';
     const username = process.env.ORTHANC_USERNAME || '';
     const password = process.env.ORTHANC_PASSWORD || '';
     const timeoutMs = process.env.ORTHANC_TIMEOUT_MS ? parseInt(process.env.ORTHANC_TIMEOUT_MS, 10) : 5000;

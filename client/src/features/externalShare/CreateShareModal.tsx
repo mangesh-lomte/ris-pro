@@ -28,10 +28,10 @@ export const CreateShareModal: React.FC<CreateShareModalProps> = ({
   const [recipientName, setRecipientName] = useState('');
   const [recipientEmail, setRecipientEmail] = useState('');
   const [recipientPhone, setRecipientPhone] = useState('');
-  const [recipientRole, setRecipientRole] = useState('Referring Clinician');
+  const [recipientRole, setRecipientRole] = useState<'PATIENT' | 'REFERRING_PHYSICIAN' | 'OUTSIDE_HOSPITAL' | 'SPECIALIST'>('REFERRING_PHYSICIAN');
   const [institutionName, setInstitutionName] = useState('');
-  const [shareType, setShareType] = useState<'PATIENT_PORTAL' | 'REFERRING_DOCTOR' | 'OUTSIDE_HOSPITAL' | 'LEGAL_AUDIT'>(
-    'REFERRING_DOCTOR'
+  const [shareType, setShareType] = useState<'PATIENT_LINK' | 'DOCTOR_SHARE' | 'OUTSIDE_HOSPITAL'>(
+    'DOCTOR_SHARE'
   );
   const [durationDays, setDurationDays] = useState(7);
   const requiresOtp = true; // Mandatory per PDF Req 6
@@ -77,10 +77,10 @@ export const CreateShareModal: React.FC<CreateShareModalProps> = ({
         includeDicom,
         includeReportPdf,
         includeWebViewer,
-        notes: notes.trim() || undefined,
+        consentNotes: notes.trim() || undefined,
         consentPurpose: consentPurpose.trim() || undefined,
         consentedBy: consentedBy.trim() || recipientName.trim(),
-        relationToPatient: relationToPatient.trim() || undefined,
+        consentedByRelation: relationToPatient.trim(),
       });
       onClose();
     } catch (err: any) {
@@ -91,8 +91,8 @@ export const CreateShareModal: React.FC<CreateShareModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden border border-gray-100 animate-in fade-in zoom-in duration-150">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 flex items-center justify-center p-4">
+      <div className="bg-white rounded shadow-2xl max-w-2xl w-full overflow-hidden border border-gray-100 animate-in fade-in zoom-in duration-150">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/80">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center">
@@ -157,10 +157,9 @@ export const CreateShareModal: React.FC<CreateShareModalProps> = ({
                 onChange={(e) => setShareType(e.target.value as any)}
                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
               >
-                <option value="REFERRING_DOCTOR">Outside Doctor / Referring Clinician</option>
+                <option value="DOCTOR_SHARE">Outside Doctor / Referring Clinician</option>
                 <option value="OUTSIDE_HOSPITAL">Outside Hospital / Tertiary Center</option>
-                <option value="PATIENT_PORTAL">Patient Portal Direct Share</option>
-                <option value="LEGAL_AUDIT">Legal / Insurance Audit</option>
+                <option value="PATIENT_LINK">Patient Direct Share</option>
               </select>
             </div>
             <div className="space-y-1.5">
@@ -182,7 +181,7 @@ export const CreateShareModal: React.FC<CreateShareModalProps> = ({
           </div>
 
           {/* Recipient Details */}
-          <div className="border border-gray-200 rounded-xl p-4 bg-gray-50/50 space-y-3">
+          <div className="border border-gray-200 rounded p-4 bg-gray-50/50 space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-gray-700">Recipient Identification</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
@@ -200,13 +199,16 @@ export const CreateShareModal: React.FC<CreateShareModalProps> = ({
               </div>
               <div>
                 <label className="block text-xs text-gray-600 mb-1">Role / Designation</label>
-                <input
-                  type="text"
-                  placeholder="e.g., Attending Neurosurgeon"
+                <select
                   value={recipientRole}
-                  onChange={(e) => setRecipientRole(e.target.value)}
+                  onChange={(e) => setRecipientRole(e.target.value as typeof recipientRole)}
                   className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
-                />
+                >
+                  <option value="REFERRING_PHYSICIAN">Referring physician</option>
+                  <option value="SPECIALIST">Specialist</option>
+                  <option value="OUTSIDE_HOSPITAL">Outside hospital</option>
+                  <option value="PATIENT">Patient</option>
+                </select>
               </div>
             </div>
 
@@ -245,7 +247,7 @@ export const CreateShareModal: React.FC<CreateShareModalProps> = ({
           </div>
 
           {/* Capabilities & Security Controls */}
-          <div className="border border-gray-200 rounded-xl p-4 bg-gray-50/50 space-y-3">
+          <div className="border border-gray-200 rounded p-4 bg-gray-50/50 space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-gray-700">Access Permissions & Security</h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <label className="flex items-center gap-2.5 p-2.5 bg-white border border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 transition">
@@ -287,7 +289,7 @@ export const CreateShareModal: React.FC<CreateShareModalProps> = ({
                 />
                 <div className="text-xs">
                   <div className="font-semibold text-gray-800 flex items-center gap-1">
-                    <Film className="w-3.5 h-3.5 text-indigo-600" /> DICOM ZIP
+                    <Film className="w-3.5 h-3.5 text-[#2563EB]" /> DICOM ZIP
                   </div>
                   <div className="text-gray-500 text-[10px]">Authenticated image archive</div>
                 </div>
@@ -306,7 +308,7 @@ export const CreateShareModal: React.FC<CreateShareModalProps> = ({
           </div>
 
           {/* Consent / Disclosure Record */}
-          <div className="border border-gray-200 rounded-xl p-4 bg-gray-50/50 space-y-3">
+          <div className="border border-gray-200 rounded p-4 bg-gray-50/50 space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-gray-700">Patient Consent & Clinical Disclosure</h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>

@@ -111,17 +111,17 @@ export class OrthancPacsGateway implements PacsGateway {
 
       return {
         connected: true,
-        serverName: system.Name || 'Manrad RIS PACS',
+        serverName: system.Name || 'RadAxis RIS PACS',
         version: system.Version || 'Unknown',
         apiVersion: system.ApiVersion,
-        dicomAet: system.DicomAet || 'MANRAD',
+        dicomAet: system.DicomAet || 'RADAXIS',
         dicomWebPluginAvailable,
         checkedAt: now,
       };
     } catch (error: any) {
       return {
         connected: false,
-        serverName: 'Manrad RIS PACS',
+        serverName: 'RadAxis RIS PACS',
         details: error.message || 'Orthanc server unreachable',
         checkedAt: now,
       };
@@ -133,7 +133,7 @@ export class OrthancPacsGateway implements PacsGateway {
     return {
       adapter: 'orthanc',
       connected: health.connected,
-      serverName: health.serverName || 'Manrad RIS PACS',
+      serverName: health.serverName || 'RadAxis RIS PACS',
       version: health.version,
       dicomWebPluginAvailable: health.dicomWebPluginAvailable ?? false,
       metadataLookupSupported: true,
@@ -226,6 +226,65 @@ export class OrthancPacsGateway implements PacsGateway {
         };
       }
       throw error;
+    }
+  }
+
+  async findStudyByStudyInstanceUid(studyInstanceUid: string): Promise<OrthancStudyMetadata | null> {
+    if (!studyInstanceUid || studyInstanceUid.trim().length === 0) {
+      return null;
+    }
+
+    try {
+      const results = await this.fetchOrthanc<any[]>('/tools/find', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          Level: 'Studies',
+          Expand: true,
+          Query: {
+            StudyInstanceUID: studyInstanceUid.trim(),
+          },
+          RequestedTags: [
+            'PatientID',
+            'PatientName',
+            'AccessionNumber',
+            'StudyDescription',
+            'StudyDate',
+            'StudyInstanceUID',
+            'ModalitiesInStudy',
+          ],
+        }),
+      });
+
+      if (!Array.isArray(results) || results.length === 0) {
+        return null;
+      }
+
+      const item = results[0];
+      const requested = item.RequestedTags || {};
+      const main = item.MainDicomTags || {};
+      const patientMain = item.PatientMainDicomTags || {};
+
+      let modalities: string[] = [];
+      const rawModalities = requested.ModalitiesInStudy || main.ModalitiesInStudy;
+      if (Array.isArray(rawModalities)) {
+        modalities = rawModalities;
+      } else if (typeof rawModalities === 'string') {
+        modalities = rawModalities.split('\\').map((s) => s.trim()).filter(Boolean);
+      }
+
+      return {
+        orthancStudyId: item.ID,
+        accessionNumber: String(requested.AccessionNumber || main.AccessionNumber || '').trim(),
+        patientId: requested.PatientID || patientMain.PatientID || null,
+        patientName: requested.PatientName || patientMain.PatientName || null,
+        studyInstanceUid: requested.StudyInstanceUID || main.StudyInstanceUID || null,
+        studyDate: requested.StudyDate || main.StudyDate || null,
+        studyDescription: requested.StudyDescription || main.StudyDescription || null,
+        modalitiesInStudy: modalities,
+      };
+    } catch {
+      return null;
     }
   }
 

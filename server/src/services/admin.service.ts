@@ -1249,7 +1249,7 @@ export async function getIntegrationHealth() {
   }
 
   // Probe Orthanc PACS
-  const orthancUrl = env.ORTHANC_URL || 'http://localhost:8042';
+  const orthancUrl = env.ORTHANC_URL || 'http://localhost:8044';
   let pacsStatus = 'DOWN';
   let pacsDetails: Record<string, unknown> = {};
 
@@ -1387,7 +1387,7 @@ export async function triggerDatabaseBackup(actorId: string, actorName: string) 
 
     const backupLines: string[] = [];
     backupLines.push(`-- ==========================================================`);
-    backupLines.push(`-- MANRAD RIS DATABASE BACKUP`);
+    backupLines.push(`-- RADAXIS RIS DATABASE BACKUP`);
     backupLines.push(`-- Backup ID: ${backup.id}`);
     backupLines.push(`-- Created At: ${startedAt.toISOString()}`);
     backupLines.push(`-- Triggered By: ${actorName} (${actorId})`);

@@ -92,7 +92,7 @@ export const IntegrationHealthTab: React.FC<IntegrationHealthTabProps> = ({
         <div className="p-5 bg-white border border-slate-200 rounded-lg shadow-sm space-y-3">
           <div className="flex justify-between items-center pb-2 border-b border-slate-100">
             <span className="font-bold text-slate-900 text-sm flex items-center gap-2">
-              <Database className="w-4 h-4 text-indigo-600" />
+              <Database className="w-4 h-4 text-[#2563EB]" />
               {healthData.interfaces?.database?.name || 'PostgreSQL Clinical Database'}
             </span>
             <span
@@ -127,7 +127,7 @@ export const IntegrationHealthTab: React.FC<IntegrationHealthTabProps> = ({
         <div className="p-5 bg-white border border-slate-200 rounded-lg shadow-sm space-y-3">
           <div className="flex justify-between items-center pb-2 border-b border-slate-100">
             <span className="font-bold text-slate-900 text-sm flex items-center gap-2">
-              <Server className="w-4 h-4 text-indigo-600" />
+              <Server className="w-4 h-4 text-[#2563EB]" />
               {healthData.interfaces?.pacs?.name || 'Orthanc DICOM PACS'}
             </span>
             <span
@@ -144,7 +144,7 @@ export const IntegrationHealthTab: React.FC<IntegrationHealthTabProps> = ({
           <div className="text-xs text-slate-600 space-y-1">
             <p>
               <strong>DICOM AET Title:</strong>{' '}
-              <span className="font-mono font-bold text-indigo-700">
+              <span className="font-mono font-bold text-blue-700">
                 {String(healthData.interfaces?.pacs?.details?.dicomAet || 'ORTHANC')}
               </span>
             </p>
@@ -165,7 +165,7 @@ export const IntegrationHealthTab: React.FC<IntegrationHealthTabProps> = ({
         <div className="p-5 bg-white border border-slate-200 rounded-lg shadow-sm space-y-3">
           <div className="flex justify-between items-center pb-2 border-b border-slate-100">
             <span className="font-bold text-slate-900 text-sm flex items-center gap-2">
-              <Radio className="w-4 h-4 text-indigo-600" />
+              <Radio className="w-4 h-4 text-[#2563EB]" />
               {healthData.interfaces?.modalities?.name || 'Modality Scanners (CT / MRI / X-Ray / US)'}
             </span>
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -193,7 +193,7 @@ export const IntegrationHealthTab: React.FC<IntegrationHealthTabProps> = ({
         <div className="p-5 bg-white border border-slate-200 rounded-lg shadow-sm space-y-3">
           <div className="flex justify-between items-center pb-2 border-b border-slate-100">
             <span className="font-bold text-slate-900 text-sm flex items-center gap-2">
-              <Layers className="w-4 h-4 text-indigo-600" />
+              <Layers className="w-4 h-4 text-[#2563EB]" />
               {healthData.interfaces?.hl7_fhir?.name || 'HIS / EMR Interoperability Gateway'}
             </span>
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">

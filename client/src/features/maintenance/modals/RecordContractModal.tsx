@@ -20,10 +20,10 @@ export const RecordContractModal: React.FC<RecordContractModalProps> = ({
     contractNumber: '',
     vendorName: '',
     startDate: new Date().toISOString().split('T')[0],
-    endDate: new Date(Date.now() + 365 * 2 * 86400000).toISOString().split('T')[0],
+    endDate: '',
     annualCost: '',
     responseSlaHours: '4',
-    coverageDetails: 'Comprehensive coverage including X-ray tube and detector arrays',
+    coverageDetails: '',
     contactPerson: '',
   });
   const [saving, setSaving] = useState(false);
@@ -33,8 +33,8 @@ export const RecordContractModal: React.FC<RecordContractModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.equipmentId || !formData.vendorName || !formData.startDate || !formData.endDate) {
-      setError('Equipment, vendor name and contract dates are required');
+    if (!formData.equipmentId || !formData.vendorName || !formData.startDate || !formData.endDate || !formData.coverageDetails.trim()) {
+      setError('Equipment, vendor, contract dates, and coverage scope are required');
       return;
     }
 
@@ -58,7 +58,7 @@ export const RecordContractModal: React.FC<RecordContractModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl shadow-xl max-w-lg w-full flex flex-col overflow-hidden">
+      <div className="bg-white rounded shadow-xl max-w-lg w-full flex flex-col overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
           <h3 className="text-base font-bold text-slate-800">Register Service Contract / AMC / Warranty</h3>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600 font-bold">✕</button>
@@ -190,9 +190,10 @@ export const RecordContractModal: React.FC<RecordContractModalProps> = ({
           </div>
 
           <div>
-            <label className="block font-semibold text-slate-700 mb-1">Coverage Scope & Inclusions</label>
+            <label className="block font-semibold text-slate-700 mb-1">Coverage Scope & Inclusions *</label>
             <textarea
               rows={2}
+              required
               value={formData.coverageDetails}
               onChange={(e) => setFormData({ ...formData, coverageDetails: e.target.value })}
               className="w-full px-3 py-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"

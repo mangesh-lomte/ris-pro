@@ -18,11 +18,12 @@ export const RecordCertificateModal: React.FC<RecordCertificateModalProps> = ({
     equipmentId: equipment[0]?.id || '',
     certificationType: 'RADIATION_SAFETY_AERB',
     certificateNumber: '',
-    issuingAuthority: 'Atomic Energy Regulatory Board (AERB)',
+    issuingAuthority: '',
     issueDate: new Date().toISOString().split('T')[0],
-    expiryDate: new Date(Date.now() + 365 * 86400000).toISOString().split('T')[0],
-    certifiedByName: 'Dr. S. K. Raman (RSO Grade I)',
-    remarks: 'Annual radiation survey and quality assurance certification completed',
+    expiryDate: '',
+    certifiedByName: '',
+    passed: false,
+    remarks: '',
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -54,7 +55,7 @@ export const RecordCertificateModal: React.FC<RecordCertificateModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl shadow-xl max-w-lg w-full flex flex-col overflow-hidden">
+      <div className="bg-white rounded shadow-xl max-w-lg w-full flex flex-col overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
           <h3 className="text-base font-bold text-slate-800">Record Regulatory / QA Certificate</h3>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600 font-bold">✕</button>
@@ -149,14 +150,23 @@ export const RecordCertificateModal: React.FC<RecordCertificateModalProps> = ({
           </div>
 
           <div>
-            <label className="block font-semibold text-slate-700 mb-1">Certifying Physicist / RSO Name</label>
+            <label className="block font-semibold text-slate-700 mb-1">Certifying Physicist / RSO Name *</label>
             <input
               type="text"
+              required
               placeholder="e.g. Dr. S. K. Raman (RSO Grade I)"
               value={formData.certifiedByName}
               onChange={(e) => setFormData({ ...formData, certifiedByName: e.target.value })}
               className="w-full px-3 py-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
             />
+          </div>
+
+          <div>
+            <label className="block font-semibold text-slate-700 mb-1">Certification Result *</label>
+            <select required value={formData.passed ? 'PASS' : 'FAIL'} onChange={(e) => setFormData({ ...formData, passed: e.target.value === 'PASS' })} className="w-full px-3 py-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+              <option value="FAIL">Fail - corrective action required</option>
+              <option value="PASS">Pass - certification requirements met</option>
+            </select>
           </div>
 
           <div>

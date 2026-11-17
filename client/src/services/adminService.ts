@@ -91,7 +91,7 @@ export interface DrDrillRecord {
   status: 'SCHEDULED' | 'IN_PROGRESS' | 'SUCCESS' | 'FAILED' | 'PARTIAL';
   recoveryTarget: string;
   simulatedRtoMinutes: number;
-  simulatedRpoMinutes: number;
+  simulatedRpoMinutes?: number | null;
   findings: string;
   conductedBy: string;
   createdAt: string;
@@ -216,9 +216,12 @@ export const adminService = {
     department?: string;
     phoneNumber?: string;
   }): Promise<AdminUser> {
+    const parts = data.name.trim().split(/\s+/);
+    const firstName = parts.shift() || '';
+    const lastName = parts.join(' ') || '-';
     const res = await apiClient<AdminUser>('/admin/users', {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify({ firstName, lastName, email: data.email, password: data.password, role: data.role }),
     });
     return res.data;
   },
@@ -239,10 +242,10 @@ export const adminService = {
     return res.data;
   },
 
-  async deactivateUser(id: string, reason?: string): Promise<AdminUser> {
+  async deactivateUser(id: string, _reason?: string): Promise<AdminUser> {
     const res = await apiClient<AdminUser>(`/admin/users/${id}`, {
-      method: 'DELETE',
-      body: JSON.stringify({ reason }),
+      method: 'PATCH',
+      body: JSON.stringify({ isActive: false }),
     });
     return res.data;
   },
@@ -261,7 +264,17 @@ export const adminService = {
   }): Promise<{ items: AdminAuditLog[]; total: number; page: number; totalPages: number }> {
     const query = toQueryString(params);
     const res = await apiClient<{ items: AdminAuditLog[]; total: number; page: number; totalPages: number }>(`/admin/audit-logs${query}`);
-    return res.data;
+    return {
+      ...res.data,
+      items: res.data.items.map((log: any) => ({
+        ...log,
+        actorId: log.actorId || log.userId || '',
+        actorName: log.actorName || (log.user ? `${log.user.firstName} ${log.user.lastName}` : 'System'),
+        actorRole: log.actorRole || log.user?.role || 'SYSTEM',
+        patientId: log.patientId || log.details?.patientId || null,
+        accessionNumber: log.accessionNumber || log.details?.accessionNumber || null,
+      })),
+    };
   },
 
   // 3. Patient Merge
@@ -279,7 +292,11 @@ export const adminService = {
 
   async getMergeHistory(): Promise<PatientMergeRecord[]> {
     const res = await apiClient<PatientMergeRecord[]>('/admin/patients/merge-history');
-    return res.data;
+    return res.data.map((record: any) => {
+      const counts = record.reassignedCounts || {};
+      const total = Object.values(counts).reduce((sum: number, value: any) => sum + Number(value || 0), 0);
+      return { ...record, reassignedCounts: { ...counts, total }, mergedBy: record.mergedBy || record.performedByName };
+    });
   },
 
   // 4. Security Overview
@@ -339,7 +356,11 @@ export const adminService = {
   }): Promise<any> {
     const res = await apiClient<any>('/admin/exam-catalog', {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        code: data.code, name: data.name, modality: data.modality, bodyPart: data.bodyPart || 'GENERAL',
+        defaultDurationMinutes: data.typicalDurationMinutes || 30, bufferMinutes: 5,
+        contrastSupported: Boolean(data.requiresContrast), fastingRequired: false, ivRequired: false, consentRequired: false,
+      }),
     });
     return res.data;
   },
@@ -370,7 +391,11 @@ export const adminService = {
   }): Promise<any> {
     const res = await apiClient<any>('/admin/reporting-templates', {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        name: data.title, modality: data.modality, bodyPart: data.bodyPart,
+        description: `Findings guidance: ${data.findings}\nImpression guidance: ${data.impression}`,
+        language: data.language || 'en', sections: ['Clinical Indication', 'Technique & Comparison', 'Findings', 'Impression'],
+      }),
     });
     return res.data;
   },
@@ -409,12 +434,16 @@ export const adminService = {
       method: 'POST',
       body: JSON.stringify({ notes }),
     });
-    return res.data;
+    return { ...res.data, recordCount: Number((res.data.verificationDetails as any)?.recordsExported || 0), triggeredBy: (res.data as any).triggeredByName || 'Administrator' };
   },
 
   async listBackups(): Promise<BackupRecord[]> {
     const res = await apiClient<BackupRecord[]>('/admin/backups');
-    return res.data;
+    return res.data.map((record: any) => ({
+      ...record,
+      recordCount: Number(record.verificationDetails?.recordsExported || 0),
+      triggeredBy: record.triggeredByName || 'Administrator',
+    }));
   },
 
   async verifyBackup(id: string): Promise<any> {
@@ -436,7 +465,14 @@ export const adminService = {
   }): Promise<DrDrillRecord> {
     const res = await apiClient<DrDrillRecord>('/admin/dr-drills', {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        drillName: data.drillName,
+        drillType: data.drillType || 'DATABASE_RECOVERY',
+        status: data.status === 'SUCCESS' ? 'PASSED' : data.status,
+        recoveryTarget: data.recoveryTarget,
+        durationSec: Math.max(1, data.simulatedRtoMinutes * 60),
+        findings: data.findings,
+      }),
     });
     return res.data;
   },

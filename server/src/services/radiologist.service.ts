@@ -674,63 +674,80 @@ export async function getRadiologistStudyContext(identifier: string, currentUser
     },
   });
 
-  const priorStudies = previousOrders.map((p) => {
-    const hasPacsStudy = Boolean(
-      p.pacsStudyLink &&
-      p.pacsStudyLink.status === PacsStudyLinkStatus.LINKED &&
-      p.pacsStudyLink.studyInstanceUid &&
-      p.pacsStudyLink.studyInstanceUid.trim().length > 0
-    );
+  const priorStudies = await Promise.all(
+    previousOrders.map(async (p) => {
+      let hasPacsStudy = Boolean(
+        p.pacsStudyLink &&
+        p.pacsStudyLink.status === PacsStudyLinkStatus.LINKED &&
+        p.pacsStudyLink.studyInstanceUid &&
+        p.pacsStudyLink.studyInstanceUid.trim().length > 0
+      );
 
-    let pacsStatus: 'LINKED' | 'NOT_RECONCILED' | 'UNAVAILABLE';
-    let pacsMessage: string | null = null;
-    let isImageComparisonEligible: boolean;
-
-    if (isPacsConnected === false) {
-      pacsStatus = 'UNAVAILABLE';
-      pacsMessage = 'Prior study available in RIS; PACS currently unavailable.';
-      isImageComparisonEligible = false;
-    } else if (hasPacsStudy) {
-      pacsStatus = 'LINKED';
-      isImageComparisonEligible = true;
-    } else {
-      pacsStatus = 'NOT_RECONCILED';
-      pacsMessage = 'Prior images not available for verified viewing.';
-      isImageComparisonEligible = false;
-    }
-
-    const hasPriorReport = Boolean(p.report && p.report.status === ReportStatus.FINAL);
-
-    return {
-      imagingOrderId: p.id,
-      accessionNumber: p.accessionNumber,
-      modality: p.modality,
-      bodyPart: p.bodyPart,
-      procedureName: p.examinationName,
-      orderStatus: p.orderStatus,
-      studyDate: (p.appointment?.scheduledStart || p.createdAt).toISOString().split('T')[0],
-      date: (p.appointment?.scheduledStart || p.createdAt).toISOString().split('T')[0],
-      pacsStatus,
-      pacsMessage,
-      isImageComparisonEligible,
-      hasPacsStudy,
-      studyInstanceUid: hasPacsStudy ? p.pacsStudyLink!.studyInstanceUid : null,
-      hasPriorReport,
-      priorReport: hasPriorReport
-        ? {
-            reportId: p.report!.id,
-            status: p.report!.status,
-            authorName: p.report!.radiologist
-              ? `${p.report!.radiologist.firstName} ${p.report!.radiologist.lastName}`
-              : 'Staff Radiologist',
-            finalizedAt: p.report!.finalizedAt?.toISOString() || null,
-            findings: p.report!.findings,
-            impression: p.report!.impression,
-            createdAt: p.report!.createdAt.toISOString(),
+      // Verify actual PACS existence in Orthanc mode
+      if (hasPacsStudy && effectiveAdapter === 'orthanc' && isPacsConnected) {
+        try {
+          const gateway = getPacsGateway();
+          if (typeof gateway.findStudyByStudyInstanceUid === 'function') {
+            const verified = await gateway.findStudyByStudyInstanceUid(p.pacsStudyLink!.studyInstanceUid!.trim());
+            if (!verified) {
+              hasPacsStudy = false;
+            }
           }
-        : null,
-    };
-  });
+        } catch {
+          hasPacsStudy = false;
+        }
+      }
+
+      let pacsStatus: 'LINKED' | 'NOT_RECONCILED' | 'UNAVAILABLE';
+      let pacsMessage: string | null = null;
+      let isImageComparisonEligible: boolean;
+
+      if (isPacsConnected === false) {
+        pacsStatus = 'UNAVAILABLE';
+        pacsMessage = 'Prior study available in RIS; PACS currently unavailable.';
+        isImageComparisonEligible = false;
+      } else if (hasPacsStudy) {
+        pacsStatus = 'LINKED';
+        isImageComparisonEligible = true;
+      } else {
+        pacsStatus = 'NOT_RECONCILED';
+        pacsMessage = 'Prior images not available for verified viewing.';
+        isImageComparisonEligible = false;
+      }
+
+      const hasPriorReport = Boolean(p.report && p.report.status === ReportStatus.FINAL);
+
+      return {
+        imagingOrderId: p.id,
+        accessionNumber: p.accessionNumber,
+        modality: p.modality,
+        bodyPart: p.bodyPart,
+        procedureName: p.examinationName,
+        orderStatus: p.orderStatus,
+        studyDate: (p.appointment?.scheduledStart || p.createdAt).toISOString().split('T')[0],
+        date: (p.appointment?.scheduledStart || p.createdAt).toISOString().split('T')[0],
+        pacsStatus,
+        pacsMessage,
+        isImageComparisonEligible,
+        hasPacsStudy,
+        studyInstanceUid: hasPacsStudy ? p.pacsStudyLink!.studyInstanceUid : null,
+        hasPriorReport,
+        priorReport: hasPriorReport
+          ? {
+              reportId: p.report!.id,
+              status: p.report!.status,
+              authorName: p.report!.radiologist
+                ? `${p.report!.radiologist.firstName} ${p.report!.radiologist.lastName}`
+                : 'Staff Radiologist',
+              finalizedAt: p.report!.finalizedAt?.toISOString() || null,
+              findings: p.report!.findings,
+              impression: p.report!.impression,
+              createdAt: p.report!.createdAt.toISOString(),
+            }
+          : null,
+      };
+    })
+  );
 
   const pacsState = derivePacsState(order, isPacsConnected);
 
@@ -1313,7 +1330,22 @@ export async function getViewerLaunchContext(
   }
 
   const studyInstanceUid = order.pacsStudyLink.studyInstanceUid.trim();
-  const viewerBaseUrl = (process.env.OHIF_BASE_URL || env.OHIF_BASE_URL || process.env.OHIF_VIEWER_URL || 'http://localhost:3000').replace(/\/+$/, '');
+
+  // Verify current study exists in PACS in real Orthanc mode
+  if (effectiveAdapter === 'orthanc') {
+    const gateway = getPacsGateway();
+    if (typeof gateway.findStudyByStudyInstanceUid === 'function') {
+      const currentPacsStudy = await gateway.findStudyByStudyInstanceUid(studyInstanceUid);
+      if (!currentPacsStudy) {
+        throw AppError.conflict(
+          'Current examination images are not available in PACS archive for verified viewing.',
+          'STUDY_NOT_IN_PACS'
+        );
+      }
+    }
+  }
+
+  const viewerBaseUrl = (process.env.OHIF_BASE_URL || env.OHIF_BASE_URL || process.env.OHIF_VIEWER_URL || 'http://localhost:3002').replace(/\/+$/, '');
 
   // Multi-study comparison launch
   if (priorIdentifier && priorIdentifier.trim().length > 0) {
@@ -1360,6 +1392,20 @@ export async function getViewerLaunchContext(
     }
 
     const priorStudyInstanceUid = priorOrder.pacsStudyLink.studyInstanceUid.trim();
+
+    // Verify prior study exists in PACS in real Orthanc mode
+    if (effectiveAdapter === 'orthanc') {
+      const gateway = getPacsGateway();
+      if (typeof gateway.findStudyByStudyInstanceUid === 'function') {
+        const priorPacsStudy = await gateway.findStudyByStudyInstanceUid(priorStudyInstanceUid);
+        if (!priorPacsStudy) {
+          throw AppError.conflict(
+            'Prior examination images are not available in PACS archive for verified viewing.',
+            'PRIOR_STUDY_NOT_IN_PACS'
+          );
+        }
+      }
+    }
     const multiStudyViewerUrl = `${viewerBaseUrl}/viewer?StudyInstanceUIDs=${encodeURIComponent(studyInstanceUid)},${encodeURIComponent(priorStudyInstanceUid)}`;
 
     // Audit logging: RADIOLOGIST_PRIOR_IMAGES_OPENED
@@ -1468,30 +1514,46 @@ export async function getPriorStudiesForOrder(identifier: string) {
     orderBy: { createdAt: 'desc' },
   });
 
-  return previousOrders.map((p) => {
-    const hasPacsStudy = Boolean(
-      p.pacsStudyLink &&
-      p.pacsStudyLink.status === PacsStudyLinkStatus.LINKED &&
-      p.pacsStudyLink.studyInstanceUid &&
-      p.pacsStudyLink.studyInstanceUid.trim().length > 0
-    );
+  return Promise.all(
+    previousOrders.map(async (p) => {
+      let hasPacsStudy = Boolean(
+        p.pacsStudyLink &&
+        p.pacsStudyLink.status === PacsStudyLinkStatus.LINKED &&
+        p.pacsStudyLink.studyInstanceUid &&
+        p.pacsStudyLink.studyInstanceUid.trim().length > 0
+      );
 
-    let pacsStatus: 'LINKED' | 'NOT_RECONCILED' | 'UNAVAILABLE';
-    let pacsMessage: string | null = null;
-    let isImageComparisonEligible: boolean;
+      // Verify actual PACS existence in Orthanc mode
+      if (hasPacsStudy && effectiveAdapter === 'orthanc' && isPacsConnected) {
+        try {
+          const gateway = getPacsGateway();
+          if (typeof gateway.findStudyByStudyInstanceUid === 'function') {
+            const verified = await gateway.findStudyByStudyInstanceUid(p.pacsStudyLink!.studyInstanceUid!.trim());
+            if (!verified) {
+              hasPacsStudy = false;
+            }
+          }
+        } catch {
+          hasPacsStudy = false;
+        }
+      }
 
-    if (!isPacsConnected) {
-      pacsStatus = 'UNAVAILABLE';
-      pacsMessage = 'Prior study available in RIS; PACS currently unavailable.';
-      isImageComparisonEligible = false;
-    } else if (hasPacsStudy) {
-      pacsStatus = 'LINKED';
-      isImageComparisonEligible = true;
-    } else {
-      pacsStatus = 'NOT_RECONCILED';
-      pacsMessage = 'Prior images not available for verified viewing.';
-      isImageComparisonEligible = false;
-    }
+      let pacsStatus: 'LINKED' | 'NOT_RECONCILED' | 'UNAVAILABLE';
+      let pacsMessage: string | null = null;
+      let isImageComparisonEligible: boolean;
+
+      if (!isPacsConnected) {
+        pacsStatus = 'UNAVAILABLE';
+        pacsMessage = 'Prior study available in RIS; PACS currently unavailable.';
+        isImageComparisonEligible = false;
+      } else if (hasPacsStudy) {
+        pacsStatus = 'LINKED';
+        isImageComparisonEligible = true;
+      } else {
+        pacsStatus = 'NOT_RECONCILED';
+        pacsMessage = 'Prior images not available for verified viewing.';
+        isImageComparisonEligible = false;
+      }
 
     const hasPriorReport = Boolean(p.report && p.report.status === ReportStatus.FINAL);
 
@@ -1523,7 +1585,8 @@ export async function getPriorStudiesForOrder(identifier: string) {
           }
         : null,
     };
-  });
+    })
+  );
 }
 
 /**

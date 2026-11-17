@@ -38,7 +38,7 @@ export const EndDowntimeModal: React.FC<EndDowntimeModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl shadow-xl max-w-lg w-full flex flex-col overflow-hidden">
+      <div className="bg-white rounded shadow-xl max-w-lg w-full flex flex-col overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-200 bg-emerald-50 flex items-center justify-between">
           <div>
             <h3 className="text-base font-bold text-emerald-800">Restore Machine to Service</h3>

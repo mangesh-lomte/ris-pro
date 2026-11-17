@@ -6407,7 +6407,7 @@ describe('Healthcare API Integration Tests (Phase 2)', () => {
         headers: { Authorization: `Bearer ${radToken}` },
       });
       const body = await res.json();
-      const expectedUrl = `http://localhost:3000/viewer?StudyInstanceUIDs=${encodeURIComponent(testStudyUid)}`;
+      const expectedUrl = `http://localhost:3002/viewer?StudyInstanceUIDs=${encodeURIComponent(testStudyUid)}`;
       assert.strictEqual(body.data.viewerUrl, expectedUrl);
     });
 
@@ -6991,7 +6991,7 @@ describe('Healthcare API Integration Tests (Phase 2)', () => {
         assert.strictEqual(body.data.accessionNumber, 'ACC-TEST-P42B-CURR');
         assert.strictEqual(body.data.priorAccessionNumber, 'ACC-TEST-P42B-PRIOR1');
 
-        const expectedUrl = `http://localhost:3000/viewer?StudyInstanceUIDs=${encodeURIComponent(currStudyUid)},${encodeURIComponent(prior1StudyUid)}`;
+        const expectedUrl = `http://localhost:3002/viewer?StudyInstanceUIDs=${encodeURIComponent(currStudyUid)},${encodeURIComponent(prior1StudyUid)}`;
         assert.strictEqual(body.data.viewerUrl, expectedUrl);
       });
 
@@ -7005,7 +7005,7 @@ describe('Healthcare API Integration Tests (Phase 2)', () => {
         assert.strictEqual(body.data.isMultiStudy, false);
         assert.strictEqual(
           body.data.viewerUrl,
-          `http://localhost:3000/viewer?StudyInstanceUIDs=${encodeURIComponent(currStudyUid)}`
+          `http://localhost:3002/viewer?StudyInstanceUIDs=${encodeURIComponent(currStudyUid)}`
         );
       });
 
@@ -7903,7 +7903,7 @@ describe('Healthcare API Integration Tests (Phase 2)', () => {
 
       p44RadUser1 = await prisma.user.create({
         data: {
-          email: `rad1.p44.${Date.now()}@manrad.local`,
+          email: `rad1.p44.${Date.now()}@radaxis.local`,
           passwordHash: '$2b$10$abcdefghijklmnopqrstuv',
           firstName: 'Elena',
           lastName: 'Rostova',
@@ -7919,7 +7919,7 @@ describe('Healthcare API Integration Tests (Phase 2)', () => {
 
       p44RadUser2 = await prisma.user.create({
         data: {
-          email: `rad2.p44.${Date.now()}@manrad.local`,
+          email: `rad2.p44.${Date.now()}@radaxis.local`,
           passwordHash: '$2b$10$abcdefghijklmnopqrstuv',
           firstName: 'Marcus',
           lastName: 'Vance',

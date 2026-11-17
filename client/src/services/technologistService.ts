@@ -150,6 +150,23 @@ export const technologistService = {
     return response.data;
   },
 
+  async launchScannerWorklist(orderId: string): Promise<{
+    success: boolean;
+    accessionNumber: string;
+    syncedAt: string;
+    stationAETitle: string;
+    transport: 'DICOM_MWL';
+  }> {
+    const response = await apiClient<{
+      success: boolean;
+      accessionNumber: string;
+      syncedAt: string;
+      stationAETitle: string;
+      transport: 'DICOM_MWL';
+    }>(`/orders/${orderId}/mwl-sync`, { method: 'POST' });
+    return response.data;
+  },
+
   /**
    * Starts scan acquisition (READY_FOR_SCAN -> SCAN_IN_PROGRESS)
    */

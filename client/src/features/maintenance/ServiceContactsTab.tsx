@@ -40,7 +40,7 @@ export const ServiceContactsTab: React.FC<ServiceContactsTabProps> = ({
   return (
     <div className="space-y-4">
       {/* Controls Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded shadow-sm border border-slate-200">
         <div className="flex flex-wrap items-center gap-4">
           <div className="relative">
             <Search className="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5" />
@@ -90,7 +90,7 @@ export const ServiceContactsTab: React.FC<ServiceContactsTabProps> = ({
           filtered.map((c) => (
             <div
               key={c.id}
-              className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 hover:border-sky-400 transition-colors flex flex-col justify-between"
+              className="bg-white rounded shadow-sm border border-slate-200 p-4 hover:border-sky-400 transition-colors flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between mb-2">

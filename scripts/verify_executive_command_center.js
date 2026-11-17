@@ -97,7 +97,7 @@ async function run() {
   };
 
   try {
-    console.log('=== STARTING MANRAD RIS EXECUTIVE CLINICAL COMMAND CENTER VERIFICATION ===\n');
+    console.log('=== STARTING RADAXIS RIS EXECUTIVE CLINICAL COMMAND CENTER VERIFICATION ===\n');
 
     // ========================================================================
     // 1. ADMIN ROLE & FUNCTIONAL ACTIONS

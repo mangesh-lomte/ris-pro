@@ -1,9 +1,9 @@
-name: manrad
+name: radaxis-ris
 
 services:
   db:
     image: postgres:16
-    container_name: manrad-db
+    container_name: radaxis-db
     restart: unless-stopped
 
     environment:
@@ -12,10 +12,10 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
 
     ports:
-      - "5432:5432"
+      - "5434:5432"
 
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - radaxis_postgres_data:/var/lib/postgresql/data
 
     healthcheck:
       test:
@@ -29,16 +29,16 @@ services:
 
   orthanc:
     image: orthancteam/orthanc:26.9.1
-    container_name: manrad-orthanc
+    container_name: radaxis-orthanc
     restart: unless-stopped
 
     ports:
-      - "8042:8042"
-      - "4242:4242"
+      - "8044:8042"
+      - "4244:4242"
 
     environment:
-      ORTHANC__NAME: "Manrad RIS PACS"
-      ORTHANC__DICOM_AET: "MANRAD"
+      ORTHANC__NAME: "RadAxis RIS PACS"
+      ORTHANC__DICOM_AET: "RADAXIS"
 
       ORTHANC__REMOTE_ACCESS_ALLOWED: "true"
       ORTHANC__AUTHENTICATION_ENABLED: "true"
@@ -48,15 +48,15 @@ services:
       ORTHANC__DICOM_WEB__ROOT: "/dicom-web/"
 
     volumes:
-      - orthanc_data:/var/lib/orthanc/db
+      - radaxis_orthanc_data:/var/lib/orthanc/db
 
   ohif:
     image: ohif/app:latest
-    container_name: manrad-ohif
+    container_name: radaxis-ohif
     restart: unless-stopped
 
     ports:
-      - "127.0.0.1:3000:80"
+      - "127.0.0.1:3002:80"
 
     environment:
       PORT: 80
@@ -77,5 +77,5 @@ services:
       - orthanc
 
 volumes:
-  postgres_data:
-  orthanc_data:
+  radaxis_postgres_data:
+  radaxis_orthanc_data:

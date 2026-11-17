@@ -124,6 +124,29 @@ export class MockPacsGateway implements PacsGateway {
     return this.mockStudies.find((s) => s.orthancStudyId === orthancStudyId) || null;
   }
 
+  async findStudyByStudyInstanceUid(studyInstanceUid: string): Promise<OrthancStudyMetadata | null> {
+    if (this.outcome === 'failure' || !studyInstanceUid || studyInstanceUid.trim().length === 0) {
+      return null;
+    }
+    const match = this.mockStudies.find(
+      (s) => s.studyInstanceUid && s.studyInstanceUid.trim() === studyInstanceUid.trim()
+    );
+    if (match) return match;
+    if (this.outcome === 'success') {
+      return {
+        orthancStudyId: `MOCK-${studyInstanceUid.slice(-8)}`,
+        accessionNumber: 'MOCK-ACCESSION',
+        patientId: 'MOCK-PATIENT',
+        patientName: 'MOCK-NAME',
+        studyInstanceUid: studyInstanceUid.trim(),
+        studyDate: '20260101',
+        studyDescription: 'Mock PACS Study',
+        modalitiesInStudy: ['CT'],
+      };
+    }
+    return null;
+  }
+
   async requestHandoff(_context: PacsHandoffContext): Promise<PacsHandoffResult> {
     const now = new Date();
 

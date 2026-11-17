@@ -48,7 +48,7 @@ export function WorkflowPage() {
         <Card className="border-slate-200">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <Database className="w-4 h-4 text-indigo-600" />
+              <Database className="w-4 h-4 text-[#2563EB]" />
               <span>Role of PACS / VNA (Imaging Archive)</span>
             </CardTitle>
           </CardHeader>

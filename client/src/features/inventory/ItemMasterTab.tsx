@@ -29,7 +29,7 @@ export function ItemMasterTab({ items, onRefresh, isAdmin }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded border border-slate-200 shadow-sm">
         <div className="flex items-center gap-2 flex-1">
           <div className="relative flex-1 max-w-sm">
             <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
@@ -70,7 +70,7 @@ export function ItemMasterTab({ items, onRefresh, isAdmin }: Props) {
         )}
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+      <div className="bg-white rounded border border-slate-200 overflow-hidden shadow-sm">
         <div className="table-scroll-container thin-scroll overflow-x-auto w-full">
         <table className="w-full text-left text-xs min-w-[700px]">
           <thead className="bg-slate-100/80 text-slate-700 font-semibold border-b border-slate-200">

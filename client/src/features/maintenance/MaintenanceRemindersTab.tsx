@@ -41,7 +41,7 @@ export const MaintenanceRemindersTab: React.FC<MaintenanceRemindersTabProps> = (
 
   if (loading || !reminders) {
     return (
-      <div className="p-12 text-center text-slate-500 bg-white rounded-xl border border-slate-200">
+      <div className="p-12 text-center text-slate-500 bg-white rounded border border-slate-200">
         Evaluating maintenance reminders and compliance schedule...
       </div>
     );
@@ -76,7 +76,7 @@ export const MaintenanceRemindersTab: React.FC<MaintenanceRemindersTabProps> = (
     <div className="space-y-4">
       {/* Overview Stat Counters */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-white p-4 rounded-xl border border-rose-200 shadow-2xs bg-rose-50/20">
+        <div className="bg-white p-4 rounded border border-rose-200 shadow-2xs bg-rose-50/20">
           <div className="flex items-center justify-between text-xs font-semibold text-rose-700 uppercase tracking-wider">
             <span>Overdue Actions</span>
             <AlertOctagon className="w-4 h-4 text-rose-600" />
@@ -87,7 +87,7 @@ export const MaintenanceRemindersTab: React.FC<MaintenanceRemindersTabProps> = (
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-xl border border-amber-200 shadow-2xs bg-amber-50/20">
+        <div className="bg-white p-4 rounded border border-amber-200 shadow-2xs bg-amber-50/20">
           <div className="flex items-center justify-between text-xs font-semibold text-amber-700 uppercase tracking-wider">
             <span>Due Within 7 Days</span>
             <Clock className="w-4 h-4 text-amber-600" />
@@ -98,7 +98,7 @@ export const MaintenanceRemindersTab: React.FC<MaintenanceRemindersTabProps> = (
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-xl border border-sky-200 shadow-2xs bg-sky-50/20">
+        <div className="bg-white p-4 rounded border border-sky-200 shadow-2xs bg-sky-50/20">
           <div className="flex items-center justify-between text-xs font-semibold text-sky-700 uppercase tracking-wider">
             <span>Upcoming (30 Days)</span>
             <Calendar className="w-4 h-4 text-sky-600" />
@@ -109,7 +109,7 @@ export const MaintenanceRemindersTab: React.FC<MaintenanceRemindersTabProps> = (
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
+        <div className="bg-white p-4 rounded border border-slate-200 shadow-2xs">
           <div className="flex items-center justify-between text-xs font-semibold text-slate-600 uppercase tracking-wider">
             <span>Active Downtime Outages</span>
             <AlertTriangle className="w-4 h-4 text-rose-600" />
@@ -124,7 +124,7 @@ export const MaintenanceRemindersTab: React.FC<MaintenanceRemindersTabProps> = (
       </div>
 
       {/* Filter Chips & Action Bar */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
+      <div className="bg-white p-4 rounded border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2 overflow-x-auto text-xs">
           <span className="text-slate-500 font-semibold flex items-center gap-1 shrink-0">
             <Filter className="w-3.5 h-3.5 text-slate-400" /> Severity:
@@ -161,7 +161,7 @@ export const MaintenanceRemindersTab: React.FC<MaintenanceRemindersTabProps> = (
       <div className="space-y-4">
         {/* Active Downtime Outages */}
         {(filterSeverity === 'ALL' || filterSeverity === 'OVERDUE') && activeDowntimes.length > 0 && (
-          <div className="bg-rose-50/50 rounded-xl border border-rose-200 p-4 space-y-3">
+          <div className="bg-rose-50/50 rounded border border-rose-200 p-4 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <AlertOctagon className="w-4 h-4 text-rose-600" />
@@ -205,7 +205,7 @@ export const MaintenanceRemindersTab: React.FC<MaintenanceRemindersTabProps> = (
 
         {/* Overdue / Due PM Schedules */}
         {(filterSeverity === 'ALL' || filterSeverity === 'OVERDUE' || filterSeverity === 'NEAR_DUE') && (overduePms.length > 0 || dueNearPms.length > 0) && (
-          <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3 shadow-sm">
+          <div className="bg-white rounded border border-slate-200 p-4 space-y-3 shadow-sm">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-amber-600" />
@@ -256,7 +256,7 @@ export const MaintenanceRemindersTab: React.FC<MaintenanceRemindersTabProps> = (
 
         {/* Expiring Compliance Certificates */}
         {(filterSeverity === 'ALL' || filterSeverity === 'NEAR_DUE' || filterSeverity === 'OVERDUE') && expiringCertificates.length > 0 && (
-          <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3 shadow-sm">
+          <div className="bg-white rounded border border-slate-200 p-4 space-y-3 shadow-sm">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <FileCheck2 className="w-4 h-4 text-sky-600" />
@@ -300,10 +300,10 @@ export const MaintenanceRemindersTab: React.FC<MaintenanceRemindersTabProps> = (
 
         {/* Expiring Warranty / AMC Contracts */}
         {(filterSeverity === 'ALL' || filterSeverity === 'NEAR_DUE') && expiringContracts.length > 0 && (
-          <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3 shadow-sm">
+          <div className="bg-white rounded border border-slate-200 p-4 space-y-3 shadow-sm">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-indigo-600" />
+                <FileText className="w-4 h-4 text-[#2563EB]" />
                 <h3 className="font-bold text-xs uppercase tracking-wider text-slate-900">
                   Expiring AMC & Warranty Contracts ({expiringContracts.length})
                 </h3>
@@ -344,7 +344,7 @@ export const MaintenanceRemindersTab: React.FC<MaintenanceRemindersTabProps> = (
 
         {/* Open Critical/High Breakdown Tickets */}
         {(filterSeverity === 'ALL' || filterSeverity === 'UPCOMING') && criticalTickets.length > 0 && (
-          <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-3 shadow-sm">
+          <div className="bg-white rounded border border-slate-200 p-4 space-y-3 shadow-sm">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 text-amber-600" />

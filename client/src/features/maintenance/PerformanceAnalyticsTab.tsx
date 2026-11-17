@@ -37,7 +37,7 @@ export const PerformanceAnalyticsTab: React.FC<PerformanceAnalyticsTabProps> = (
   return (
     <div className="space-y-6">
       {/* Controls Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded shadow-sm border border-slate-200">
         <div className="flex flex-wrap items-center gap-3">
           <label className="text-xs font-semibold text-slate-700">Analytics Period:</label>
           <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-md text-xs">
@@ -84,14 +84,14 @@ export const PerformanceAnalyticsTab: React.FC<PerformanceAnalyticsTabProps> = (
       </div>
 
       {loading || !analytics ? (
-        <div className="p-12 text-center text-slate-500 bg-white rounded-xl border border-slate-200 text-xs">
+        <div className="p-12 text-center text-slate-500 bg-white rounded border border-slate-200 text-xs">
           Computing equipment performance and reliability analytics...
         </div>
       ) : (
         <>
           {/* Key Metric Tiles */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+            <div className="bg-white p-5 rounded border border-slate-200 shadow-xs">
               <div className="flex items-center justify-between text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
                 <span>Fleet Operational Uptime</span>
                 <Activity className="w-4 h-4 text-emerald-600" />
@@ -104,7 +104,7 @@ export const PerformanceAnalyticsTab: React.FC<PerformanceAnalyticsTabProps> = (
               </div>
             </div>
 
-            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+            <div className="bg-white p-5 rounded border border-slate-200 shadow-xs">
               <div className="flex items-center justify-between text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
                 <span>Mean Time Between Failures</span>
                 <Clock className="w-4 h-4 text-sky-600" />
@@ -117,12 +117,12 @@ export const PerformanceAnalyticsTab: React.FC<PerformanceAnalyticsTabProps> = (
               </div>
             </div>
 
-            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+            <div className="bg-white p-5 rounded border border-slate-200 shadow-xs">
               <div className="flex items-center justify-between text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
                 <span>Mean Time To Repair</span>
-                <Wrench className="w-4 h-4 text-indigo-600" />
+                <Wrench className="w-4 h-4 text-sky-600" />
               </div>
-              <div className="text-3xl font-extrabold text-indigo-700">
+              <div className="text-3xl font-extrabold text-sky-800">
                 {analytics.mttrHours} hrs
               </div>
               <div className="text-xs text-slate-500 mt-2">
@@ -130,7 +130,7 @@ export const PerformanceAnalyticsTab: React.FC<PerformanceAnalyticsTabProps> = (
               </div>
             </div>
 
-            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+            <div className="bg-white p-5 rounded border border-slate-200 shadow-xs">
               <div className="flex items-center justify-between text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
                 <span>Unplanned Outages</span>
                 <AlertOctagon className="w-4 h-4 text-rose-600" />
@@ -146,7 +146,7 @@ export const PerformanceAnalyticsTab: React.FC<PerformanceAnalyticsTabProps> = (
 
           {/* Downtime Hours & Summary */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
+            <div className="bg-white p-5 rounded border border-slate-200 shadow-xs">
               <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-4">Downtime Breakdown (Hours)</h3>
               <div className="space-y-3">
                 <div className="flex justify-between items-center text-xs">
@@ -164,14 +164,14 @@ export const PerformanceAnalyticsTab: React.FC<PerformanceAnalyticsTabProps> = (
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-slate-600">Scheduled PM Completion Rate:</span>
                   <span className="font-bold text-emerald-600 font-mono">
-                    {(analytics as any).pmCompletionRate !== undefined ? `${(analytics as any).pmCompletionRate}%` : '100%'}
+                    {(analytics as any).pmCompletionRate !== null && (analytics as any).pmCompletionRate !== undefined ? `${(analytics as any).pmCompletionRate}%` : 'No scheduled PM data'}
                   </span>
                 </div>
               </div>
             </div>
 
             {/* Per-equipment breakdown table */}
-            <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+            <div className="lg:col-span-2 bg-white rounded border border-slate-200 shadow-xs overflow-hidden">
               <div className="p-4 border-b border-slate-100 flex items-center justify-between">
                 <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Unit-by-Unit Reliability Table</h3>
                 <span className="text-[11px] text-slate-400 font-medium">Past {periodDays} Days Window</span>

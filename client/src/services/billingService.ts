@@ -296,7 +296,11 @@ export const billingService = {
   }): Promise<ApiResponse<Quotation>> {
     return apiClient<Quotation>('/billing/quotations', {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        patientId: data.patientId,
+        validDays: data.validityDays,
+        items: data.items.map((item) => ({ serviceCode: item.code, quantity: item.quantity })),
+      }),
     });
   },
 
@@ -326,7 +330,15 @@ export const billingService = {
   }): Promise<ApiResponse<InvoiceRecord>> {
     return apiClient<InvoiceRecord>('/billing/invoices', {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        patientId: data.patientId,
+        orderId: data.orderId || data.accessionNumber,
+        items: data.items?.map((item) => ({
+          serviceCode: item.code,
+          description: item.description,
+          quantity: item.quantity,
+        })),
+      }),
     });
   },
 
@@ -365,6 +377,7 @@ export const billingService = {
       amount: number;
       method: 'CASH' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'UPI' | 'ONLINE' | 'INSURANCE';
       referenceNumber?: string;
+      authorizationConfirmed?: boolean;
       notes?: string;
       idempotencyKey?: string;
     }
@@ -375,6 +388,7 @@ export const billingService = {
         amount: data.amount,
         paymentMethod: data.method,
         reference: data.referenceNumber,
+        authorizationConfirmed: data.authorizationConfirmed,
         notes: data.notes,
         idempotencyKey: data.idempotencyKey,
       }),
@@ -439,10 +453,9 @@ export const billingService = {
   async updateClaimStatus(
     id: string,
     data: {
-      status: 'APPROVED' | 'REJECTED' | 'SETTLED';
+      status: 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED' | 'SETTLED';
       approvedAmount?: number;
-      settledAmount?: number;
-      approvalCode?: string;
+      settlementReference?: string;
       notes?: string;
     }
   ): Promise<ApiResponse<InsuranceClaimRecord>> {
@@ -454,18 +467,11 @@ export const billingService = {
 
   // 9. Contrast / Film Charges
   async attachClinicalCharges(
-    orderIdOrAccession: string,
-    data: {
-      contrastUsed?: boolean;
-      contrastVolumeMl?: number;
-      contrastRate?: number;
-      filmCount?: number;
-      filmRate?: number;
-    }
+    orderIdOrAccession: string
   ): Promise<ApiResponse<InvoiceRecord>> {
     return apiClient<InvoiceRecord>(`/billing/orders/${orderIdOrAccession}/clinical-charges`, {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify({}),
     });
   },
 

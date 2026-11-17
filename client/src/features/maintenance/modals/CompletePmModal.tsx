@@ -15,10 +15,10 @@ export const CompletePmModal: React.FC<CompletePmModalProps> = ({
   onSubmit,
 }) => {
   const [formData, setFormData] = useState({
-    actualHours: '3.5',
-    findings: 'All electrical connections tight, gantry slip ring tracks cleaned, exposure test verified',
-    workDone: 'Cleaned slip rings, lubricated gantry bearings, refreshed detector calibration table',
+    findings: '',
+    workDone: '',
     partsReplaced: '',
+    outcome: 'PASS',
     nextDueDate: new Date(Date.now() + 90 * 86400000).toISOString().split('T')[0],
   });
   const [saving, setSaving] = useState(false);
@@ -32,8 +32,8 @@ export const CompletePmModal: React.FC<CompletePmModalProps> = ({
       setSaving(true);
       setError('');
       await onSubmit(pm.id, {
-        ...formData,
-        actualHours: formData.actualHours ? parseFloat(formData.actualHours) : undefined,
+        notes: [formData.workDone, formData.findings, formData.partsReplaced ? `Parts: ${formData.partsReplaced}` : ''].filter(Boolean).join('\n'),
+        completedChecklist: [{ item: 'Preventive maintenance completion outcome', status: formData.outcome, actual: formData.workDone, remarks: formData.findings || undefined }],
         nextDueDate: new Date(formData.nextDueDate).toISOString(),
       });
       onClose();
@@ -46,7 +46,7 @@ export const CompletePmModal: React.FC<CompletePmModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl shadow-xl max-w-lg w-full flex flex-col overflow-hidden">
+      <div className="bg-white rounded shadow-xl max-w-lg w-full flex flex-col overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
           <div>
             <h3 className="text-base font-bold text-slate-800">Complete PM Inspection</h3>
@@ -64,18 +64,6 @@ export const CompletePmModal: React.FC<CompletePmModalProps> = ({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block font-semibold text-slate-700 mb-1">Labor Hours Spent</label>
-              <input
-                type="number"
-                step="0.5"
-                required
-                value={formData.actualHours}
-                onChange={(e) => setFormData({ ...formData, actualHours: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              />
-            </div>
-
-            <div>
               <label className="block font-semibold text-slate-700 mb-1">Next Cycle Due Date *</label>
               <input
                 type="date"
@@ -85,6 +73,15 @@ export const CompletePmModal: React.FC<CompletePmModalProps> = ({
                 className="w-full px-3 py-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block font-semibold text-slate-700 mb-1">Checklist Outcome *</label>
+            <select required value={formData.outcome} onChange={(e) => setFormData({ ...formData, outcome: e.target.value })} className="w-full px-3 py-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+              <option value="PASS">Pass - safe to return to service</option>
+              <option value="WARNING">Warning - completed with monitored findings</option>
+              <option value="FAIL">Fail - keep equipment out of service</option>
+            </select>
           </div>
 
           <div>

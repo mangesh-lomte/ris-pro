@@ -19,11 +19,6 @@ export function AttachClinicalChargesModal({
   onSuccess,
 }: AttachClinicalChargesModalProps) {
   const [accession, setAccession] = useState(orderAccession);
-  const [contrastUsed, setContrastUsed] = useState(true);
-  const [contrastVolumeMl, setContrastVolumeMl] = useState(100);
-  const [contrastRate, setContrastRate] = useState(0.85);
-  const [filmCount, setFilmCount] = useState(2);
-  const [filmRate, setFilmRate] = useState(15.0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -40,13 +35,7 @@ export function AttachClinicalChargesModal({
     setSuccess(false);
 
     try {
-      await billingService.attachClinicalCharges(accession.trim(), {
-        contrastUsed,
-        contrastVolumeMl: contrastUsed ? Number(contrastVolumeMl) : 0,
-        contrastRate: contrastUsed ? Number(contrastRate) : 0,
-        filmCount: Number(filmCount),
-        filmRate: Number(filmRate),
-      });
+      await billingService.attachClinicalCharges(accession.trim());
 
       setSuccess(true);
       setTimeout(() => {
@@ -103,72 +92,8 @@ export function AttachClinicalChargesModal({
             />
           </div>
 
-          <div className="p-3 rounded-xl border border-slate-200 bg-slate-50 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="font-semibold text-slate-800">IV Contrast Consumable</span>
-              <label className="flex items-center gap-2 text-2xs cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={contrastUsed}
-                  onChange={(e) => setContrastUsed(e.target.checked)}
-                  className="rounded text-cyan-600"
-                />
-                Contrast Administered
-              </label>
-            </div>
-
-            {contrastUsed && (
-              <div className="grid grid-cols-2 gap-3 pt-1">
-                <div>
-                  <span className="text-3xs uppercase font-bold text-slate-400 block">Volume (mL)</span>
-                  <Input
-                    type="number"
-                    min="1"
-                    value={contrastVolumeMl}
-                    onChange={(e) => setContrastVolumeMl(parseInt(e.target.value) || 0)}
-                    className="text-xs font-mono"
-                  />
-                </div>
-                <div>
-                  <span className="text-3xs uppercase font-bold text-slate-400 block">Rate / mL (₹)</span>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={contrastRate}
-                    onChange={(e) => setContrastRate(parseFloat(e.target.value) || 0)}
-                    className="text-xs font-mono"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="p-3 rounded-xl border border-slate-200 bg-slate-50 space-y-3">
-            <span className="font-semibold text-slate-800 block">Diagnostic Film Prints</span>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <span className="text-3xs uppercase font-bold text-slate-400 block">Film Sheet Count</span>
-                <Input
-                  type="number"
-                  min="0"
-                  value={filmCount}
-                  onChange={(e) => setFilmCount(parseInt(e.target.value) || 0)}
-                  className="text-xs font-mono"
-                />
-              </div>
-              <div>
-                <span className="text-3xs uppercase font-bold text-slate-400 block">Rate / Film (₹)</span>
-                <Input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={filmRate}
-                  onChange={(e) => setFilmRate(parseFloat(e.target.value) || 0)}
-                  className="text-xs font-mono"
-                />
-              </div>
-            </div>
+          <div className="rounded border border-cyan-200 bg-cyan-50 p-3 text-xs leading-5 text-cyan-900">
+            Contrast and film charges are calculated from recorded contrast administrations and inventory film-print transactions. Rates come only from the active price master.
           </div>
         </DialogContent>
 
@@ -180,7 +105,7 @@ export function AttachClinicalChargesModal({
             size="sm"
             type="submit"
             disabled={loading}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white gap-1.5"
+            className="bg-[#2563EB] hover:bg-blue-700 text-white gap-1.5"
           >
             {loading ? 'Attaching...' : 'Add Consumable Charges'}
           </Button>

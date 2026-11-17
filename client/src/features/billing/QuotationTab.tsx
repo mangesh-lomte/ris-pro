@@ -24,7 +24,7 @@ interface SelectedQuoteItem {
 }
 
 export function QuotationTab({ quotations, prices, loading, onRefresh }: QuotationTabProps) {
-  const [patientId, setPatientId] = useState('PAT-2026-DEMO01');
+  const [patientId, setPatientId] = useState('');
   const [validityDays, setValidityDays] = useState(14);
   const [items, setItems] = useState<SelectedQuoteItem[]>([]);
   const [selectedPriceCode, setSelectedPriceCode] = useState('');
@@ -87,7 +87,7 @@ export function QuotationTab({ quotations, prices, loading, onRefresh }: Quotati
   return (
     <div className="space-y-6">
       {/* Quotation Generator Card */}
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+      <div className="rounded border border-slate-200 bg-white p-5 shadow-sm space-y-4">
         <div className="flex items-center gap-2 border-b pb-3">
           <div className="p-1.5 bg-cyan-100 text-cyan-800 rounded-lg">
             <Calculator className="w-5 h-5" />
@@ -154,7 +154,7 @@ export function QuotationTab({ quotations, prices, loading, onRefresh }: Quotati
           </div>
 
           {items.length > 0 && (
-            <div className="border border-slate-200 rounded-xl p-3 bg-slate-50 space-y-2">
+            <div className="border border-slate-200 rounded p-3 bg-slate-50 space-y-2">
               <span className="font-semibold text-slate-800 block text-2xs uppercase">Estimated Procedure Line Items</span>
               {items.map((item, idx) => (
                 <div
@@ -220,7 +220,7 @@ export function QuotationTab({ quotations, prices, loading, onRefresh }: Quotati
 
       {/* Quotation Detail View if selected */}
       {activeQuotation && (
-        <div className="rounded-xl border border-cyan-200 bg-cyan-50/40 p-5 space-y-3">
+        <div className="rounded border border-cyan-200 bg-cyan-50/40 p-5 space-y-3">
           <div className="flex items-center justify-between border-b border-cyan-100 pb-2">
             <div>
               <span className="inline-block px-2 py-0.5 rounded bg-cyan-200 text-cyan-900 font-bold text-3xs uppercase mr-2">
@@ -260,7 +260,7 @@ export function QuotationTab({ quotations, prices, loading, onRefresh }: Quotati
       )}
 
       {/* Past Quotations Table */}
-      <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+      <div className="rounded border border-slate-200 bg-white overflow-hidden shadow-sm">
         <div className="px-4 py-3 border-b bg-slate-50/50 flex items-center justify-between">
           <h4 className="font-bold text-xs text-slate-800 uppercase tracking-wide">Historical Quotations & Estimates</h4>
           <span className="text-2xs text-slate-500">{quotations.length} records</span>
@@ -290,7 +290,7 @@ export function QuotationTab({ quotations, prices, loading, onRefresh }: Quotati
               quotations.map((q) => (
                 <TableRow key={q.id} className="hover:bg-slate-50/50 text-xs">
                   <TableCell className="font-mono font-bold text-cyan-900">{q.quotationNumber}</TableCell>
-                  <TableCell className="font-mono text-indigo-700">{q.patientId}</TableCell>
+                  <TableCell className="font-mono text-blue-700">{q.patientId}</TableCell>
                   <TableCell className="font-medium text-slate-800">
                     {q.patient ? `${q.patient.firstName} ${q.patient.lastName}` : 'Walk-in'}
                   </TableCell>

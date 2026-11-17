@@ -105,6 +105,7 @@ export interface PacsGateway {
     studies: OrthancStudyMetadata[];
     rawError?: string;
   }>;
+  findStudyByStudyInstanceUid?(studyInstanceUid: string): Promise<OrthancStudyMetadata | null>;
   getStudyMetadata(orthancStudyId: string): Promise<OrthancStudyMetadata | null>;
   getStudySeriesAndInstances?(orthancStudyId: string): Promise<DicomSeriesSummary[]>;
   getStudyArchive?(orthancStudyId: string): Promise<Buffer | null>;

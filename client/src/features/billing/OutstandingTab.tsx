@@ -50,7 +50,7 @@ export function OutstandingTab({ invoices, loading, onRefresh }: OutstandingTabP
     <div className="space-y-4">
       {/* Overview Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="p-4 rounded-xl border border-rose-200 bg-rose-50/50 space-y-1">
+        <div className="p-4 rounded border border-rose-200 bg-rose-50/50 space-y-1">
           <span className="text-3xs uppercase font-bold text-rose-700 block">Total Outstanding Balance</span>
           <span className="text-xl font-extrabold text-rose-700 font-mono">
             {formatINR(totalOutstanding)}
@@ -58,7 +58,7 @@ export function OutstandingTab({ invoices, loading, onRefresh }: OutstandingTabP
           <p className="text-3xs text-rose-600">Across {outstandingInvoices.length} active invoices</p>
         </div>
 
-        <div className="p-4 rounded-xl border border-amber-200 bg-amber-50/50 space-y-1">
+        <div className="p-4 rounded border border-amber-200 bg-amber-50/50 space-y-1">
           <span className="text-3xs uppercase font-bold text-amber-700 block">Partially Paid</span>
           <span className="text-xl font-extrabold text-amber-800 font-mono">
             {outstandingInvoices.filter((i) => i.status === 'PARTIALLY_PAID').length}
@@ -66,7 +66,7 @@ export function OutstandingTab({ invoices, loading, onRefresh }: OutstandingTabP
           <p className="text-3xs text-amber-700">Accounts with partial deposits</p>
         </div>
 
-        <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-1">
+        <div className="p-4 rounded border border-slate-200 bg-slate-50 space-y-1">
           <span className="text-3xs uppercase font-bold text-slate-500 block">Uncollected / Issued</span>
           <span className="text-xl font-extrabold text-slate-800 font-mono">
             {outstandingInvoices.filter((i) => i.status === 'ISSUED').length}
@@ -90,7 +90,7 @@ export function OutstandingTab({ invoices, loading, onRefresh }: OutstandingTabP
         </span>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+      <div className="rounded border border-slate-200 bg-white overflow-hidden shadow-sm">
         <Table>
           <TableHeader>
             <TableRow className="bg-slate-50/80">
@@ -124,7 +124,7 @@ export function OutstandingTab({ invoices, loading, onRefresh }: OutstandingTabP
                 return (
                   <TableRow key={inv.id} className="hover:bg-slate-50/50 text-xs">
                     <TableCell className="font-mono font-bold text-cyan-900">{inv.invoiceNumber}</TableCell>
-                    <TableCell className="font-mono font-bold text-indigo-700">{inv.patientId}</TableCell>
+                    <TableCell className="font-mono font-bold text-blue-700">{inv.patientId}</TableCell>
                     <TableCell className="font-medium text-slate-800">
                       {inv.patient ? `${inv.patient.firstName} ${inv.patient.lastName}` : 'Walk-in'}
                     </TableCell>

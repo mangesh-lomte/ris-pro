@@ -1022,7 +1022,7 @@ export async function processHl7Message(
   });
 
   // Emit standard HL7 MSA acknowledgment
-  const ack = `MSH|^~\\&|MANRAD_RIS|HOSPITAL|HIS|HOSPITAL|${new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14)}||ACK|ACK${Date.now()}|P|2.5\rMSA|AA|${orderId}|Accession Assigned: ${accessionNumber}\r`;
+  const ack = `MSH|^~\\&|RADAXIS_RIS|HOSPITAL|HIS|HOSPITAL|${new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14)}||ACK|ACK${Date.now()}|P|2.5\rMSA|AA|${orderId}|Accession Assigned: ${accessionNumber}\r`;
 
   return {
     success: true,

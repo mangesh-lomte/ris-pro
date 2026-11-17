@@ -14,11 +14,11 @@ export const envSchema = z.object({
   JWT_EXPIRES_IN: z.string().default('8h'),
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
   PACS_ADAPTER: z.enum(['mock', 'orthanc']).default('mock'),
-  ORTHANC_URL: z.string().default('http://localhost:8042'),
+  ORTHANC_URL: z.string().default('http://localhost:8044'),
   ORTHANC_USERNAME: z.string().optional(),
   ORTHANC_PASSWORD: z.string().optional(),
   ORTHANC_TIMEOUT_MS: z.string().default('5000').transform((val) => parseInt(val, 10)),
-  OHIF_BASE_URL: z.string().default('http://localhost:3000'),
+  OHIF_BASE_URL: z.string().default('http://localhost:3002'),
   HOSPITAL_TIME_ZONE: z.string().default('Asia/Kolkata'),
   DASHBOARD_DELAYED_PATIENT_MINUTES: z.string().default('15').transform((val) => parseInt(val, 10)),
 }).superRefine((data, ctx) => {

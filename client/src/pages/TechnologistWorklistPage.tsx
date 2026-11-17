@@ -146,35 +146,35 @@ export function TechnologistWorklistPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-[1500px] mx-auto pb-12">
+    <div className="space-y-4 max-w-[1500px] mx-auto pb-10">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-[#DCE2EC]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#dce6e0]">
         <div>
-          <h1 className="text-2xl sm:text-[28px] font-bold tracking-tight text-[#15233B]">
-            Technologist Worklist (MWL)
+          <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900">
+            Technologist Acquisition Worklist (MWL)
           </h1>
-          <p className="text-xs sm:text-sm text-[#64748B] mt-1">
-            Pre-acquisition exam queue for checked-in patients awaiting scan preparation
+          <p className="text-xs text-slate-500 font-medium mt-0.5">
+            Operational scanner queue: safety check, clinical protocol selection, and PACS transfer
           </p>
         </div>
 
         {/* Live Queue Urgency Counter */}
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs">
-            <span className="text-slate-500 font-medium">Ready:</span>
-            <span className="font-bold text-slate-900 tabular-nums">{worklistData?.total || 0}</span>
+          <div className="flex items-center gap-2 px-3.5 py-1.5 bg-white border border-[#dce6e0] rounded-full text-xs shadow-soft">
+            <span className="text-slate-500 font-semibold">Ready:</span>
+            <span className="font-extrabold text-slate-900 font-mono text-xs">{worklistData?.total || 0}</span>
             {statCount > 0 && (
-              <span className="ml-1 px-1.5 py-0.5 bg-rose-100 text-rose-700 font-bold text-[10px] rounded animate-pulse">
+              <span className="px-2 py-0.5 bg-rose-100 text-rose-800 font-bold text-[10px] rounded-full animate-pulse">
                 {statCount} STAT
               </span>
             )}
             {urgentCount > 0 && (
-              <span className="px-1.5 py-0.5 bg-amber-100 text-amber-800 font-bold text-[10px] rounded">
+              <span className="px-2 py-0.5 bg-amber-100 text-amber-800 font-bold text-[10px] rounded-full">
                 {urgentCount} URGENT
               </span>
             )}
             {routineCount > 0 && (
-              <span className="px-1.5 py-0.5 bg-slate-200 text-slate-700 font-medium text-[10px] rounded">
+              <span className="px-2 py-0.5 bg-slate-100 text-slate-600 font-medium text-[10px] rounded-full">
                 {routineCount} ROUTINE
               </span>
             )}
@@ -185,25 +185,25 @@ export function TechnologistWorklistPage() {
             variant="outline"
             onClick={() => refetch()}
             disabled={isFetching}
-            className="gap-1.5 text-xs"
+            className="gap-1.5 text-xs font-bold px-3.5 py-1.5 rounded-full border-[#dce6e0] text-slate-800 hover:bg-[#f8faf8] shadow-soft"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 text-emerald-600 ${isFetching ? 'animate-spin' : ''}`} />
             <span>Refresh</span>
           </Button>
         </div>
       </div>
 
       {/* Filter & Search Bar */}
-      <Card className="shadow-2xs border-slate-200/90 rounded-lg bg-white">
-        <CardContent className="p-3.5 space-y-3">
+      <Card className="shadow-soft border border-[#dce6e0] rounded-3xl bg-white">
+        <CardContent className="p-4 space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
             {/* Search Input */}
             <div className="relative md:col-span-2">
-              <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
               <Input
                 type="text"
                 placeholder="Search patient, MRN, accession, procedure..."
-                className="pl-9 h-8 text-xs rounded-md"
+                className="pl-9 pr-4 py-2 text-xs rounded-full border-[#dce6e0] bg-[#f8faf8] focus:bg-white"
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
@@ -218,7 +218,7 @@ export function TechnologistWorklistPage() {
                 aria-label="Filter by Modality"
                 value={modalityFilter}
                 onChange={handleModalityChange}
-                className="w-full h-8 px-2.5 text-xs rounded-md border border-slate-200 bg-white font-medium text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-[#227DA5]"
+                className="w-full py-2 px-3.5 text-xs font-bold rounded-full border border-[#dce6e0] bg-[#f8faf8] text-slate-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
               >
                 <option value="ALL">All Modalities</option>
                 <option value="CT">CT (Computed Tomography)</option>
@@ -236,7 +236,7 @@ export function TechnologistWorklistPage() {
                   setEquipmentFilter(e.target.value);
                   setPage(1);
                 }}
-                className="w-full h-8 px-2.5 text-xs rounded-md border border-slate-200 bg-white font-medium text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-[#227DA5]"
+                className="w-full py-2 px-3.5 text-xs font-bold rounded-full border border-[#dce6e0] bg-[#f8faf8] text-slate-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
               >
                 <option value="ALL">All Scanners</option>
                 {equipmentList?.map((eq) => (
@@ -256,7 +256,7 @@ export function TechnologistWorklistPage() {
                   setPriorityFilter(e.target.value);
                   setPage(1);
                 }}
-                className="w-full h-9 px-3 text-xs rounded-md border border-slate-200 bg-white font-medium text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                className="w-full py-2 px-3.5 text-xs font-bold rounded-full border border-[#dce6e0] bg-[#f8faf8] text-slate-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
               >
                 <option value="ALL">All Priorities</option>
                 <option value="STAT">STAT (Emergency)</option>
@@ -267,40 +267,44 @@ export function TechnologistWorklistPage() {
           </div>
 
           {/* Quick Date Pills */}
-          <div className="flex items-center justify-between text-xs text-slate-500 pt-1 border-t border-slate-100">
+          <div className="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
             <div className="flex items-center gap-2">
               <Calendar className="w-3.5 h-3.5 text-slate-400" />
-              <span className="font-medium text-slate-600">Date Range:</span>
-              <button
-                type="button"
-                onClick={() => {
-                  setDateFilter('TODAY');
-                  setPage(1);
-                }}
-                className={`px-2.5 py-0.5 rounded font-medium text-xs transition-colors ${dateFilter === 'TODAY'
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              <span className="font-bold text-slate-600">Date Range:</span>
+              <div className="flex items-center gap-1 bg-[#f0f4f1] p-1 rounded-full">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDateFilter('TODAY');
+                    setPage(1);
+                  }}
+                  className={`px-3 py-1 rounded-full font-bold text-xs transition-all ${
+                    dateFilter === 'TODAY'
+                      ? 'bg-slate-900 text-white shadow-soft font-extrabold'
+                      : 'text-slate-600 hover:text-slate-900'
                   }`}
-              >
-                Today
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setDateFilter('ALL');
-                  setPage(1);
-                }}
-                className={`px-2.5 py-0.5 rounded font-medium text-xs transition-colors ${dateFilter === 'ALL'
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                >
+                  Today
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDateFilter('ALL');
+                    setPage(1);
+                  }}
+                  className={`px-3 py-1 rounded-full font-bold text-xs transition-all ${
+                    dateFilter === 'ALL'
+                      ? 'bg-slate-900 text-white shadow-soft font-extrabold'
+                      : 'text-slate-600 hover:text-slate-900'
                   }`}
-              >
-                All Dates
-              </button>
+                >
+                  All Dates
+                </button>
+              </div>
             </div>
 
-            <div className="text-[11px] text-slate-400">
-              Deterministic clinical order: STAT &gt; URGENT &gt; ROUTINE &gt; Scheduled Time
+            <div className="text-[11px] text-slate-400 font-medium hidden sm:block">
+              Clinical sorting: STAT &gt; URGENT &gt; ROUTINE &gt; Scheduled Time
             </div>
           </div>
         </CardContent>

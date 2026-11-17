@@ -18,8 +18,8 @@ export const ConsumePartModal: React.FC<ConsumePartModalProps> = ({
     equipmentId: equipment[0]?.id || '',
     inventoryItemId: '',
     quantityUsed: '1',
-    location: 'BIOMEDICAL_WORKSHOP',
-    reason: 'Preventive replacement during routine calibration',
+    location: 'GENERAL_STORE',
+    reason: '',
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -50,7 +50,7 @@ export const ConsumePartModal: React.FC<ConsumePartModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl shadow-xl max-w-lg w-full flex flex-col overflow-hidden">
+      <div className="bg-white rounded shadow-xl max-w-lg w-full flex flex-col overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
           <h3 className="text-base font-bold text-slate-800">Consume Maintenance Spare Part</h3>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-600 font-bold">✕</button>
@@ -112,10 +112,11 @@ export const ConsumePartModal: React.FC<ConsumePartModalProps> = ({
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                 className="w-full px-3 py-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
               >
-                <option value="BIOMEDICAL_WORKSHOP">Biomedical Workshop</option>
                 <option value="GENERAL_STORE">General Central Store</option>
                 <option value="CT_SCANNER">CT Suite Storage</option>
-                <option value="MRI_ROOM">MRI Suite Storage</option>
+                <option value="MRI_SCANNER">MRI Suite Storage</option>
+                <option value="XRAY_ROOM">X-Ray Suite Storage</option>
+                <option value="PHARMACY">Pharmacy</option>
               </select>
             </div>
           </div>

@@ -81,7 +81,7 @@ export function FilmStockTab() {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-indigo-50 text-indigo-600 rounded-md">
+          <div className="p-2 bg-blue-50 text-[#2563EB] rounded-md">
             <Film className="w-6 h-6" />
           </div>
           <div>
@@ -93,7 +93,7 @@ export function FilmStockTab() {
         <div className="flex items-center gap-2">
           <Button
             onClick={() => setIsModalOpen(true)}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-1.5 text-xs py-1.5 h-auto"
+            className="bg-[#2563EB] hover:bg-blue-700 text-white flex items-center gap-1.5 text-xs py-1.5 h-auto"
           >
             <Plus className="w-4 h-4" /> Record Print / Spoilage
           </Button>
@@ -206,7 +206,7 @@ export function FilmStockTab() {
                       <td className="px-4 py-3 font-mono font-medium text-slate-900">{film.itemCode}</td>
                       <td className="px-4 py-3">
                         <div className="font-semibold text-slate-800">{film.name}</div>
-                        <div className="text-[11px] text-indigo-600 font-medium">{film.filmSize}</div>
+                        <div className="text-[11px] text-[#2563EB] font-medium">{film.filmSize}</div>
                       </td>
                       <td className="px-4 py-3 text-right font-bold">
                         <span className={isLow ? 'text-red-600' : 'text-slate-800'}>{qty}</span>
@@ -241,7 +241,7 @@ export function FilmStockTab() {
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full overflow-hidden">
             <div className="flex justify-between items-center px-6 py-4 border-b border-slate-200 bg-slate-50">
               <div className="flex items-center gap-2">
-                <Printer className="w-5 h-5 text-indigo-600" />
+                <Printer className="w-5 h-5 text-[#2563EB]" />
                 <h3 className="font-semibold text-slate-800">Record Film Printing & Spoilage</h3>
               </div>
               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
@@ -348,7 +348,7 @@ export function FilmStockTab() {
                 <Button
                   type="submit"
                   disabled={submitting}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs"
+                  className="bg-[#2563EB] hover:bg-blue-700 text-white text-xs"
                 >
                   {submitting ? 'Recording...' : 'Save Consumption'}
                 </Button>

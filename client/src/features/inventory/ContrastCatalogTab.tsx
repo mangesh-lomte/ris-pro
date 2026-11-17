@@ -21,7 +21,7 @@ export function ContrastCatalogTab({ contrastItems, onRefresh }: Props) {
   return (
     <div className="space-y-4">
       {/* Contrast Clinical Pipeline Context Card */}
-      <div className="bg-sky-50/70 border border-sky-200/80 rounded-xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs">
+      <div className="bg-sky-50/70 border border-sky-200/80 rounded p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs">
         <div className="space-y-0.5">
           <div className="flex items-center gap-1.5 font-bold text-sky-950">
             <ShieldCheck className="w-4 h-4 text-sky-600" />
@@ -42,7 +42,7 @@ export function ContrastCatalogTab({ contrastItems, onRefresh }: Props) {
         </span>
       </div>
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded border border-slate-200 shadow-sm">
         <div className="flex items-center gap-2">
           <Droplets className="w-5 h-5 text-sky-600" />
           <h3 className="font-semibold text-sm text-slate-900">Contrast Media Formulations (CT & MRI)</h3>
@@ -81,14 +81,14 @@ export function ContrastCatalogTab({ contrastItems, onRefresh }: Props) {
           return (
             <div
               key={c.id}
-              className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3 flex flex-col justify-between"
+              className="bg-white rounded border border-slate-200 p-5 shadow-sm space-y-3 flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-start justify-between gap-2">
                   <span className="font-semibold text-sm text-slate-900 leading-tight">{c.name}</span>
                   <span className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 border ${
                     c.contrastType === 'GADOLINIUM' || c.subCategory === 'GADOLINIUM'
-                      ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                      ? 'bg-blue-50 text-blue-700 border-blue-200'
                       : 'bg-sky-50 text-sky-700 border-sky-200'
                   }`}>
                     {c.contrastType || c.subCategory || 'CONTRAST'}

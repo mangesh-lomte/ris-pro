@@ -58,7 +58,7 @@ export function PeerReviewDetailModal({
         <DialogHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-indigo-600" />
+              <Users className="h-5 w-5 text-[#2563EB]" />
               <DialogTitle className="text-base font-bold">PEER REVIEW / SECOND OPINION</DialogTitle>
             </div>
             {review && (
@@ -84,7 +84,7 @@ export function PeerReviewDetailModal({
 
         {isLoading ? (
           <div className="py-8 flex flex-col items-center justify-center text-muted-foreground text-xs">
-            <Loader2 className="h-6 w-6 animate-spin text-indigo-600 mb-2" />
+            <Loader2 className="h-6 w-6 animate-spin text-[#2563EB] mb-2" />
             <span>Loading peer review record...</span>
           </div>
         ) : isError || !review ? (
@@ -136,11 +136,11 @@ export function PeerReviewDetailModal({
               <div className="space-y-2 pt-2 border-t">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-foreground flex items-center gap-1.5 text-indigo-900 dark:text-indigo-200">
-                    <FileText className="h-3.5 w-3.5 text-indigo-600" />
+                    <FileText className="h-3.5 w-3.5 text-[#2563EB]" />
                     Second Opinion Response
                   </span>
                   {review.decision && (
-                    <Badge variant="outline" className="text-[10px] font-bold border-indigo-300 text-indigo-700 bg-indigo-50 dark:bg-indigo-950">
+                    <Badge variant="outline" className="text-[10px] font-bold border-indigo-300 text-blue-700 bg-blue-50 dark:bg-indigo-950">
                       {review.decision}
                     </Badge>
                   )}

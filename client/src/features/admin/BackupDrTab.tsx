@@ -64,7 +64,7 @@ export const BackupDrTab: React.FC<BackupDrTabProps> = ({
       {/* Top Banner with Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-indigo-50 text-indigo-700 rounded-lg">
+          <div className="p-2.5 bg-blue-50 text-blue-700 rounded-lg">
             <HardDrive className="w-6 h-6" />
           </div>
           <div>
@@ -94,7 +94,7 @@ export const BackupDrTab: React.FC<BackupDrTabProps> = ({
           <button
             onClick={onTriggerBackup}
             disabled={backupTriggering}
-            className="inline-flex items-center px-3.5 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded shadow-sm disabled:opacity-50 transition-colors"
+            className="inline-flex items-center px-3.5 py-1.5 text-xs font-medium text-white bg-[#2563EB] hover:bg-blue-700 rounded shadow-sm disabled:opacity-50 transition-colors"
           >
             <HardDrive className={`w-3.5 h-3.5 mr-1.5 ${backupTriggering ? 'animate-spin' : ''}`} />
             {backupTriggering ? 'Creating Snapshot...' : 'Trigger Database Backup'}
@@ -106,7 +106,7 @@ export const BackupDrTab: React.FC<BackupDrTabProps> = ({
       <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
         <div className="p-3.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between text-xs font-semibold text-slate-700">
           <div className="flex items-center gap-2">
-            <FileCode2 className="w-4 h-4 text-indigo-600" />
+            <FileCode2 className="w-4 h-4 text-[#2563EB]" />
             <span>Database Backup Snapshots Ledger</span>
           </div>
           <span className="text-slate-500 font-mono">Total: {backups.length} snapshots</span>
@@ -134,7 +134,7 @@ export const BackupDrTab: React.FC<BackupDrTabProps> = ({
               ) : (
                 backups.map((b) => (
                   <tr key={b.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="px-4 py-2.5 font-semibold text-indigo-700 truncate max-w-xs">
+                    <td className="px-4 py-2.5 font-semibold text-blue-700 truncate max-w-xs">
                       {b.filename}
                     </td>
                     <td className="px-4 py-2.5 text-slate-500 whitespace-nowrap">
@@ -161,9 +161,9 @@ export const BackupDrTab: React.FC<BackupDrTabProps> = ({
                     <td className="px-4 py-2.5 text-right font-sans">
                       <button
                         onClick={() => onVerifyBackup(b.id)}
-                        className="inline-flex items-center px-2 py-1 text-xs font-semibold text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded transition-colors focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:outline-none"
+                        className="inline-flex items-center px-2 py-1 text-xs font-semibold text-blue-700 hover:text-indigo-900 bg-blue-50 hover:bg-indigo-100 border border-blue-200 rounded transition-colors focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:outline-none"
                       >
-                        <ShieldCheck className="w-3 h-3 mr-1 text-indigo-600" />
+                        <ShieldCheck className="w-3 h-3 mr-1 text-[#2563EB]" />
                         Verify Checksum
                       </button>
                     </td>
@@ -314,7 +314,7 @@ export const BackupDrTab: React.FC<BackupDrTabProps> = ({
                 <button
                   type="submit"
                   disabled={loggingDrill}
-                  className="px-4 py-2 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded disabled:opacity-50"
+                  className="px-4 py-2 text-xs font-medium text-white bg-[#2563EB] hover:bg-blue-700 rounded disabled:opacity-50"
                 >
                   {loggingDrill ? 'Saving Drill...' : 'Log DR Drill'}
                 </button>

@@ -6,9 +6,10 @@ interface InitiateTransferModalProps {
   onClose: () => void;
   onSubmit: (payload: {
     orderId: string;
-    targetSystem: string;
-    transferProtocol: 'DICOM_DIR' | 'C_STORE' | 'TLS_HTTPS' | 'WADO_RS';
-    simulateFailure?: boolean;
+    destination: string;
+    packageType: 'DICOM_ZIP' | 'DICOM_DIR' | 'C_STORE' | 'STOW_RS';
+    totalFiles: number;
+    totalBytes: number;
   }) => Promise<void>;
   orders: Array<{
     id: string;
@@ -25,9 +26,10 @@ export const InitiateTransferModal: React.FC<InitiateTransferModalProps> = ({
   orders,
 }) => {
   const [orderId, setOrderId] = useState('');
-  const [targetSystem, setTargetSystem] = useState('Metro Tertiary PACS (C-STORE)');
-  const [transferProtocol, setTransferProtocol] = useState<'DICOM_DIR' | 'C_STORE' | 'TLS_HTTPS' | 'WADO_RS'>('C_STORE');
-  const [simulateFailure, setSimulateFailure] = useState(false);
+  const [destination, setDestination] = useState('');
+  const [packageType, setPackageType] = useState<'DICOM_ZIP' | 'DICOM_DIR' | 'C_STORE' | 'STOW_RS'>('C_STORE');
+  const [totalFiles, setTotalFiles] = useState(1);
+  const [totalBytes, setTotalBytes] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,7 +41,7 @@ export const InitiateTransferModal: React.FC<InitiateTransferModalProps> = ({
       setError('Please select an examination to transfer.');
       return;
     }
-    if (!targetSystem.trim()) {
+    if (!destination.trim()) {
       setError('Target PACS destination is required.');
       return;
     }
@@ -49,9 +51,10 @@ export const InitiateTransferModal: React.FC<InitiateTransferModalProps> = ({
       setError(null);
       await onSubmit({
         orderId,
-        targetSystem: targetSystem.trim(),
-        transferProtocol,
-        simulateFailure,
+        destination: destination.trim(),
+        packageType,
+        totalFiles,
+        totalBytes,
       });
       onClose();
     } catch (err: any) {
@@ -62,8 +65,8 @@ export const InitiateTransferModal: React.FC<InitiateTransferModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-gray-100 animate-in fade-in zoom-in duration-150">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 flex items-center justify-center p-4">
+      <div className="bg-white rounded shadow-2xl max-w-lg w-full overflow-hidden border border-gray-100 animate-in fade-in zoom-in duration-150">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/80">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center">
@@ -114,8 +117,8 @@ export const InitiateTransferModal: React.FC<InitiateTransferModalProps> = ({
             </label>
             <input
               type="text"
-              value={targetSystem}
-              onChange={(e) => setTargetSystem(e.target.value)}
+              value={destination}
+              onChange={(e) => setDestination(e.target.value)}
               placeholder="e.g., Regional Trauma Center PACS / Orthanc Node"
               required
               className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
@@ -128,28 +131,27 @@ export const InitiateTransferModal: React.FC<InitiateTransferModalProps> = ({
               Transfer Protocol
             </label>
             <select
-              value={transferProtocol}
-              onChange={(e) => setTransferProtocol(e.target.value as any)}
+              value={packageType}
+              onChange={(e) => setPackageType(e.target.value as typeof packageType)}
               className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
             >
-              <option value="C_STORE">DICOM C-STORE (Standard Network Push)</option>
-              <option value="TLS_HTTPS">TLS HTTPS / WADO-RS Secure Tunnel</option>
+              <option value="C_STORE">DICOM C-STORE</option>
+              <option value="STOW_RS">DICOM STOW-RS</option>
+              <option value="DICOM_ZIP">DICOM ZIP Package</option>
               <option value="DICOM_DIR">DICOM_DIR Media Package</option>
-              <option value="WADO_RS">WADO-RS Direct REST Handoff</option>
             </select>
           </div>
 
-          <label className="flex items-center gap-2 p-2.5 bg-gray-50 border border-gray-200 rounded-lg cursor-pointer">
-            <input
-              type="checkbox"
-              checked={simulateFailure}
-              onChange={(e) => setSimulateFailure(e.target.checked)}
-              className="rounded text-rose-600 focus:ring-rose-500 h-4 w-4"
-            />
-            <div className="text-xs text-gray-700">
-              <span className="font-semibold text-rose-700">Simulate Network Interruption</span> (Demonstrates automated retry recovery)
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">Files</label>
+              <input type="number" min={1} value={totalFiles} onChange={(e) => setTotalFiles(Number(e.target.value))} required className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
             </div>
-          </label>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">Payload bytes</label>
+              <input type="number" min={1} value={totalBytes} onChange={(e) => setTotalBytes(Number(e.target.value))} required className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
+            </div>
+          </div>
 
           <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
             <button

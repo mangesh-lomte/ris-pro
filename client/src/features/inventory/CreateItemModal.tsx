@@ -67,7 +67,7 @@ export function CreateItemModal({ isOpen, onClose, onSuccess }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-xl rounded-xl bg-white shadow-2xl overflow-hidden border border-slate-200">
+      <div className="w-full max-w-xl rounded bg-white shadow-2xl overflow-hidden border border-slate-200">
         <div className="bg-slate-900 px-6 py-4 flex items-center justify-between text-white">
           <div className="flex items-center gap-2">
             <PlusCircle className="w-5 h-5 text-teal-400" />

@@ -140,6 +140,16 @@ export function TechnologistContrastModal({
       return;
     }
 
+    if (!batchLotNumber.trim()) {
+      setFormError('Batch / lot number is required for contrast traceability.');
+      return;
+    }
+
+    if (!expirationDate) {
+      setFormError('Contrast expiration date is required.');
+      return;
+    }
+
     recordMutation.mutate({
       contrastAgentName: contrastAgentName.trim(),
       concentration: concentration.trim() || undefined,
@@ -147,8 +157,8 @@ export function TechnologistContrastModal({
       volumeUnit,
       route,
       routeNotes: route === 'OTHER' ? routeNotes.trim() : undefined,
-      batchLotNumber: batchLotNumber.trim() || undefined,
-      expirationDate: expirationDate || undefined,
+      batchLotNumber: batchLotNumber.trim(),
+      expirationDate,
       administrationNotes: administrationNotes.trim() || undefined,
     });
   };
@@ -165,7 +175,7 @@ export function TechnologistContrastModal({
         <DialogHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-indigo-50 border border-indigo-200 rounded-lg text-indigo-700">
+              <div className="p-2 bg-blue-50 border border-blue-200 rounded text-blue-700">
                 <Syringe className="w-5 h-5" />
               </div>
               <div>
@@ -202,7 +212,7 @@ export function TechnologistContrastModal({
         ) : (
           <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
             {/* Prominent Identifiers Header */}
-            <div className="p-4 bg-slate-900 text-white rounded-xl shadow-sm border border-slate-800 space-y-3">
+            <div className="p-4 bg-slate-900 text-white rounded shadow-sm border border-slate-800 space-y-3">
               <div className="text-[11px] font-bold tracking-wider text-slate-400 uppercase flex items-center justify-between">
                 <span>Patient & Examination Context (Read-Only)</span>
                 <span className="text-emerald-400 font-mono text-[10px]">VERIFIED IDENTIFIERS</span>
@@ -240,7 +250,7 @@ export function TechnologistContrastModal({
             </div>
 
             {/* Workflow Milestones Read-Only Bar */}
-            <div className="grid grid-cols-3 gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs">
+            <div className="grid grid-cols-3 gap-3 p-3 bg-slate-50 border border-[#E2E8F0] rounded text-xs">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
                 <div>
@@ -266,7 +276,7 @@ export function TechnologistContrastModal({
 
             {/* Non-Contrast Exam Case */}
             {!context.contrastRequired && (
-              <div className="p-4 bg-slate-100 border border-slate-200 rounded-xl text-center space-y-2">
+              <div className="p-4 bg-slate-100 border border-[#E2E8F0] rounded text-center space-y-2">
                 <p className="text-sm font-semibold text-slate-700">
                   Contrast is not required for this ordered examination.
                 </p>
@@ -279,7 +289,7 @@ export function TechnologistContrastModal({
 
             {/* Not in SCAN_IN_PROGRESS Alert */}
             {context.contrastRequired && context.orderStatus !== 'SCAN_IN_PROGRESS' && (
-              <div className="p-4 bg-amber-50 border border-amber-300 rounded-xl flex items-start gap-3 text-amber-900">
+              <div className="p-4 bg-amber-50 border border-amber-300 rounded flex items-start gap-3 text-amber-900">
                 <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                 <div>
                   <strong className="text-xs block font-bold">Contrast Administration Unavailable</strong>
@@ -294,22 +304,22 @@ export function TechnologistContrastModal({
 
             {/* Administration Form (Only visible when eligible) */}
             {isEligibleToRecord && (
-              <form onSubmit={handleSubmit} className="border border-indigo-200 rounded-xl p-5 bg-indigo-50/30 space-y-4">
+              <form onSubmit={handleSubmit} className="border border-blue-200 rounded p-5 bg-blue-50/30 space-y-4">
                 <div className="flex items-center justify-between border-b border-indigo-100 pb-2.5">
                   <span className="text-xs font-bold uppercase tracking-wider text-indigo-950 flex items-center gap-1.5">
-                    <Syringe className="w-4 h-4 text-indigo-600" />
+                    <Syringe className="w-4 h-4 text-[#2563EB]" />
                     Record Contrast Media Administration
                   </span>
                   <span className="text-[11px] text-slate-500 font-medium">Server Timestamps Applied</span>
                 </div>
 
                 {/* Neutral Clinical Instruction */}
-                <div className="p-3 bg-white border border-indigo-100 rounded-lg text-[11px] text-slate-600 leading-relaxed">
+                <div className="p-3 bg-white border border-indigo-100 rounded text-[11px] text-slate-600 leading-relaxed">
                   <strong>Notice:</strong> Record the contrast administration performed according to your institution's approved clinical protocol.
                 </div>
 
                 {formError && (
-                  <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700 flex items-center gap-2">
+                  <div className="p-3 bg-rose-50 border border-rose-200 rounded text-xs text-rose-700 flex items-center gap-2">
                     <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
                     <span>{formError}</span>
                   </div>
@@ -326,7 +336,7 @@ export function TechnologistContrastModal({
                       value={contrastAgentName}
                       onChange={(e) => setContrastAgentName(e.target.value)}
                       placeholder="e.g. Omnipaque (Iohexol), Dotarem, Isovue"
-                      className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full text-xs px-3 py-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       disabled={recordMutation.isPending}
                     />
                   </div>
@@ -341,7 +351,7 @@ export function TechnologistContrastModal({
                       value={concentration}
                       onChange={(e) => setConcentration(e.target.value)}
                       placeholder="e.g. 350 mgI/mL, 0.5 mmol/mL"
-                      className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full text-xs px-3 py-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       disabled={recordMutation.isPending}
                     />
                   </div>
@@ -360,10 +370,10 @@ export function TechnologistContrastModal({
                         value={volume}
                         onChange={(e) => setVolume(e.target.value)}
                         placeholder="e.g. 75"
-                        className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-full text-xs px-3 py-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         disabled={recordMutation.isPending}
                       />
-                      <span className="inline-flex items-center px-3 py-2 border border-slate-300 rounded-lg bg-slate-100 text-xs font-bold text-slate-700 select-none">
+                      <span className="inline-flex items-center px-3 py-2 border border-slate-300 rounded bg-slate-100 text-xs font-bold text-slate-700 select-none">
                         mL
                       </span>
                     </div>
@@ -377,7 +387,7 @@ export function TechnologistContrastModal({
                     <select
                       value={route}
                       onChange={(e) => setRoute(e.target.value as ContrastRoute)}
-                      className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                      className="w-full text-xs px-3 py-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
                       disabled={recordMutation.isPending}
                     >
                       <option value="IV">Intravenous (IV)</option>
@@ -397,7 +407,7 @@ export function TechnologistContrastModal({
                         value={routeNotes}
                         onChange={(e) => setRouteNotes(e.target.value)}
                         placeholder="Specify route details (e.g. Rectal, Intra-articular)"
-                        className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-full text-xs px-3 py-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         disabled={recordMutation.isPending}
                       />
                     </div>
@@ -406,29 +416,31 @@ export function TechnologistContrastModal({
                   {/* Batch / Lot Number */}
                   <div>
                     <label className="text-xs font-semibold text-slate-700 block mb-1">
-                      Batch / Lot Number (Optional)
+                      Batch / Lot Number <span className="text-rose-500">*</span>
                     </label>
                     <input
                       type="text"
                       value={batchLotNumber}
                       onChange={(e) => setBatchLotNumber(e.target.value)}
                       placeholder="e.g. LOT-2026-X99"
-                      className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full text-xs px-3 py-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       disabled={recordMutation.isPending}
+                      required
                     />
                   </div>
 
                   {/* Expiration Date */}
                   <div>
                     <label className="text-xs font-semibold text-slate-700 block mb-1">
-                      Expiration Date (Optional)
+                      Expiration Date <span className="text-rose-500">*</span>
                     </label>
                     <input
                       type="date"
                       value={expirationDate}
                       onChange={(e) => setExpirationDate(e.target.value)}
-                      className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full text-xs px-3 py-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       disabled={recordMutation.isPending}
+                      required
                     />
                   </div>
 
@@ -442,7 +454,7 @@ export function TechnologistContrastModal({
                       value={administrationNotes}
                       onChange={(e) => setAdministrationNotes(e.target.value)}
                       placeholder="Factual notes regarding injection rate, flush, or observation."
-                      className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full text-xs px-3 py-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       disabled={recordMutation.isPending}
                     />
                   </div>
@@ -453,7 +465,7 @@ export function TechnologistContrastModal({
                     type="submit"
                     size="sm"
                     disabled={recordMutation.isPending}
-                    className="text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white gap-2 shadow-sm"
+                    className="text-xs font-bold bg-[#2563EB] hover:bg-blue-700 text-white gap-2 shadow-sm"
                   >
                     {recordMutation.isPending ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -468,7 +480,7 @@ export function TechnologistContrastModal({
 
             {/* Administrations History Section */}
             <div className="space-y-3 pt-2">
-              <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+              <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-2">
                 <span className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
                   <Clock className="w-3.5 h-3.5 text-slate-500" />
                   Documented Contrast Administrations ({context.administrations.length})
@@ -488,7 +500,7 @@ export function TechnologistContrastModal({
               </div>
 
               {context.administrations.length === 0 ? (
-                <div className="p-4 bg-slate-50 border border-dashed border-slate-200 rounded-lg text-center text-xs text-slate-500">
+                <div className="p-4 bg-slate-50 border border-dashed border-[#E2E8F0] rounded text-center text-xs text-slate-500">
                   No contrast media has been recorded for this examination yet.
                 </div>
               ) : (
@@ -496,7 +508,7 @@ export function TechnologistContrastModal({
                   {context.administrations.map((adm) => (
                     <div
                       key={adm.id}
-                      className="p-3.5 bg-white border border-slate-200 rounded-lg shadow-xs space-y-2 text-xs"
+                      className="p-3.5 bg-white border border-[#E2E8F0] rounded shadow-xs space-y-2 text-xs"
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">

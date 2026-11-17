@@ -54,7 +54,7 @@ export function PeerReviewWorkspaceModal({
   const openViewerMutation = useMutation({
     mutationFn: () => radiologistService.getViewerLaunch(context!.order.id),
     onSuccess: (data) => {
-      window.open(data.viewerUrl, 'manrad-pacs-viewer');
+      window.open(data.viewerUrl, 'radaxis-pacs-viewer');
     },
     onError: (err: any) => {
       setActionError(err?.message || 'Unable to open PACS viewer.');
@@ -111,7 +111,7 @@ export function PeerReviewWorkspaceModal({
         <DialogHeader className="p-4 border-b shrink-0 bg-muted/10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-indigo-600" />
+              <Users className="h-5 w-5 text-[#2563EB]" />
               <DialogTitle className="text-base font-bold tracking-tight">
                 PEER REVIEW / SECOND OPINION WORKSPACE
               </DialogTitle>
@@ -138,7 +138,7 @@ export function PeerReviewWorkspaceModal({
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {isLoading ? (
             <div className="py-12 flex flex-col items-center justify-center text-muted-foreground text-xs">
-              <Loader2 className="h-7 w-7 animate-spin text-indigo-600 mb-2" />
+              <Loader2 className="h-7 w-7 animate-spin text-[#2563EB] mb-2" />
               <span>Loading review context...</span>
             </div>
           ) : isError || !context ? (
@@ -180,7 +180,7 @@ export function PeerReviewWorkspaceModal({
                 </div>
 
                 {context.reason && (
-                  <div className="p-2 bg-indigo-50/60 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800 rounded text-xs text-indigo-950 dark:text-indigo-200 italic mt-2">
+                  <div className="p-2 bg-blue-50/60 dark:bg-indigo-950/20 border border-blue-200 dark:border-indigo-800 rounded text-xs text-indigo-950 dark:text-indigo-200 italic mt-2">
                     <strong className="not-italic font-semibold text-indigo-800 dark:text-indigo-300 block text-[10px] uppercase">
                       Clinical Consultation Reason:
                     </strong>
@@ -208,7 +208,7 @@ export function PeerReviewWorkspaceModal({
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-8 text-xs flex items-center gap-1.5 border-indigo-300 text-indigo-600 hover:bg-indigo-50"
+                  className="h-8 text-xs flex items-center gap-1.5 border-indigo-300 text-[#2563EB] hover:bg-blue-50"
                   onClick={() => openViewerMutation.mutate()}
                   disabled={openViewerMutation.isPending}
                 >
@@ -253,7 +253,7 @@ export function PeerReviewWorkspaceModal({
                   {isAssignedReviewer && (
                     <Button
                       size="sm"
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs flex items-center gap-1.5 mx-auto"
+                      className="bg-[#2563EB] hover:bg-blue-700 text-white font-semibold text-xs flex items-center gap-1.5 mx-auto"
                       onClick={() => claimMutation.mutate()}
                       disabled={claimMutation.isPending}
                     >
@@ -266,7 +266,7 @@ export function PeerReviewWorkspaceModal({
                 <form onSubmit={handleSubmit} className="space-y-3.5 pt-2 border-t">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-indigo-600" />
+                      <CheckCircle2 className="h-3.5 w-3.5 text-[#2563EB]" />
                       Second Opinion Decision / Recommendation
                     </label>
                     <select
@@ -305,7 +305,7 @@ export function PeerReviewWorkspaceModal({
                     <Button
                       type="submit"
                       size="sm"
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs flex items-center gap-1.5"
+                      className="bg-[#2563EB] hover:bg-blue-700 text-white font-semibold text-xs flex items-center gap-1.5"
                       disabled={!comment.trim() || submitMutation.isPending}
                     >
                       {submitMutation.isPending ? (

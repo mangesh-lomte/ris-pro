@@ -15,10 +15,9 @@ interface ReconcileImportModalProps {
     dateOfBirth?: string;
   }>;
   onReconcile: (id: string, payload: {
-    action: 'ATTACH_TO_PATIENT' | 'REJECT';
-    patientId?: string;
-    notes?: string;
-    rejectionReason?: string;
+    matchedPatientId?: string;
+    reconciliationNotes: string;
+    reject: boolean;
   }) => Promise<void>;
 }
 
@@ -55,10 +54,9 @@ export const ReconcileImportModal: React.FC<ReconcileImportModalProps> = ({
       setLoading(true);
       setError(null);
       await onReconcile(importRecord.id, {
-        action,
-        patientId: action === 'ATTACH_TO_PATIENT' ? selectedPatientId : undefined,
-        rejectionReason: action === 'REJECT' ? rejectionReason.trim() : undefined,
-        notes: notes.trim() || undefined,
+        matchedPatientId: action === 'ATTACH_TO_PATIENT' ? selectedPatientId : undefined,
+        reconciliationNotes: action === 'REJECT' ? rejectionReason.trim() : notes.trim(),
+        reject: action === 'REJECT',
       });
       onClose();
     } catch (err: any) {
@@ -69,8 +67,8 @@ export const ReconcileImportModal: React.FC<ReconcileImportModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-gray-100 animate-in fade-in zoom-in duration-150">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 flex items-center justify-center p-4">
+      <div className="bg-white rounded shadow-2xl max-w-lg w-full overflow-hidden border border-gray-100 animate-in fade-in zoom-in duration-150">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/80">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center">
@@ -97,7 +95,7 @@ export const ReconcileImportModal: React.FC<ReconcileImportModalProps> = ({
           )}
 
           {/* Outside Study Demographics Banner */}
-          <div className="p-3.5 bg-blue-50/70 border border-blue-200 rounded-xl space-y-1 text-xs">
+          <div className="p-3.5 bg-blue-50/70 border border-blue-200 rounded space-y-1 text-xs">
             <div className="font-bold text-blue-900 flex items-center justify-between">
               <span>{importRecord.importNumber} — {importRecord.patientName}</span>
               <span className="font-mono bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">{importRecord.modality}</span>
@@ -113,7 +111,7 @@ export const ReconcileImportModal: React.FC<ReconcileImportModalProps> = ({
           {/* Reconcile Action Choice */}
           <div className="grid grid-cols-2 gap-3">
             <label
-              className={`flex items-center gap-2 p-3 rounded-xl border cursor-pointer transition ${
+              className={`flex items-center gap-2 p-3 rounded border cursor-pointer transition ${
                 action === 'ATTACH_TO_PATIENT'
                   ? 'border-blue-500 bg-blue-50/50 text-blue-900 font-semibold shadow-sm'
                   : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'
@@ -131,7 +129,7 @@ export const ReconcileImportModal: React.FC<ReconcileImportModalProps> = ({
             </label>
 
             <label
-              className={`flex items-center gap-2 p-3 rounded-xl border cursor-pointer transition ${
+              className={`flex items-center gap-2 p-3 rounded border cursor-pointer transition ${
                 action === 'REJECT'
                   ? 'border-rose-500 bg-rose-50/50 text-rose-900 font-semibold shadow-sm'
                   : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300'

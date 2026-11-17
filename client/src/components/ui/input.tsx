@@ -13,19 +13,19 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           type={type}
           aria-invalid={error ? 'true' : undefined}
           className={cn(
-            'flex h-9 w-full rounded-lg border border-[#DCE2EC] bg-white px-3 py-1.5 text-xs text-[#15233B]',
-            'placeholder:text-[#94A3B8]',
-            'focus:outline-none focus:ring-2 focus:ring-[#33398A]/20 focus:border-[#33398A]',
-            'disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-[#F3F6FC]',
+            'flex h-9 w-full rounded-full border border-slate-200/80 bg-[#f4f7f5] hover:bg-[#edf2ee] focus:bg-white px-3.5 py-1.5 text-xs text-slate-800',
+            'placeholder:text-slate-400',
+            'focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent',
+            'disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-[#f4f7f5]',
             'transition-colors',
-            error && 'border-[#D92D4C] focus:ring-[#D92D4C]/20 focus:border-[#D92D4C]',
+            error && 'border-rose-400 focus:ring-rose-500',
             className
           )}
           ref={ref}
           {...props}
         />
         {error && (
-          <p role="alert" className="mt-1 text-xs text-[#D92D4C] font-medium">
+          <p role="alert" className="mt-1 text-[11px] text-rose-600 font-bold px-2">
             {error}
           </p>
         )}

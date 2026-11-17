@@ -345,7 +345,7 @@ export async function getAppointmentSlip(appointmentId: string) {
   }
 
   return {
-    facilityName: 'Manrad Imaging & Diagnostic Center',
+    facilityName: 'RadAxis Imaging & Diagnostic Center',
     facilityAddress: '100 Medical Center Way, Suite 200',
     facilityPhone: '+1 (555) 019-8472',
     slipGeneratedAt: new Date().toISOString(),

@@ -51,7 +51,7 @@ export const router = createBrowserRouter([
   {
     path: '/viewer/:studyInstanceUid',
     loader: ({ params }) => {
-      const ohifBase = (((import.meta as any).env?.VITE_OHIF_BASE_URL as string) || 'http://localhost:3000').replace(/\/+$/, '');
+      const ohifBase = (((import.meta as any).env?.VITE_OHIF_BASE_URL as string) || 'http://localhost:3002').replace(/\/+$/, '');
       const uid = params.studyInstanceUid || '';
       window.location.replace(`${ohifBase}/viewer?StudyInstanceUIDs=${encodeURIComponent(uid)}`);
       return null;

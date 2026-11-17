@@ -309,14 +309,14 @@ export const RadiologistReportModal: React.FC<RadiologistReportModalProps> = ({
       if (autosaveTimerRef.current) {
         clearTimeout(autosaveTimerRef.current);
       }
-      defaultSpeechProvider.stop();
+      defaultSpeechProvider.abort();
     };
   }, []);
 
   // Stop dictation when modal closes
   useEffect(() => {
     if (!open) {
-      defaultSpeechProvider.stop();
+      defaultSpeechProvider.abort();
       setDictationState(defaultSpeechProvider.isSupported() ? 'ready' : 'unavailable');
       setHearingPreview('');
     }
@@ -440,7 +440,7 @@ export const RadiologistReportModal: React.FC<RadiologistReportModalProps> = ({
   const openImagesMutation = useMutation({
     mutationFn: () => radiologistService.getViewerLaunch(orderId!),
     onSuccess: (data) => {
-      const win = window.open(data.viewerUrl, 'manrad-pacs-viewer');
+      const win = window.open(data.viewerUrl, 'radaxis-pacs-viewer');
       if (win) {
         viewerWindowRef.current = win;
       }
@@ -483,7 +483,7 @@ export const RadiologistReportModal: React.FC<RadiologistReportModalProps> = ({
       if (!event.data || typeof event.data !== 'object') return;
 
       // 1. Origin validation: Only allow PACS viewer origin or current origin
-      const allowedOrigins = ['http://localhost:3000', window.location.origin];
+      const allowedOrigins = ['http://localhost:3002', window.location.origin];
       const isLocalhostViewer =
         typeof event.origin === 'string' &&
         (allowedOrigins.includes(event.origin) ||
@@ -719,7 +719,7 @@ export const RadiologistReportModal: React.FC<RadiologistReportModalProps> = ({
       const url = new URL(launch.viewerUrl);
       url.searchParams.set('initialSeriesInstanceUID', seriesUid);
       url.searchParams.set('initialSOPInstanceUID', sopUid);
-      const win = window.open(url.toString(), 'manrad-pacs-viewer');
+      const win = window.open(url.toString(), 'radaxis-pacs-viewer');
       if (win) {
         viewerWindowRef.current = win;
       }
@@ -849,7 +849,7 @@ export const RadiologistReportModal: React.FC<RadiologistReportModalProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <DialogTitle className="text-lg font-bold flex items-center gap-2 text-[#152B42]">
-                  <FileText className="h-5 w-5 text-[#174A70]" />
+                  <FileText className="h-5 w-5 text-[#2563EB]" />
                   <span>REPORTING WORKSPACE</span>
                 </DialogTitle>
                 <Badge
@@ -882,12 +882,12 @@ export const RadiologistReportModal: React.FC<RadiologistReportModalProps> = ({
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-7 text-xs flex items-center gap-1.5 border-indigo-300 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 font-medium shadow-xs"
+                  className="h-7 text-xs flex items-center gap-1.5 border-indigo-300 text-blue-700 dark:text-indigo-300 hover:bg-blue-50 dark:hover:bg-indigo-950/50 font-medium shadow-xs"
                   onClick={() => openImagesMutation.mutate()}
                   disabled={openImagesMutation.isPending}
                   title="Launch study in OHIF Viewer"
                 >
-                  <ExternalLink className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
+                  <ExternalLink className="h-3.5 w-3.5 text-[#2563EB] dark:text-indigo-400" />
                   {openImagesMutation.isPending ? 'Launching...' : 'Open Images'}
                 </Button>
               </div>
@@ -1007,7 +1007,7 @@ export const RadiologistReportModal: React.FC<RadiologistReportModalProps> = ({
                   type="button"
                   size="sm"
                   variant="outline"
-                  className="h-7 text-xs bg-white dark:bg-card border-indigo-300 text-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-950 flex items-center gap-1 shadow-xs"
+                  className="h-7 text-xs bg-white dark:bg-card border-indigo-300 text-blue-700 hover:bg-blue-50 dark:hover:bg-indigo-950 flex items-center gap-1 shadow-xs"
                   onClick={() => setIsVersionHistoryOpen(true)}
                 >
                   <History className="h-3.5 w-3.5" />
@@ -1030,7 +1030,7 @@ export const RadiologistReportModal: React.FC<RadiologistReportModalProps> = ({
                   type="button"
                   size="sm"
                   variant="outline"
-                  className="h-7 text-xs bg-white dark:bg-card border-indigo-300 text-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-950 flex items-center gap-1 shadow-xs"
+                  className="h-7 text-xs bg-white dark:bg-card border-indigo-300 text-blue-700 hover:bg-blue-50 dark:hover:bg-indigo-950 flex items-center gap-1 shadow-xs"
                   onClick={() => {
                     setAmendmentModalType('ADDENDUM');
                     setIsAmendmentModalOpen(true);
@@ -1067,7 +1067,7 @@ export const RadiologistReportModal: React.FC<RadiologistReportModalProps> = ({
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {isLoading ? (
             <div className="py-12 flex flex-col items-center justify-center text-muted-foreground text-sm">
-              <Loader2 className="h-8 w-8 animate-spin text-indigo-600 mb-2" />
+              <Loader2 className="h-8 w-8 animate-spin text-[#2563EB] mb-2" />
               <span>Loading reporting workspace...</span>
             </div>
           ) : isError ? (
@@ -1129,7 +1129,7 @@ export const RadiologistReportModal: React.FC<RadiologistReportModalProps> = ({
                       <Button
                         size="sm"
                         variant="default"
-                        className="h-8 text-xs bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-1.5 shadow-xs font-semibold"
+                        className="h-8 text-xs bg-[#2563EB] hover:bg-blue-700 text-white flex items-center gap-1.5 shadow-xs font-semibold"
                         disabled={isSendingToReception}
                         onClick={handleSendToReception}
                       >
@@ -1202,12 +1202,12 @@ export const RadiologistReportModal: React.FC<RadiologistReportModalProps> = ({
             /* 1. Template Selection Mode (No draft yet) */
             /* ========================================== */
             <div className="space-y-4 py-2">
-              <div className="p-3 bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 rounded-lg">
+              <div className="p-3 bg-blue-50/70 dark:bg-indigo-950/30 border border-blue-200 dark:border-indigo-800 rounded-lg">
                 <h4 className="text-sm font-semibold text-indigo-900 dark:text-indigo-200 flex items-center gap-1.5">
-                  <FileText className="h-4 w-4 text-indigo-600" />
+                  <FileText className="h-4 w-4 text-[#2563EB]" />
                   Select Reporting Template
                 </h4>
-                <p className="text-xs text-indigo-700 dark:text-indigo-300 mt-1">
+                <p className="text-xs text-blue-700 dark:text-indigo-300 mt-1">
                   Choose a structured template matching modality{' '}
                   <strong>{workspace?.order.modality}</strong> and body region{' '}
                   <strong>{workspace?.order.bodyPart}</strong>. A draft will be created only after
@@ -1229,7 +1229,7 @@ export const RadiologistReportModal: React.FC<RadiologistReportModalProps> = ({
                         onClick={() => setSelectedTemplateId(tpl.id)}
                         className={`p-3 border rounded-lg cursor-pointer transition-all ${
                           isSelected
-                            ? 'border-indigo-600 bg-indigo-50/40 dark:bg-indigo-950/40 ring-1 ring-indigo-500'
+                            ? 'border-indigo-600 bg-blue-50/40 dark:bg-indigo-950/40 ring-1 ring-indigo-500'
                             : 'border-border hover:border-indigo-300 dark:hover:border-indigo-700 bg-card'
                         }`}
                       >
@@ -1266,7 +1266,7 @@ export const RadiologistReportModal: React.FC<RadiologistReportModalProps> = ({
 
               <div className="pt-4 border-t flex justify-end">
                 <Button
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold flex items-center gap-1.5"
+                  className="bg-[#2563EB] hover:bg-blue-700 text-white font-semibold flex items-center gap-1.5"
                   onClick={() => createDraftMutation.mutate(selectedTemplateId)}
                   disabled={!selectedTemplateId || createDraftMutation.isPending}
                 >
@@ -1312,7 +1312,7 @@ export const RadiologistReportModal: React.FC<RadiologistReportModalProps> = ({
                         className={`h-4 w-4 ${
                           dictationState === 'listening'
                             ? 'text-rose-600 animate-pulse'
-                            : 'text-indigo-600'
+                            : 'text-[#2563EB]'
                         }`}
                       />
                       <span>Voice Dictation:</span>
@@ -1345,7 +1345,7 @@ export const RadiologistReportModal: React.FC<RadiologistReportModalProps> = ({
                       <Button
                         type="button"
                         size="sm"
-                        className="h-8 text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-medium flex items-center gap-1.5"
+                        className="h-8 text-xs bg-[#2563EB] hover:bg-blue-700 text-white font-medium flex items-center gap-1.5"
                         onClick={handleStartDictation}
                         disabled={
                           dictationState === 'unavailable' ||
@@ -1424,7 +1424,7 @@ export const RadiologistReportModal: React.FC<RadiologistReportModalProps> = ({
 
                 {/* Ephemeral Real-time Speech Preview */}
                 {dictationState === 'listening' && hearingPreview && (
-                  <div className="text-xs italic text-indigo-700 dark:text-indigo-300 bg-indigo-50/50 dark:bg-indigo-950/30 px-2.5 py-1.5 rounded border border-indigo-100 dark:border-indigo-900 flex items-center gap-2">
+                  <div className="text-xs italic text-blue-700 dark:text-indigo-300 bg-blue-50/50 dark:bg-indigo-950/30 px-2.5 py-1.5 rounded border border-indigo-100 dark:border-indigo-900 flex items-center gap-2">
                     <Volume2 className="h-3.5 w-3.5 shrink-0 text-indigo-500 animate-pulse" />
                     <span>Hearing: &ldquo;{hearingPreview}&rdquo;</span>
                   </div>
@@ -1458,7 +1458,7 @@ export const RadiologistReportModal: React.FC<RadiologistReportModalProps> = ({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                      <Ruler className="h-4 w-4 text-indigo-600" />
+                      <Ruler className="h-4 w-4 text-[#2563EB]" />
                       Measurements & Key Images
                     </h4>
                     <Badge variant="outline" className="text-[11px] font-mono">
@@ -1473,7 +1473,7 @@ export const RadiologistReportModal: React.FC<RadiologistReportModalProps> = ({
                       type="button"
                       size="sm"
                       variant="outline"
-                      className="h-7 text-xs flex items-center gap-1 text-indigo-700 dark:text-indigo-300 border-indigo-200"
+                      className="h-7 text-xs flex items-center gap-1 text-blue-700 dark:text-indigo-300 border-blue-200"
                       onClick={() => {
                         setMLabel(`Measurement ${measurements.length + 1}`);
                         setShowAddMeasurementDialog(true);
@@ -1487,7 +1487,7 @@ export const RadiologistReportModal: React.FC<RadiologistReportModalProps> = ({
                       type="button"
                       size="sm"
                       variant="outline"
-                      className="h-7 text-xs flex items-center gap-1 text-indigo-700 dark:text-indigo-300 border-indigo-200"
+                      className="h-7 text-xs flex items-center gap-1 text-blue-700 dark:text-indigo-300 border-blue-200"
                       onClick={() => {
                         setKLabel(`Key Image ${keyImages.length + 1}`);
                         setShowAddKeyImageDialog(true);
@@ -1523,12 +1523,12 @@ export const RadiologistReportModal: React.FC<RadiologistReportModalProps> = ({
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <Badge
                                 variant="secondary"
-                                className="text-[10px] font-mono px-1 py-0 bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"
+                                className="text-[10px] font-mono px-1 py-0 bg-blue-50 text-blue-700 dark:bg-indigo-950 dark:text-indigo-300"
                               >
                                 {m.toolType}
                               </Badge>
                               <span className="text-xs font-semibold text-foreground truncate">{m.label}</span>
-                              <span className="text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                              <span className="text-xs font-mono font-bold text-[#2563EB] dark:text-indigo-400">
                                 {m.numericValue} {m.unit}
                               </span>
                             </div>
@@ -1547,7 +1547,7 @@ export const RadiologistReportModal: React.FC<RadiologistReportModalProps> = ({
                               type="button"
                               size="sm"
                               variant="ghost"
-                              className="h-7 w-7 p-0 text-muted-foreground hover:text-indigo-600"
+                              className="h-7 w-7 p-0 text-muted-foreground hover:text-[#2563EB]"
                               title="View in PACS Viewer"
                               onClick={() => handleViewReference(m.seriesInstanceUid, m.sopInstanceUid)}
                             >
@@ -1609,7 +1609,7 @@ export const RadiologistReportModal: React.FC<RadiologistReportModalProps> = ({
                               type="button"
                               size="sm"
                               variant="ghost"
-                              className="h-7 w-7 p-0 text-muted-foreground hover:text-indigo-600"
+                              className="h-7 w-7 p-0 text-muted-foreground hover:text-[#2563EB]"
                               title="View in PACS Viewer"
                               onClick={() => handleViewReference(k.seriesInstanceUid, k.sopInstanceUid)}
                             >
@@ -1654,7 +1654,7 @@ export const RadiologistReportModal: React.FC<RadiologistReportModalProps> = ({
                             </span>
                           )}
                           {isImpression && (
-                            <span className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400">
+                            <span className="text-[10px] font-semibold text-[#2563EB] dark:text-indigo-400">
                               *core conclusion
                             </span>
                           )}
@@ -1712,7 +1712,7 @@ export const RadiologistReportModal: React.FC<RadiologistReportModalProps> = ({
               onClick={() => openImagesMutation.mutate()}
               disabled={openImagesMutation.isPending}
             >
-              <ExternalLink className="h-3.5 w-3.5 text-indigo-600" />
+              <ExternalLink className="h-3.5 w-3.5 text-[#2563EB]" />
               {openImagesMutation.isPending ? 'Launching...' : 'Open Images'}
             </Button>
 
@@ -1739,10 +1739,10 @@ export const RadiologistReportModal: React.FC<RadiologistReportModalProps> = ({
                 type="button"
                 size="sm"
                 variant="outline"
-                className="text-xs flex items-center gap-1.5 border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-950/30"
+                className="text-xs flex items-center gap-1.5 border-blue-200 text-blue-700 hover:bg-blue-50 dark:hover:bg-indigo-950/30"
                 onClick={() => setIsPeerReviewRequestOpen(true)}
               >
-                <Users className="h-3.5 w-3.5 text-indigo-600" />
+                <Users className="h-3.5 w-3.5 text-[#2563EB]" />
                 Request Peer Review
               </Button>
             )}
@@ -1803,7 +1803,7 @@ export const RadiologistReportModal: React.FC<RadiologistReportModalProps> = ({
             {draftExists && !workspace?.finalizedReport && (
               <Button
                 size="sm"
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs flex items-center gap-1.5"
+                className="bg-[#2563EB] hover:bg-blue-700 text-white font-semibold text-xs flex items-center gap-1.5"
                 onClick={handleManualSave}
                 disabled={
                   saveStatus === 'saving' ||
@@ -1846,7 +1846,7 @@ export const RadiologistReportModal: React.FC<RadiologistReportModalProps> = ({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="text-base font-bold flex items-center gap-2">
-            <Ruler className="h-4 w-4 text-indigo-600" />
+            <Ruler className="h-4 w-4 text-[#2563EB]" />
             Add Image Measurement Reference
           </DialogTitle>
         </DialogHeader>
@@ -1970,7 +1970,7 @@ export const RadiologistReportModal: React.FC<RadiologistReportModalProps> = ({
             <Button
               type="submit"
               size="sm"
-              className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold"
+              className="bg-[#2563EB] hover:bg-blue-700 text-white font-semibold"
             >
               Insert Measurement
             </Button>
@@ -2148,7 +2148,7 @@ export const RadiologistReportModal: React.FC<RadiologistReportModalProps> = ({
           impression={draftContent.Impression || draftContent.impression || ''}
           measurementsCount={measurements.length}
           keyImagesCount={keyImages.length}
-          signerName={workspace.assignment?.assignedToName || 'Dr. Elena Rostova'}
+          signerName={workspace.assignment?.assignedToName || 'Authenticated radiologist'}
           signerEmail="rad@ris.local"
           signerRole="RADIOLOGIST"
           onSuccess={() => {

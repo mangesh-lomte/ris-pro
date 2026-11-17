@@ -114,7 +114,7 @@ export const QualityIncidentsTab: React.FC<QualityIncidentsTabProps> = ({
             <span>Peer Review Audit</span>
             <FileCheck2 className="w-4 h-4 text-indigo-500" />
           </div>
-          <p className="text-2xl font-bold text-indigo-700 font-mono">
+          <p className="text-2xl font-bold text-blue-700 font-mono">
             {peerReview?.totalSubmitted ?? 0}
           </p>
           <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100">

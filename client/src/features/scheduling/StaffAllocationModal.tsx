@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { allocateStaffMachine } from '../../services/appointmentService';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { allocateStaffMachine, fetchSchedulingStaff } from '../../services/appointmentService';
 import {
   Dialog,
   DialogHeader,
@@ -31,11 +31,11 @@ export function StaffAllocationModal({
   const queryClient = useQueryClient();
 
   const [equipmentId, setEquipmentId] = useState(appointment?.equipmentId || '');
-  const [radiographer, setRadiographer] = useState('Sarah Jenkins, RT(R)');
-  const [nurse, setNurse] = useState('David Ross, RN');
+  const [assignedTechnologistId, setAssignedTechnologistId] = useState('');
   const [location, setLocation] = useState(appointment?.location || '');
   const [notes, setNotes] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const { data: schedulingStaff = [] } = useQuery({ queryKey: ['scheduling-staff'], queryFn: fetchSchedulingStaff, enabled: open });
 
   const allocateMutation = useMutation({
     mutationFn: (payload: any) =>
@@ -57,8 +57,7 @@ export function StaffAllocationModal({
     allocateMutation.mutate({
       equipmentId: equipmentId || undefined,
       location: location.trim() || undefined,
-      radiographer: radiographer.trim() || undefined,
-      nurse: nurse.trim() || undefined,
+      assignedTechnologistId: assignedTechnologistId || undefined,
       notes: notes.trim() || undefined,
     });
   };
@@ -121,29 +120,12 @@ export function StaffAllocationModal({
             </select>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="text-[11px] font-medium text-slate-700 block mb-1">
-                Assigned Radiographer / Tech
-              </label>
-              <Input
-                value={radiographer}
-                onChange={(e) => setRadiographer(e.target.value)}
-                placeholder="Radiographer name"
-                className="h-8 text-xs"
-              />
-            </div>
-            <div>
-              <label className="text-[11px] font-medium text-slate-700 block mb-1">
-                Assigned Nurse
-              </label>
-              <Input
-                value={nurse}
-                onChange={(e) => setNurse(e.target.value)}
-                placeholder="Nurse name"
-                className="h-8 text-xs"
-              />
-            </div>
+          <div>
+            <label htmlFor="allocation-technologist" className="text-sm font-medium text-slate-700 block mb-1">Assigned Technologist</label>
+            <select id="allocation-technologist" value={assignedTechnologistId} onChange={(e) => setAssignedTechnologistId(e.target.value)} className="w-full h-10 rounded-md border border-slate-300 bg-white px-3 text-sm">
+              <option value="">Unassigned</option>
+              {schedulingStaff.map((staff) => <option key={staff.id} value={staff.id}>{staff.lastName}, {staff.firstName} — {staff.email}</option>)}
+            </select>
           </div>
 
           <div>

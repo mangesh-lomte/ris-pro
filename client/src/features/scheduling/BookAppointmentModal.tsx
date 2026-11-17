@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { createAppointment, CreateAppointmentData } from '../../services/appointmentService';
+import { createAppointment, CreateAppointmentData, fetchSchedulingStaff } from '../../services/appointmentService';
+import { useAuth } from '../../hooks/useAuth';
 import { fetchEquipment } from '../../services/clinicalMasterService';
 import {
   Dialog,
@@ -38,6 +39,7 @@ export function BookAppointmentModal({
   onAppointmentBooked,
 }: BookAppointmentModalProps) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const [date, setDate] = useState<string>(
     initialDate || new Date().toISOString().split('T')[0]
@@ -50,8 +52,7 @@ export function BookAppointmentModal({
   const [notes, setNotes] = useState<string>('');
   const [allowConflictOverride, setAllowConflictOverride] = useState<boolean>(false);
   const [overrideReason, setOverrideReason] = useState<string>('');
-  const [assignedRadiographer, setAssignedRadiographer] = useState<string>('');
-  const [assignedNurse, setAssignedNurse] = useState<string>('');
+  const [assignedTechnologistId, setAssignedTechnologistId] = useState<string>('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const targetPatient = patient || order?.patient;
@@ -62,6 +63,7 @@ export function BookAppointmentModal({
     queryFn: () => fetchEquipment({ modality: targetModality, operationalOnly: true }),
     enabled: open,
   });
+  const { data: schedulingStaff = [] } = useQuery({ queryKey: ['scheduling-staff'], queryFn: fetchSchedulingStaff, enabled: open });
 
   useEffect(() => {
     if (open) {
@@ -132,22 +134,17 @@ export function BookAppointmentModal({
       return;
     }
 
-    const scheduledEnd = new Date(scheduledStart.getTime() + durationMinutes * 60000);
-
-    const payload: any = {
+    const payload: CreateAppointmentData = {
       patientId: targetPatient.id,
       imagingOrderId: order.id,
       equipmentId: selectedEquipmentId,
       examDefinitionId: order.examDefinitionId || undefined,
       scheduledStart: scheduledStart.toISOString(),
-      scheduledEnd: scheduledEnd.toISOString(),
-      durationMinutes,
       priority: order.priority,
       notes: notes.trim() || undefined,
       allowConflictOverride: allowConflictOverride || undefined,
       overrideReason: allowConflictOverride ? overrideReason.trim() || 'Supervisor emergency slot override' : undefined,
-      assignedRadiographer: assignedRadiographer.trim() || undefined,
-      assignedNurse: assignedNurse.trim() || undefined,
+      assignedTechnologistId: assignedTechnologistId || undefined,
     };
 
     bookMutation.mutate(payload);
@@ -252,17 +249,9 @@ export function BookAppointmentModal({
               <label className="text-[11px] font-medium text-slate-700 block mb-1">
                 Duration (Minutes)
               </label>
-              <select
-                value={durationMinutes}
-                onChange={(e) => setDurationMinutes(Number(e.target.value))}
-                className="w-full h-8 rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-cyan-500 font-mono"
-              >
-                <option value={15}>15 mins</option>
-                <option value={30}>30 mins</option>
-                <option value={45}>45 mins</option>
-                <option value={60}>60 mins</option>
-                <option value={90}>90 mins</option>
-              </select>
+              <div className="h-8 rounded-md border border-slate-300 bg-slate-50 px-2 flex items-center text-sm text-slate-800 tabular-nums">
+                {durationMinutes} minutes (exam rule)
+              </div>
             </div>
           </div>
 
@@ -279,33 +268,20 @@ export function BookAppointmentModal({
           </div>
 
           {/* Staff Allocation */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+          <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
             <div>
-              <label className="text-[11px] font-medium text-slate-700 block mb-1">
-                Assigned Radiographer
+              <label htmlFor="appointment-technologist" className="text-sm font-medium text-slate-700 block mb-1">
+                Assigned Technologist
               </label>
-              <Input
-                placeholder="e.g. Sarah Jenkins, RT(R)"
-                value={assignedRadiographer}
-                onChange={(e) => setAssignedRadiographer(e.target.value)}
-                className="h-8 text-xs bg-white"
-              />
-            </div>
-            <div>
-              <label className="text-[11px] font-medium text-slate-700 block mb-1">
-                Assigned Nurse
-              </label>
-              <Input
-                placeholder="e.g. David Ross, RN"
-                value={assignedNurse}
-                onChange={(e) => setAssignedNurse(e.target.value)}
-                className="h-8 text-xs bg-white"
-              />
+              <select id="appointment-technologist" value={assignedTechnologistId} onChange={(e) => setAssignedTechnologistId(e.target.value)} className="w-full h-10 rounded-md border border-slate-300 bg-white px-3 text-sm">
+                <option value="">Assign later</option>
+                {schedulingStaff.map((staff) => <option key={staff.id} value={staff.id}>{staff.lastName}, {staff.firstName} — {staff.email}</option>)}
+              </select>
             </div>
           </div>
 
           {/* Supervisor Emergency Overbooking Override */}
-          <div className="p-2.5 rounded-lg border border-amber-200 bg-amber-50 space-y-2">
+          {user?.role === 'ADMIN' && <div className="p-3 rounded-lg border border-amber-200 bg-amber-50 space-y-2">
             <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-amber-900">
               <input
                 type="checkbox"
@@ -320,10 +296,11 @@ export function BookAppointmentModal({
                 placeholder="Enter clinical emergency justification / supervisor override reason"
                 value={overrideReason}
                 onChange={(e) => setOverrideReason(e.target.value)}
-                className="h-8 text-xs bg-white text-slate-900 border-amber-300"
+                required minLength={10}
+                className="h-10 text-sm bg-white text-slate-900 border-amber-300"
               />
             )}
-          </div>
+          </div>}
 
           {/* Notes */}
           <div>

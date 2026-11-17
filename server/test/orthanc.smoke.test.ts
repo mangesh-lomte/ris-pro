@@ -10,8 +10,8 @@ import assert from 'node:assert/strict';
 import { OrthancPacsGateway } from '../src/integrations/pacs/orthancPacsGateway';
 import { PacsStudyLookupOutcome } from '../src/integrations/pacs/pacsGateway.interface';
 
-describe('Real Orthanc PACS Live Smoke Test (Requires manrad-orthanc container)', () => {
-  const orthancUrl = process.env.ORTHANC_URL || 'http://localhost:8042';
+describe('Real Orthanc PACS Live Smoke Test (Requires radaxis-orthanc container)', () => {
+  const orthancUrl = process.env.ORTHANC_URL || 'http://localhost:8044';
   const orthancUser = process.env.ORTHANC_USERNAME || 'orthanc';
   const orthancPassword = process.env.ORTHANC_PASSWORD || '';
 
@@ -27,12 +27,12 @@ describe('Real Orthanc PACS Live Smoke Test (Requires manrad-orthanc container)'
     assert.strictEqual(
       health.connected,
       true,
-      `Failed to connect to Orthanc at ${orthancUrl}. Ensure manrad-orthanc container is running.`
+      `Failed to connect to Orthanc at ${orthancUrl}. Ensure radaxis-orthanc container is running.`
     );
-    assert.strictEqual(health.serverName, 'Manrad RIS PACS');
+    assert.strictEqual(health.serverName, 'RadAxis RIS PACS');
     assert.ok(health.version, 'Orthanc version must be populated');
     assert.ok(health.apiVersion, 'Orthanc API version must be populated');
-    assert.strictEqual(health.dicomAet, 'MANRAD');
+    assert.strictEqual(health.dicomAet, 'RADAXIS');
     assert.ok(health.checkedAt instanceof Date);
   });
 
@@ -42,7 +42,7 @@ describe('Real Orthanc PACS Live Smoke Test (Requires manrad-orthanc container)'
     assert.strictEqual(
       health.dicomWebPluginAvailable,
       true,
-      'dicom-web plugin must be loaded and discovered in manrad-orthanc container'
+      'dicom-web plugin must be loaded and discovered in radaxis-orthanc container'
     );
   });
 
@@ -50,7 +50,7 @@ describe('Real Orthanc PACS Live Smoke Test (Requires manrad-orthanc container)'
     const caps = await liveGateway.getCapabilities();
     assert.strictEqual(caps.adapter, 'orthanc');
     assert.strictEqual(caps.connected, true);
-    assert.strictEqual(caps.serverName, 'Manrad RIS PACS');
+    assert.strictEqual(caps.serverName, 'RadAxis RIS PACS');
     assert.strictEqual(caps.metadataLookupSupported, true);
     assert.strictEqual(caps.reconciliationSupported, true);
     assert.strictEqual(caps.dicomWebPluginAvailable, true);

@@ -199,8 +199,8 @@ export const ServiceHistoryTab: React.FC<ServiceHistoryTabProps> = ({
         );
       case 'PART':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
-            <Package className="w-3 h-3 text-indigo-600" /> Part Replaced
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+            <Package className="w-3 h-3 text-[#2563EB]" /> Part Replaced
           </span>
         );
       case 'CERT':
@@ -228,7 +228,7 @@ export const ServiceHistoryTab: React.FC<ServiceHistoryTabProps> = ({
   return (
     <div className="space-y-4">
       {/* Controls & Equipment Selector */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+      <div className="bg-white p-4 rounded border border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
           <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5 shrink-0">
             <History className="w-4 h-4 text-sky-600" />
@@ -272,7 +272,7 @@ export const ServiceHistoryTab: React.FC<ServiceHistoryTabProps> = ({
 
       {/* Equipment Context Banner */}
       {selectedEquipment && (
-        <div className="bg-sky-50/70 border border-sky-200/80 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="bg-sky-50/70 border border-sky-200/80 rounded p-4 flex flex-wrap items-center justify-between gap-3 text-xs">
           <div className="space-y-0.5">
             <div className="flex items-center gap-2">
               <span className="font-bold text-sm text-slate-900">{selectedEquipment.name}</span>
@@ -330,7 +330,7 @@ export const ServiceHistoryTab: React.FC<ServiceHistoryTabProps> = ({
       </div>
 
       {/* Chronological Timeline / Table */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+      <div className="bg-white rounded border border-slate-200 overflow-hidden shadow-sm">
         {loadingHistory || parentLoading ? (
           <div className="p-12 text-center text-slate-500 text-xs">Loading comprehensive service history...</div>
         ) : filteredEvents.length === 0 ? (

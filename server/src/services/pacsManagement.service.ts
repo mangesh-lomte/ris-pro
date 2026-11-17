@@ -348,14 +348,14 @@ export async function importExternalDicomMedia(
     },
   });
 
-  // Link to PACS
+  // Link to PACS (starts UNLINKED until external DICOM instances are reconciled into archive)
   const verifiedUserId = context?.userId || (await prisma.user.findFirst({ select: { id: true } }))?.id || 'system';
   await prisma.pacsStudyLink.create({
     data: {
       imagingOrderId: order.id,
       orthancStudyId: `ORTHANC-EXT-${studyInstanceUid.slice(-8)}`,
       studyInstanceUid,
-      status: PacsStudyLinkStatus.LINKED,
+      status: PacsStudyLinkStatus.UNLINKED,
       verifiedByUserId: verifiedUserId,
     },
   });

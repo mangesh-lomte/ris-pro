@@ -66,13 +66,13 @@ export function StockAuditTab() {
           batchId: s.batchId || undefined,
           countedQty: Number(c.counted),
           discrepancyReason: c.reason.trim() || undefined,
+          autoReconcile: reconcile,
         };
       });
 
       const res = await inventoryService.recordAudit({
         location,
         notes: auditNotes.trim() || undefined,
-        reconcileDiscrepancies: reconcile,
         items: itemsPayload,
       });
 
@@ -91,7 +91,7 @@ export function StockAuditTab() {
   return (
     <div className="space-y-6">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded border border-slate-200 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-sky-50 text-sky-700 rounded-md border border-sky-100">
             <Scale className="w-6 h-6" />
@@ -153,7 +153,7 @@ export function StockAuditTab() {
 
       {/* Active Audit Form */}
       {isAuditing && (
-        <form onSubmit={handleAuditSubmit} className="bg-white rounded-xl border-2 border-sky-400 p-5 shadow-md space-y-4">
+        <form onSubmit={handleAuditSubmit} className="bg-white rounded border-2 border-sky-400 p-5 shadow-md space-y-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-200 pb-3">
             <div>
               <h3 className="text-base font-semibold text-sky-950 flex items-center gap-2">
@@ -292,7 +292,7 @@ export function StockAuditTab() {
       )}
 
       {/* Historical Stock Audits */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded border border-slate-200 shadow-sm overflow-hidden">
         <div className="px-4 py-3 border-b border-slate-200 bg-slate-50/70 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <History className="w-4 h-4 text-sky-600" />

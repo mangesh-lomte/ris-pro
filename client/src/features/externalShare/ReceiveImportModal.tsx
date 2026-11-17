@@ -5,16 +5,17 @@ interface ReceiveImportModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (payload: {
-    patientName: string;
-    patientIdOutside?: string;
-    accessionOutside?: string;
-    modality: string;
-    studyDescription?: string;
-    studyDate?: string;
-    sourceFacility: string;
-    studyInstanceUid?: string;
-    seriesCount?: number;
-    instancesCount?: number;
+    patientNameRaw: string;
+    patientIdRaw?: string;
+    accessionRaw?: string;
+    modality: 'CT' | 'MRI' | 'XRAY' | 'ULTRASOUND';
+    studyDescription: string;
+    studyDate: string;
+    sourceInstitution: string;
+    studyInstanceUid: string;
+    numberOfInstances: number;
+    fileSize: number;
+    storagePath: string;
   }) => Promise<void>;
 }
 
@@ -26,12 +27,14 @@ export const ReceiveImportModal: React.FC<ReceiveImportModalProps> = ({
   const [patientName, setPatientName] = useState('');
   const [patientIdOutside, setPatientIdOutside] = useState('');
   const [accessionOutside, setAccessionOutside] = useState('');
-  const [modality, setModality] = useState('MRI');
-  const [studyDescription, setStudyDescription] = useState('MRI Lumbar Spine with Contrast');
+  const [modality, setModality] = useState<'CT' | 'MRI' | 'XRAY' | 'ULTRASOUND'>('MRI');
+  const [studyDescription, setStudyDescription] = useState('');
   const [studyDate, setStudyDate] = useState(new Date().toISOString().split('T')[0]);
-  const [sourceFacility, setSourceFacility] = useState('Apex Specialty Diagnostic Center');
-  const [seriesCount, setSeriesCount] = useState(4);
-  const [instancesCount, setInstancesCount] = useState(128);
+  const [sourceFacility, setSourceFacility] = useState('');
+  const [studyInstanceUid, setStudyInstanceUid] = useState('');
+  const [instancesCount, setInstancesCount] = useState(1);
+  const [fileSize, setFileSize] = useState(1);
+  const [storagePath, setStoragePath] = useState('');
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,20 +51,26 @@ export const ReceiveImportModal: React.FC<ReceiveImportModalProps> = ({
       setError('Source facility is required.');
       return;
     }
+    if (!studyInstanceUid.trim() || !studyDescription.trim() || !storagePath.trim()) {
+      setError('Study description, DICOM Study Instance UID, and verified storage location are required.');
+      return;
+    }
 
     try {
       setLoading(true);
       setError(null);
       await onSubmit({
-        patientName: patientName.trim(),
-        patientIdOutside: patientIdOutside.trim() || undefined,
-        accessionOutside: accessionOutside.trim() || undefined,
+        patientNameRaw: patientName.trim(),
+        patientIdRaw: patientIdOutside.trim() || undefined,
+        accessionRaw: accessionOutside.trim() || undefined,
         modality,
-        studyDescription: studyDescription.trim() || undefined,
+        studyDescription: studyDescription.trim(),
         studyDate,
-        sourceFacility: sourceFacility.trim(),
-        seriesCount: Number(seriesCount),
-        instancesCount: Number(instancesCount),
+        sourceInstitution: sourceFacility.trim(),
+        studyInstanceUid: studyInstanceUid.trim(),
+        numberOfInstances: Number(instancesCount),
+        fileSize: Number(fileSize),
+        storagePath: storagePath.trim(),
       });
       onClose();
     } catch (err: any) {
@@ -72,8 +81,8 @@ export const ReceiveImportModal: React.FC<ReceiveImportModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-gray-100 animate-in fade-in zoom-in duration-150">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 flex items-center justify-center p-4">
+      <div className="bg-white rounded shadow-2xl max-w-lg w-full overflow-hidden border border-gray-100 animate-in fade-in zoom-in duration-150">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/80">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center">
@@ -132,14 +141,13 @@ export const ReceiveImportModal: React.FC<ReceiveImportModalProps> = ({
               </label>
               <select
                 value={modality}
-                onChange={(e) => setModality(e.target.value)}
+                onChange={(e) => setModality(e.target.value as typeof modality)}
                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
               >
                 <option value="MRI">MRI</option>
                 <option value="CT">CT</option>
-                <option value="XR">X-Ray (XR)</option>
-                <option value="US">Ultrasound (US)</option>
-                <option value="MG">Mammography (MG)</option>
+                <option value="XRAY">X-Ray</option>
+                <option value="ULTRASOUND">Ultrasound</option>
               </select>
             </div>
           </div>
@@ -200,13 +208,13 @@ export const ReceiveImportModal: React.FC<ReceiveImportModalProps> = ({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1">
-                Series Count
+                File size (bytes)
               </label>
               <input
                 type="number"
                 min={1}
-                value={seriesCount}
-                onChange={(e) => setSeriesCount(Number(e.target.value))}
+                value={fileSize}
+                onChange={(e) => setFileSize(Number(e.target.value))}
                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
               />
             </div>
@@ -222,6 +230,16 @@ export const ReceiveImportModal: React.FC<ReceiveImportModalProps> = ({
                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
               />
             </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold uppercase tracking-wider text-gray-700">DICOM Study Instance UID <span className="text-rose-500">*</span></label>
+            <input value={studyInstanceUid} onChange={(e) => setStudyInstanceUid(e.target.value)} placeholder="1.2.840..." required className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white" />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold uppercase tracking-wider text-gray-700">Verified storage location <span className="text-rose-500">*</span></label>
+            <input value={storagePath} onChange={(e) => setStoragePath(e.target.value)} placeholder="PACS object ID, mounted media path, or ingest reference" required className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white" />
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">

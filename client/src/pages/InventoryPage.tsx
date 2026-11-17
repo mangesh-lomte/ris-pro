@@ -112,15 +112,15 @@ export function InventoryPage() {
   return (
     <div className="space-y-6 max-w-[1500px] mx-auto pb-12">
       {/* Top Banner / Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-5 sm:p-6 rounded-xl border border-[#DCE2EC] shadow-card">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-5 sm:p-6 rounded-3xl border border-[#dce6e0] shadow-soft">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl sm:text-[28px] font-bold tracking-tight text-[#15233B]">Inventory, Pharmacy &amp; Contrast Management</h1>
-            <span className="px-2.5 py-0.5 text-[11px] font-bold rounded-md bg-[#33398A]/10 text-[#33398A] border border-[#33398A]/20">
+            <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900">Inventory, Pharmacy &amp; Contrast Management</h1>
+            <span className="px-3 py-1 text-[11px] font-bold rounded-full bg-emerald-100/70 text-emerald-800 border border-emerald-200">
               Clinical Materials &amp; Pharmacy
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-[#64748B] mt-1">
+          <p className="text-xs text-slate-500 font-medium mt-1">
             Clinical inventory, contrast media, emergency crash cart supplies, radiology consumables, and batch traceability.
           </p>
         </div>
@@ -128,25 +128,25 @@ export function InventoryPage() {
         <div className="flex items-center gap-2.5">
           <Button
             onClick={() => setIsScannerOpen(true)}
-            className="flex items-center gap-2 text-xs shadow-xs rounded-lg"
+            className="flex items-center gap-2 text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white shadow-soft rounded-full px-4 py-2"
           >
-            <QrCode className="w-4 h-4" /> Barcode / QR Scanner
+            <QrCode className="w-4 h-4 text-emerald-400" /> Barcode / QR Scanner
           </Button>
 
           <Button
             onClick={loadData}
             variant="outline"
             size="sm"
-            className="flex items-center gap-1.5 text-xs py-2 h-auto rounded-lg"
+            className="flex items-center gap-1.5 text-xs font-bold py-2 px-3.5 h-auto rounded-full border-[#dce6e0] text-slate-800 hover:bg-[#f8faf8] shadow-soft"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} /> Refresh All
+            <RefreshCw className={`w-3.5 h-3.5 text-emerald-600 ${loading ? 'animate-spin' : ''}`} /> Refresh All
           </Button>
         </div>
       </div>
 
       {/* Tabs Navigation */}
-      <div className="border border-[#DCE2EC] bg-white rounded-xl shadow-card px-3 pt-3">
-        <nav role="tablist" aria-label="Inventory Sections" className="flex space-x-1.5 overflow-x-auto pb-3 scrollbar-thin">
+      <div className="border border-[#dce6e0] bg-[#f0f4f1] rounded-full p-1.5 shadow-soft">
+        <nav role="tablist" aria-label="Inventory Sections" className="flex space-x-1 overflow-x-auto scrollbar-thin">
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -156,12 +156,12 @@ export function InventoryPage() {
                 role="tab"
                 aria-selected={isActive}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg whitespace-nowrap transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#33398A] ${isActive
-                    ? 'bg-[#33398A] text-white shadow-xs'
-                    : 'text-[#64748B] hover:text-[#15233B] hover:bg-[#F3F6FC]'
+                className={`flex items-center gap-2 px-3.5 py-1.5 text-xs font-bold rounded-full whitespace-nowrap transition-all cursor-pointer ${isActive
+                    ? 'bg-slate-900 text-white shadow-soft font-extrabold'
+                    : 'text-slate-600 hover:text-slate-900'
                   }`}
               >
-                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-emerald-400' : 'text-slate-400'}`} />
                 {tab.label}
               </button>
             );

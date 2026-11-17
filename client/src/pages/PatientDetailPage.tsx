@@ -92,7 +92,7 @@ export function PatientDetailPage() {
       </div>
 
       {/* Patient Master Demographics Card */}
-      <Card className="border-[#DCE2EC] overflow-hidden shadow-card rounded-2xl">
+      <Card className="border-[#E2E8F0] overflow-hidden shadow-card rounded">
         <div className="bg-[#172554] p-6 text-white flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1.5">
             <div className="flex items-center gap-3 flex-wrap">

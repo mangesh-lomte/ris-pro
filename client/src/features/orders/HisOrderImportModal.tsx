@@ -22,26 +22,26 @@ interface HisOrderImportModalProps {
 export function HisOrderImportModal({ open, onOpenChange }: HisOrderImportModalProps) {
   const queryClient = useQueryClient();
 
-  const [externalSystem, setExternalSystem] = useState('Epic EMR');
-  const [externalOrderId, setExternalOrderId] = useState(`ORD-${Math.floor(100000 + Math.random() * 900000)}`);
+  const [externalSystem, setExternalSystem] = useState('');
+  const [externalOrderId, setExternalOrderId] = useState('');
   
   // Patient fields
   const [mrn, setMrn] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [dateOfBirth, setDateOfBirth] = useState('1985-05-12');
+  const [dateOfBirth, setDateOfBirth] = useState('');
   const [gender, setGender] = useState<'MALE' | 'FEMALE' | 'OTHER'>('MALE');
   const [phone, setPhone] = useState('');
   
   // Order fields
   const [modality, setModality] = useState<'MRI' | 'CT' | 'XRAY' | 'ULTRASOUND'>('CT');
-  const [bodyPart, setBodyPart] = useState('Chest');
-  const [examinationName, setExaminationName] = useState('CT Chest with IV Contrast');
-  const [clinicalIndication, setClinicalIndication] = useState('Persistent hemoptysis, evaluate for bronchial lesion');
-  const [priority, setPriority] = useState<'ROUTINE' | 'URGENT' | 'STAT'>('URGENT');
-  const [contrastRequired, setContrastRequired] = useState(true);
-  const [referringDoctorName, setReferringDoctorName] = useState('Dr. Marcus Brody, MD');
-  const [referringDoctorHospital, setReferringDoctorHospital] = useState('St. Jude Regional Hospital');
+  const [bodyPart, setBodyPart] = useState('');
+  const [examinationName, setExaminationName] = useState('');
+  const [clinicalIndication, setClinicalIndication] = useState('');
+  const [priority, setPriority] = useState<'ROUTINE' | 'URGENT' | 'STAT'>('ROUTINE');
+  const [contrastRequired, setContrastRequired] = useState(false);
+  const [referringDoctorName, setReferringDoctorName] = useState('');
+  const [referringDoctorHospital, setReferringDoctorHospital] = useState('');
 
   const [importedResult, setImportedResult] = useState<any | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -61,8 +61,8 @@ export function HisOrderImportModal({ open, onOpenChange }: HisOrderImportModalP
 
   const handleImport = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!firstName || !lastName || !phone) {
-      setErrorMsg('Patient first name, last name and phone are required');
+    if (!externalSystem || !externalOrderId || !firstName || !lastName || !dateOfBirth || !phone || !bodyPart || !examinationName || !clinicalIndication) {
+      setErrorMsg('External order identity, patient identity, examination and clinical indication are required');
       return;
     }
 
@@ -168,6 +168,7 @@ export function HisOrderImportModal({ open, onOpenChange }: HisOrderImportModalP
                   onChange={(e) => setExternalSystem(e.target.value)}
                   className="w-full h-8 rounded-md border border-slate-300 bg-white px-2 text-xs"
                 >
+                  <option value="">Select originating system</option>
                   <option value="Epic Systems EMR">Epic Systems EMR</option>
                   <option value="Cerner Millennium">Cerner Millennium</option>
                   <option value="Meditech Expanse">Meditech Expanse</option>

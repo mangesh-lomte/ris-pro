@@ -35,9 +35,10 @@ import { WalkInRegistrationModal } from '../features/reception/WalkInRegistratio
 import { AppointmentSlipModal } from '../features/reception/AppointmentSlipModal';
 import { OrderConsentModal } from '../features/reception/OrderConsentModal';
 import { OrderBillingModal } from '../features/reception/OrderBillingModal';
+import { toLocalDateString } from '../utils/formatters';
 
 export function ReceptionQueuePage() {
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = toLocalDateString();
   const [selectedModality, setSelectedModality] = useState<ModalityType | undefined>(undefined);
   const [activeTab, setActiveTab] = useState<'queue' | 'delivery' | 'tat'>('queue');
 
@@ -68,36 +69,36 @@ export function ReceptionQueuePage() {
 
   // Fetch Pending Scheduled Arrivals (Not yet checked in)
   const { data: scheduledData, isLoading: isScheduledLoading } = useQuery({
-    queryKey: ['scheduledToday', selectedModality],
+    queryKey: ['appointmentsToday', selectedModality],
     queryFn: () =>
       fetchAppointments({
         date: todayStr,
-        status: 'SCHEDULED' as any,
         modality: selectedModality,
-        pageSize: 50,
+        pageSize: 100,
       }),
   });
 
   const queue: Appointment[] = Array.isArray(queueData) ? queueData : [];
-  const pendingArrivals: Appointment[] = scheduledData?.data?.items || [];
+  const allToday: Appointment[] = scheduledData?.data?.items || [];
+  const pendingArrivals = allToday.filter((appointment) => appointment.status === 'SCHEDULED' || appointment.status === 'CONFIRMED');
 
   const counts = {
-    totalScheduled: (scheduledData?.data?.total || pendingArrivals.length) + queue.length,
-    waiting: queue.length,
-    inProgress: 1,
-    completed: 4,
-    cancelledOrNoShow: 1,
+    totalScheduled: scheduledData?.data?.total || allToday.length,
+    waiting: queue.filter((appointment) => appointment.movementStage === 'RECEPTION').length,
+    inProgress: queue.filter((appointment) => appointment.movementStage === 'SCANNER').length,
+    completed: allToday.filter((appointment) => appointment.status === 'COMPLETED' || appointment.imagingOrder?.orderStatus === 'SCAN_COMPLETED').length,
+    cancelledOrNoShow: allToday.filter((appointment) => appointment.status === 'CANCELLED' || appointment.status === 'NO_SHOW').length,
   };
 
   return (
-    <div className="space-y-6 max-w-[1500px] mx-auto pb-12">
+    <div className="space-y-4 max-w-[1500px] mx-auto pb-10">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-[#DCE2EC]">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-[#dce6e0]">
         <div>
-          <h1 className="text-2xl sm:text-[28px] font-bold tracking-tight text-[#15233B]">
-            Reception Desk & Patient Waiting Queue
+          <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900">
+            Reception Desk &amp; Patient Waiting Queue
           </h1>
-          <p className="text-xs sm:text-sm text-[#64748B] mt-1">
+          <p className="text-xs text-slate-500 font-medium mt-0.5">
             Daily sequence tokens, identity safety check-in, and prioritized technologist dispatch
           </p>
         </div>
@@ -106,37 +107,36 @@ export function ReceptionQueuePage() {
           <Button
             size="sm"
             onClick={() => setShowWalkInModal(true)}
-            className="text-xs gap-1.5 shadow-xs rounded-lg"
+            className="text-xs font-bold gap-1.5 shadow-soft rounded-full bg-slate-900 hover:bg-slate-800 text-white px-4 py-1.5"
           >
-            <Flame className="w-3.5 h-3.5" />
+            <Flame className="w-3.5 h-3.5 text-amber-400" />
             <span>Walk-In Scan Order</span>
           </Button>
           <Button
             variant="outline"
             size="sm"
             onClick={() => refetchQueue()}
-            className="text-xs gap-1.5 rounded-lg"
+            className="text-xs font-bold gap-1.5 rounded-full border-[#dce6e0] text-slate-800 hover:bg-[#f8faf8] px-3.5 py-1.5 shadow-soft"
           >
-            <RefreshCw className="w-3.5 h-3.5 text-[#33398A]" />
+            <RefreshCw className="w-3.5 h-3.5 text-emerald-600" />
             <span>Refresh Queue</span>
           </Button>
         </div>
       </div>
 
       {/* View Switcher Tabs */}
-      <div role="tablist" aria-label="Reception Desk Views" className="flex items-center gap-2 border-b border-[#DCE2EC] pb-2 overflow-x-auto">
+      <div role="tablist" aria-label="Reception Desk Views" className="flex items-center gap-1.5 bg-[#f0f4f1] p-1 rounded-full w-fit overflow-x-auto">
         <button
           type="button"
           role="tab"
           aria-selected={activeTab === 'queue'}
           onClick={() => setActiveTab('queue')}
-          className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#33398A] shrink-0 cursor-pointer ${
-            activeTab === 'queue'
-              ? 'bg-[#33398A] text-white shadow-xs'
-              : 'text-[#64748B] hover:bg-[#F3F6FC] hover:text-[#15233B]'
-          }`}
+          className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${activeTab === 'queue'
+            ? 'bg-slate-900 text-white shadow-soft font-extrabold'
+            : 'text-slate-600 hover:text-slate-900'
+            }`}
         >
-          <Users className="w-4 h-4" />
+          <Users className="w-3.5 h-3.5" />
           <span>Patient Waiting Queue</span>
         </button>
         <button
@@ -144,27 +144,25 @@ export function ReceptionQueuePage() {
           role="tab"
           aria-selected={activeTab === 'delivery'}
           onClick={() => setActiveTab('delivery')}
-          className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#33398A] shrink-0 cursor-pointer ${
-            activeTab === 'delivery'
-              ? 'bg-[#33398A] text-white shadow-xs'
-              : 'text-[#64748B] hover:bg-[#F3F6FC] hover:text-[#15233B]'
-          }`}
+          className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${activeTab === 'delivery'
+            ? 'bg-slate-900 text-white shadow-soft font-extrabold'
+            : 'text-slate-600 hover:text-slate-900'
+            }`}
         >
-          <FileText className="w-4 h-4" />
-          <span>Report Delivery & Front Desk Handover</span>
+          <FileText className="w-3.5 h-3.5" />
+          <span>Report Delivery &amp; Front Desk Handover</span>
         </button>
         <button
           type="button"
           role="tab"
           aria-selected={activeTab === 'tat'}
           onClick={() => setActiveTab('tat')}
-          className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#33398A] shrink-0 cursor-pointer ${
-            activeTab === 'tat'
-              ? 'bg-[#33398A] text-white shadow-xs'
-              : 'text-[#64748B] hover:bg-[#F3F6FC] hover:text-[#15233B]'
-          }`}
+          className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${activeTab === 'tat'
+            ? 'bg-slate-900 text-white shadow-soft font-extrabold'
+            : 'text-slate-600 hover:text-slate-900'
+            }`}
         >
-          <Clock className="w-4 h-4" />
+          <Clock className="w-3.5 h-3.5" />
           <span>TAT Performance Dashboard</span>
         </button>
       </div>
@@ -177,384 +175,389 @@ export function ReceptionQueuePage() {
         <>
           {/* KPI Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-            <Card className="border-slate-200/90 p-3.5 bg-white shadow-sm rounded-lg">
+            <Card className="border border-[#dce6e0] p-4 bg-gradient-to-br from-[#f2f7ec] to-white shadow-soft rounded-3xl">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-slate-500 uppercase">Today's Total</span>
-                <CalendarCheck className="w-4 h-4 text-slate-400" />
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Today's Total</span>
+                <CalendarCheck className="w-4 h-4 text-emerald-600" />
               </div>
-              <div className="text-xl font-bold text-slate-900 mt-1 tabular-nums">{counts.totalScheduled}</div>
-              <p className="text-[10px] text-slate-400 mt-0.5">Scheduled for today</p>
+              <div className="text-2xl font-extrabold text-slate-900 mt-1 font-mono">{counts.totalScheduled}</div>
+              <p className="text-[11px] text-slate-500 font-medium">Scheduled exams</p>
             </Card>
 
-            <Card className="border-[#174A70]/30 p-3.5 bg-[#174A70]/5 shadow-sm rounded-lg">
+            <Card className="border border-sky-100 p-4 bg-gradient-to-br from-[#eaf4fd] to-white shadow-soft rounded-3xl">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-[#174A70] uppercase">Waiting in Queue</span>
-                <Users className="w-4 h-4 text-[#174A70]" />
+                <span className="text-[10px] font-bold text-sky-700 uppercase tracking-wider">Waiting in Queue</span>
+                <Users className="w-4 h-4 text-sky-600" />
               </div>
-              <div className="text-xl font-bold text-slate-900 mt-1 tabular-nums">{counts.waiting}</div>
-              <p className="text-[10px] text-[#174A70] mt-0.5 font-medium">Checked-in & Ready for Tech</p>
+              <div className="text-2xl font-extrabold text-slate-900 mt-1 font-mono">{counts.waiting}</div>
+              <p className="text-[11px] text-sky-700 font-medium">Checked-in &amp; ready</p>
             </Card>
 
-            <Card className="border-indigo-200 p-3.5 bg-indigo-50/40 shadow-sm rounded-lg">
+            <Card className="border border-purple-100 p-4 bg-gradient-to-br from-[#f6effb] to-white shadow-soft rounded-3xl">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-indigo-900 uppercase">With Scanner</span>
-                <Clock className="w-4 h-4 text-indigo-600" />
+                <span className="text-[10px] font-bold text-purple-700 uppercase tracking-wider">With Scanner</span>
+                <Clock className="w-4 h-4 text-purple-600" />
               </div>
-              <div className="text-xl font-bold text-indigo-700 mt-1 tabular-nums">{counts.inProgress}</div>
-              <p className="text-[10px] text-indigo-700 mt-0.5">Acquisition in progress</p>
+              <div className="text-2xl font-extrabold text-purple-900 mt-1 font-mono">{counts.inProgress}</div>
+              <p className="text-[11px] text-purple-700 font-medium">Acquisition active</p>
             </Card>
 
-            <Card className="border-emerald-200 p-3.5 bg-emerald-50/40 shadow-sm rounded-lg">
+            <Card className="border border-emerald-100 p-4 bg-gradient-to-br from-[#e8f7f0] to-white shadow-soft rounded-3xl">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-emerald-900 uppercase">Completed</span>
+                <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">Completed</span>
                 <CheckCircle2 className="w-4 h-4 text-emerald-600" />
               </div>
-              <div className="text-xl font-bold text-emerald-700 mt-1 tabular-nums">{counts.completed}</div>
-              <p className="text-[10px] text-emerald-700 mt-0.5">Scans finished</p>
+              <div className="text-2xl font-extrabold text-emerald-800 mt-1 font-mono">{counts.completed}</div>
+              <p className="text-[11px] text-emerald-700 font-medium">Scans finished</p>
             </Card>
 
-            <Card className="border-slate-200/90 p-3.5 bg-white shadow-sm rounded-lg">
+            <Card className="border border-amber-100 p-4 bg-gradient-to-br from-[#fef5e9] to-white shadow-soft rounded-3xl">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-slate-500 uppercase">No-Show / Cancel</span>
+                <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider">No-Show / Cancel</span>
                 <AlertTriangle className="w-4 h-4 text-amber-500" />
               </div>
-              <div className="text-xl font-bold text-slate-900 mt-1 tabular-nums">{counts.cancelledOrNoShow}</div>
-              <p className="text-[10px] text-slate-400 mt-0.5">Unfulfilled slots</p>
+              <div className="text-2xl font-extrabold text-amber-900 mt-1 font-mono">{counts.cancelledOrNoShow}</div>
+              <p className="text-[11px] text-amber-700 font-medium">Unfulfilled slots</p>
             </Card>
           </div>
 
           {/* Modality Filter */}
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-slate-600">Filter Modality:</span>
-            <button
-              type="button"
-              onClick={() => setSelectedModality(undefined)}
-              className={`px-2.5 py-0.5 rounded-md text-xs font-medium transition cursor-pointer ${
-                selectedModality === undefined ? 'bg-[#174A70] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              All Modalities
-            </button>
-            {(['MRI', 'CT', 'XRAY'] as ModalityType[]).map((mod) => (
+            <span className="text-xs font-bold text-slate-500">Filter Modality:</span>
+            <div className="flex items-center gap-1 bg-[#f0f4f1] p-1 rounded-full">
               <button
-                key={mod}
                 type="button"
-                onClick={() => setSelectedModality(selectedModality === mod ? undefined : mod)}
-                className={`px-2.5 py-0.5 rounded-md text-xs font-medium transition cursor-pointer ${
-                  selectedModality === mod ? 'bg-[#174A70] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
+                onClick={() => setSelectedModality(undefined)}
+                className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${selectedModality === undefined ? 'bg-slate-900 text-white shadow-soft' : 'text-slate-600 hover:text-slate-900'
+                  }`}
               >
-                {mod}
+                All Modalities
               </button>
-            ))}
-          </div>
-
-      {/* Active Waiting Queue */}
-      <Card className="border-cyan-300 shadow-sm overflow-hidden">
-        <CardHeader className="bg-cyan-50/70 pb-3 border-b border-cyan-200 flex flex-row items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Ticket className="w-4 h-4 text-cyan-700" />
-            <div>
-              <h3 className="text-sm font-bold text-slate-900">
-                Active Waiting Room Queue ({queue.length} Patients)
-              </h3>
-              <p className="text-[11px] text-slate-500">
-                Sorted by clinical urgency (STAT &gt; URGENT &gt; ROUTINE) then check-in time
-              </p>
+              {(['MRI', 'CT', 'XRAY'] as ModalityType[]).map((mod) => (
+                <button
+                  key={mod}
+                  type="button"
+                  onClick={() => setSelectedModality(selectedModality === mod ? undefined : mod)}
+                  className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${selectedModality === mod ? 'bg-slate-900 text-white shadow-soft' : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                >
+                  {mod}
+                </button>
+              ))}
             </div>
           </div>
-          <Badge variant="cyan" className="font-mono text-xs font-bold">
-            Live Telemetry
-          </Badge>
-        </CardHeader>
 
-        <CardContent className="p-0">
-          {isQueueLoading ? (
-            <div className="flex h-40 items-center justify-center">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-cyan-600 border-t-transparent" />
-            </div>
-          ) : queue.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-6 px-4 text-center">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 mb-2 border border-emerald-200">
-                <CheckCircle2 className="w-4 h-4" />
+          {/* Active Waiting Queue */}
+          <Card className="border border-[#dce6e0] shadow-soft rounded-3xl bg-white overflow-hidden">
+            <CardHeader className="bg-white px-5 py-4 border-b border-[#e9f1ed] flex flex-row items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
+                  <Ticket className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-extrabold text-slate-900">
+                    Active Waiting Room Queue ({queue.length} Patients)
+                  </h3>
+                  <p className="text-[11px] text-slate-500 font-medium">
+                    Sorted by clinical urgency (STAT &gt; URGENT &gt; ROUTINE) then check-in timestamp
+                  </p>
+                </div>
               </div>
-              <p className="text-xs font-semibold text-slate-800">Waiting Room Clear</p>
-              <p className="text-[11px] text-slate-500 mt-0.5">All checked-in patients have been dispatched to scanner suites.</p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Queue Token</TableHead>
-                  <TableHead>Urgency</TableHead>
-                  <TableHead>Patient / MRN</TableHead>
-                  <TableHead>Examination & Suite</TableHead>
-                  <TableHead>Accession #</TableHead>
-                  <TableHead>Arrival / Wait Time</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {queue.map((item: Appointment) => (
-                  <TableRow key={item.id} className="hover:bg-slate-50/70 transition">
-                    <TableCell className="whitespace-nowrap">
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-mono text-xs font-bold text-[#174A70] bg-[#174A70]/10 border border-[#174A70]/25 px-2.5 py-1 rounded-md tracking-wider shadow-2xs">
-                          {item.tokenNumber}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <PriorityBadge priority={item.priority} />
-                    </TableCell>
-                    <TableCell>
-                      {item.patient ? (
-                        <Link
-                          to={`/patients/${item.patient.patientId}`}
-                          className="font-bold text-slate-900 text-xs hover:text-cyan-700 hover:underline block"
-                        >
-                          {item.patient.lastName}, {item.patient.firstName}
-                        </Link>
-                      ) : (
-                        <span className="font-bold text-slate-900 text-xs">Unknown Patient</span>
-                      )}
-                      <div className="mt-0.5">
-                        <IdentifierPill type="patient" value={item.patient?.patientId || ''} />
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-xs font-medium text-slate-900">
-                        {item.examination}
-                      </div>
-                      <span className="text-[11px] text-slate-500 font-mono">
-                        {item.equipment?.name || item.location || 'Suite'}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      {item.imagingOrder?.accessionNumber ? (
-                        <IdentifierPill type="accession" value={item.imagingOrder.accessionNumber} />
-                      ) : (
-                        <span className="text-slate-400 text-xs">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-xs font-mono">
-                      {item.checkedInAt ? (
-                        <div>
-                          <span className="text-slate-900 font-semibold block">
-                            {new Date(item.checkedInAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              <Badge variant="outline" className="font-mono text-[10px] font-bold text-emerald-900 bg-emerald-100/70 border-emerald-200 rounded-full px-2.5 py-0.5">
+                Live Queue Active
+              </Badge>
+            </CardHeader>
+
+            <CardContent className="p-0">
+              {isQueueLoading ? (
+                <div className="flex h-40 items-center justify-center">
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
+                </div>
+              ) : queue.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 mb-2 border border-emerald-100">
+                    <CheckCircle2 className="w-5 h-5" />
+                  </div>
+                  <p className="text-xs font-bold text-slate-900">Waiting Room Clear</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">No checked-in patients are currently active in the reception workflow.</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-b border-[#e9f1ed] bg-[#f8faf8] text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      <TableHead className="py-3 px-4">Queue Token</TableHead>
+                      <TableHead className="py-3 px-4">Urgency</TableHead>
+                      <TableHead className="py-3 px-4">Patient / MRN</TableHead>
+                      <TableHead className="py-3 px-4">Examination &amp; Suite</TableHead>
+                      <TableHead className="py-3 px-4">Accession #</TableHead>
+                      <TableHead className="py-3 px-4">Arrival / Wait Time</TableHead>
+                      <TableHead className="py-3 px-4">Current Location</TableHead>
+                      <TableHead className="py-3 px-4 text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {queue.map((item: Appointment) => (
+                      <TableRow key={item.id} className="hover:bg-[#f8faf8] transition border-b border-[#f0f4f1]">
+                        <TableCell className="py-3 px-4 whitespace-nowrap">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-mono text-xs font-extrabold text-emerald-900 bg-emerald-100/70 border border-emerald-200 px-3 py-1 rounded-full tracking-wider shadow-soft">
+                              {item.tokenNumber}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-3 px-4">
+                          <PriorityBadge priority={item.priority} />
+                        </TableCell>
+                        <TableCell className="py-3 px-4">
+                          {item.patient ? (
+                            <Link
+                              to={`/patients/${item.patient.patientId}`}
+                              className="font-bold text-slate-900 text-xs hover:text-emerald-700 block"
+                            >
+                              {item.patient.lastName}, {item.patient.firstName}
+                            </Link>
+                          ) : (
+                            <span className="font-bold text-slate-900 text-xs">Unknown Patient</span>
+                          )}
+                          <div className="mt-0.5">
+                            <IdentifierPill type="patient" value={item.patient?.patientId || ''} />
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-3 px-4">
+                          <div className="text-xs font-bold text-slate-900">
+                            {item.examination}
+                          </div>
+                          <span className="text-[11px] text-slate-500 font-mono font-medium">
+                            {item.equipment?.name || item.location || 'Suite'}
                           </span>
-                          <span className="text-slate-500 text-[10px]">
-                            {Math.max(0, Math.floor((Date.now() - new Date(item.checkedInAt).getTime()) / 60000))} mins waiting
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="text-slate-400">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge status={item.imagingOrder?.orderStatus || item.status} />
-                    </TableCell>
-                    <TableCell className="text-right whitespace-nowrap">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-xs h-7 gap-1 border-slate-300 hover:bg-slate-100"
-                          onClick={() => setSlipApptId(item.id)}
-                          title="Print Appointment Slip & Prep Instructions"
-                        >
-                          <FileText className="w-3 h-3" />
-                          <span>Slip</span>
-                        </Button>
-                        {item.imagingOrderId && (
-                          <>
+                        </TableCell>
+                        <TableCell className="py-3 px-4">
+                          {item.imagingOrder?.accessionNumber ? (
+                            <IdentifierPill type="accession" value={item.imagingOrder.accessionNumber} />
+                          ) : (
+                            <span className="text-slate-400 text-xs">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="py-3 px-4 text-xs font-mono">
+                          {item.checkedInAt ? (
+                            <div>
+                              <span className="text-slate-900 font-bold block">
+                                {new Date(item.checkedInAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                              <span className="text-slate-400 text-[10px] font-medium">
+                                {Math.max(0, Math.floor((Date.now() - new Date(item.checkedInAt).getTime()) / 60000))} mins waiting
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-slate-400">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="py-3 px-4">
+                          <div className="space-y-1">
+                            <StatusBadge status={item.movementStage || item.imagingOrder?.orderStatus || item.status} />
+                            {item.movementUpdatedAt && <div className="text-[10px] text-slate-400 font-medium">Updated {new Date(item.movementUpdatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>}
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-3 px-4 text-right whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-1.5">
                             <Button
                               size="sm"
                               variant="outline"
-                              className="text-xs h-7 gap-1 border-slate-300 hover:bg-slate-100"
-                              onClick={() =>
-                                setConsentOrder({
-                                  id: item.imagingOrderId!,
-                                  accession: item.imagingOrder?.accessionNumber || 'N/A',
-                                  patientName: `${item.patient?.firstName || ''} ${item.patient?.lastName || ''}`,
-                                })
-                              }
-                              title="Collect & View Signed Consent Forms"
+                              className="text-xs h-7 px-3 gap-1 border-[#dce6e0] text-slate-700 hover:bg-[#f8faf8] rounded-full font-bold"
+                              onClick={() => setSlipApptId(item.id)}
+                              title="Print Appointment Slip & Prep Instructions"
                             >
-                              <ShieldCheck className="w-3 h-3 text-emerald-600" />
-                              <span>Consent</span>
+                              <FileText className="w-3 h-3 text-slate-500" />
+                              <span>Slip</span>
+                            </Button>
+                            {item.imagingOrderId && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-xs h-7 px-3 gap-1 border-emerald-200 text-emerald-800 hover:bg-emerald-50 rounded-full font-bold"
+                                  onClick={() =>
+                                    setConsentOrder({
+                                      id: item.imagingOrderId!,
+                                      accession: item.imagingOrder?.accessionNumber || 'N/A',
+                                      patientName: `${item.patient?.firstName || ''} ${item.patient?.lastName || ''}`,
+                                    })
+                                  }
+                                  title="Collect & View Signed Consent Forms"
+                                >
+                                  <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                                  <span>Consent</span>
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-xs h-7 px-3 gap-1 border-[#dce6e0] text-slate-700 hover:bg-[#f8faf8] rounded-full font-bold"
+                                  onClick={() =>
+                                    setBillingOrder({
+                                      id: item.imagingOrderId!,
+                                      accession: item.imagingOrder?.accessionNumber || 'N/A',
+                                      patientName: `${item.patient?.firstName || ''} ${item.patient?.lastName || ''}`,
+                                    })
+                                  }
+                                  title="View Payment Status & Collect Billing"
+                                >
+                                  <CreditCard className="w-3 h-3 text-emerald-600" />
+                                  <span>Billing</span>
+                                </Button>
+                              </>
+                            )}
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-xs h-7 px-3 gap-1 border-[#dce6e0] text-slate-700 hover:bg-[#f8faf8] rounded-full font-bold"
+                              onClick={() => setLabelAppt(item)}
+                            >
+                              <Printer className="w-3 h-3 text-slate-500" />
+                              <span>Wristband</span>
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Today's Expected Arrivals */}
+          <Card className="border border-[#dce6e0] shadow-soft rounded-3xl bg-white overflow-hidden">
+            <CardHeader className="bg-white px-5 py-4 border-b border-[#e9f1ed]">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-extrabold text-slate-900">
+                    Pending Arrivals Today ({pendingArrivals.length} Appointments)
+                  </h3>
+                  <p className="text-[11px] text-slate-500 font-medium">
+                    Scheduled patients awaiting reception desk arrival and identity verification
+                  </p>
+                </div>
+              </div>
+            </CardHeader>
+
+            <CardContent className="p-0">
+              {isScheduledLoading ? (
+                <div className="flex h-36 items-center justify-center">
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
+                </div>
+              ) : pendingArrivals.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 mb-2 border border-emerald-100">
+                    <Users className="w-5 h-5" />
+                  </div>
+                  <p className="text-xs font-bold text-slate-900">No Pending Arrivals</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">All scheduled appointments for today have arrived or have been checked in.</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-b border-[#e9f1ed] bg-[#f8faf8] text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      <TableHead className="py-3 px-4">Appt #</TableHead>
+                      <TableHead className="py-3 px-4">Scheduled Time</TableHead>
+                      <TableHead className="py-3 px-4">Patient / MRN</TableHead>
+                      <TableHead className="py-3 px-4">Modality &amp; Suite</TableHead>
+                      <TableHead className="py-3 px-4">Examination</TableHead>
+                      <TableHead className="py-3 px-4">Priority</TableHead>
+                      <TableHead className="py-3 px-4 text-right">Reception Action</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {pendingArrivals.map((apt) => (
+                      <TableRow key={apt.id} className="hover:bg-[#f8faf8] transition border-b border-[#f0f4f1]">
+                        <TableCell className="py-3 px-4 font-mono text-xs font-bold text-slate-900">
+                          {apt.appointmentNumber}
+                        </TableCell>
+                        <TableCell className="py-3 px-4 text-xs font-mono font-medium text-slate-700">
+                          {new Date(apt.scheduledStart).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} –{' '}
+                          {new Date(apt.scheduledEnd).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </TableCell>
+                        <TableCell className="py-3 px-4">
+                          {apt.patient ? (
+                            <Link
+                              to={`/patients/${apt.patient.patientId}`}
+                              className="font-bold text-slate-900 text-xs hover:text-emerald-700 block"
+                            >
+                              {apt.patient.lastName}, {apt.patient.firstName}
+                            </Link>
+                          ) : (
+                            <span className="font-bold text-slate-900 text-xs">Unknown Patient</span>
+                          )}
+                          <div className="mt-0.5">
+                            <IdentifierPill type="patient" value={apt.patient?.patientId || ''} />
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-3 px-4 text-xs">
+                          <Badge variant="outline" className="mr-1.5 font-mono text-[10px] rounded-full border-slate-200">
+                            {apt.modality}
+                          </Badge>
+                          <span className="text-slate-700 font-medium">{apt.equipment?.name || apt.location || 'Suite'}</span>
+                        </TableCell>
+                        <TableCell className="py-3 px-4 text-xs font-medium text-slate-800">
+                          {apt.examination}
+                        </TableCell>
+                        <TableCell className="py-3 px-4">
+                          <PriorityBadge priority={apt.priority} />
+                        </TableCell>
+                        <TableCell className="py-3 px-4 text-right whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <Button
+                              size="sm"
+                              className="text-xs h-7 px-3.5 bg-slate-900 hover:bg-slate-800 text-white gap-1 rounded-full font-bold shadow-soft"
+                              onClick={() => setCheckInAppt(apt)}
+                            >
+                              <UserCheck className="w-3 h-3 text-emerald-400" />
+                              <span>Check In</span>
                             </Button>
                             <Button
                               size="sm"
                               variant="outline"
-                              className="text-xs h-7 gap-1 border-slate-300 hover:bg-slate-100"
-                              onClick={() =>
-                                setBillingOrder({
-                                  id: item.imagingOrderId!,
-                                  accession: item.imagingOrder?.accessionNumber || 'N/A',
-                                  patientName: `${item.patient?.firstName || ''} ${item.patient?.lastName || ''}`,
-                                })
-                              }
-                              title="View Payment Status & Collect Billing"
+                              className="text-xs h-7 px-3 gap-1 border-[#dce6e0] text-slate-700 hover:bg-[#f8faf8] rounded-full font-bold"
+                              onClick={() => setSlipApptId(apt.id)}
+                              title="Print Appointment Slip & Prep Instructions"
                             >
-                              <CreditCard className="w-3 h-3 text-indigo-600" />
-                              <span>Billing</span>
+                              <FileText className="w-3 h-3" />
+                              <span>Slip</span>
                             </Button>
-                          </>
-                        )}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-xs h-7 gap-1 border-slate-300 hover:bg-slate-100"
-                          onClick={() => setLabelAppt(item)}
-                        >
-                          <Printer className="w-3 h-3" />
-                          <span>Wristband</span>
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Today's Expected Arrivals */}
-      <Card className="border-slate-200 shadow-sm">
-        <CardHeader className="pb-3 border-b border-slate-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-bold text-slate-900">
-                Pending Arrivals Today ({pendingArrivals.length} Appointments)
-              </h3>
-              <p className="text-xs text-slate-500">
-                Scheduled patients awaiting reception desk arrival and identity verification
-              </p>
-            </div>
-          </div>
-        </CardHeader>
-
-        <CardContent className="p-0">
-          {isScheduledLoading ? (
-            <div className="flex h-36 items-center justify-center">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-cyan-600 border-t-transparent" />
-            </div>
-          ) : pendingArrivals.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-6 px-4 text-center">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-600 mb-2 border border-slate-200">
-                <Users className="w-4 h-4" />
-              </div>
-              <p className="text-xs font-semibold text-slate-800">No Pending Arrivals</p>
-              <p className="text-[11px] text-slate-500 mt-0.5">All scheduled appointments for today have arrived or have been checked in.</p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Appt #</TableHead>
-                  <TableHead>Scheduled Time</TableHead>
-                  <TableHead>Patient / MRN</TableHead>
-                  <TableHead>Modality & Suite</TableHead>
-                  <TableHead>Examination</TableHead>
-                  <TableHead>Priority</TableHead>
-                  <TableHead className="text-right">Reception Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {pendingArrivals.map((apt) => (
-                  <TableRow key={apt.id} className="hover:bg-slate-50/70 transition">
-                    <TableCell className="font-mono text-xs font-semibold">
-                      {apt.appointmentNumber}
-                    </TableCell>
-                    <TableCell className="text-xs font-mono font-medium text-slate-900">
-                      {new Date(apt.scheduledStart).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} –{' '}
-                      {new Date(apt.scheduledEnd).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </TableCell>
-                    <TableCell>
-                      {apt.patient ? (
-                        <Link
-                          to={`/patients/${apt.patient.patientId}`}
-                          className="font-semibold text-slate-900 text-xs hover:text-cyan-700 hover:underline block"
-                        >
-                          {apt.patient.lastName}, {apt.patient.firstName}
-                        </Link>
-                      ) : (
-                        <span className="font-semibold text-slate-900 text-xs">Unknown Patient</span>
-                      )}
-                      <div className="mt-0.5">
-                        <IdentifierPill type="patient" value={apt.patient?.patientId || ''} />
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-xs">
-                      <Badge variant="outline" className="mr-1.5 font-mono text-[10px]">
-                        {apt.modality}
-                      </Badge>
-                      <span className="text-slate-700">{apt.equipment?.name || apt.location || 'Suite'}</span>
-                    </TableCell>
-                    <TableCell className="text-xs font-medium text-slate-800">
-                      {apt.examination}
-                    </TableCell>
-                    <TableCell>
-                      <PriorityBadge priority={apt.priority} />
-                    </TableCell>
-                    <TableCell className="text-right whitespace-nowrap">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <Button
-                          size="sm"
-                          className="text-xs h-7 bg-[#174A70] hover:bg-[#123855] text-white gap-1"
-                          onClick={() => setCheckInAppt(apt)}
-                        >
-                          <UserCheck className="w-3 h-3" />
-                          <span>Check In</span>
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-xs h-7 gap-1 border-slate-300 hover:bg-slate-100"
-                          onClick={() => setSlipApptId(apt.id)}
-                          title="Print Appointment Slip & Prep Instructions"
-                        >
-                          <FileText className="w-3 h-3" />
-                          <span>Slip</span>
-                        </Button>
-                        {apt.imagingOrderId && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-xs h-7 gap-1 border-slate-300 hover:bg-slate-100"
-                            onClick={() =>
-                              setBillingOrder({
-                                id: apt.imagingOrderId!,
-                                accession: apt.imagingOrder?.accessionNumber || 'N/A',
-                                patientName: `${apt.patient?.firstName || ''} ${apt.patient?.lastName || ''}`,
-                              })
-                            }
-                            title="View Payment Status & Collect Billing"
-                          >
-                            <CreditCard className="w-3 h-3 text-indigo-600" />
-                            <span>Billing</span>
-                          </Button>
-                        )}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-xs h-7 text-amber-700 border-amber-300 hover:bg-amber-50"
-                          onClick={() => setNoShowAppt(apt)}
-                        >
-                          No-Show
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                            {apt.imagingOrderId && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-xs h-7 gap-1 border-slate-300 hover:bg-slate-100"
+                                onClick={() =>
+                                  setBillingOrder({
+                                    id: apt.imagingOrderId!,
+                                    accession: apt.imagingOrder?.accessionNumber || 'N/A',
+                                    patientName: `${apt.patient?.firstName || ''} ${apt.patient?.lastName || ''}`,
+                                  })
+                                }
+                                title="View Payment Status & Collect Billing"
+                              >
+                                <CreditCard className="w-3 h-3 text-indigo-600" />
+                                <span>Billing</span>
+                              </Button>
+                            )}
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-xs h-7 text-amber-700 border-amber-300 hover:bg-amber-50"
+                              onClick={() => setNoShowAppt(apt)}
+                            >
+                              No-Show
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
         </>
       )}
 

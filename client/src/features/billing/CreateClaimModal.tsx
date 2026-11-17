@@ -91,7 +91,7 @@ export function CreateClaimModal({ open, onOpenChange, invoice, onSuccess }: Cre
             <div>
               <DialogTitle>Submit TPA / Insurance Claim</DialogTitle>
               <p className="text-2xs text-slate-500">
-                Invoice <span className="font-mono font-bold text-slate-800">{invoice.invoiceNumber}</span> • Patient <span className="font-mono text-indigo-700">{patientIdentifier || '—'}</span>
+                Invoice <span className="font-mono font-bold text-slate-800">{invoice.invoiceNumber}</span> • Patient <span className="font-mono text-blue-700">{patientIdentifier || '—'}</span>
                 {invoice.patient ? ` (${invoice.patient.firstName} ${invoice.patient.lastName})` : ''}
               </p>
             </div>

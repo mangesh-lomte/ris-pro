@@ -161,7 +161,7 @@ export function CreateInvoiceModal({
             </div>
           </div>
 
-          <div className="border border-slate-200 rounded-xl p-3 bg-slate-50 space-y-3">
+          <div className="border border-slate-200 rounded p-3 bg-slate-50 space-y-3">
             <div className="flex items-center justify-between">
               <span className="font-semibold text-slate-800">Itemized Fee Schedule</span>
               <div className="flex items-center gap-2">

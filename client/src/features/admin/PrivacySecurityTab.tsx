@@ -102,14 +102,14 @@ export const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
         {/* 2. Password & Credential Encryption */}
         <div className="p-4 bg-white border border-slate-200 rounded-lg shadow-sm space-y-2">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-indigo-50 text-indigo-700 rounded-lg">
+            <div className="p-2 bg-blue-50 text-blue-700 rounded-lg">
               <KeyRound className="w-5 h-5" />
             </div>
             <div>
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
                 Credentials
               </span>
-              <p className="text-sm font-bold text-indigo-700 font-mono">
+              <p className="text-sm font-bold text-blue-700 font-mono">
                 {passwordHashing}
               </p>
             </div>
@@ -143,15 +143,15 @@ export const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
         {/* 4. Audit Trail Integrity */}
         <div className="p-4 bg-white border border-slate-200 rounded-lg shadow-sm space-y-2">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-indigo-50 text-indigo-700 rounded-lg">
+            <div className="p-2 bg-blue-50 text-blue-700 rounded-lg">
               <FileCheck2 className="w-5 h-5" />
             </div>
             <div>
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
                 Audit Trail
               </span>
-              <p className="text-sm font-bold text-indigo-700 flex items-center gap-1">
-                <CheckCircle2 className="w-4 h-4 text-indigo-600" />
+              <p className="text-sm font-bold text-blue-700 flex items-center gap-1">
+                <CheckCircle2 className="w-4 h-4 text-[#2563EB]" />
                 Tamper-Evident Ledger
               </p>
             </div>
@@ -168,7 +168,7 @@ export const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
         <div className="p-6 bg-white border border-slate-200 rounded-lg shadow-sm space-y-4">
           <div className="flex items-center justify-between pb-3 border-b border-slate-200">
             <div className="flex items-center gap-2">
-              <Users className="w-5 h-5 text-indigo-600" />
+              <Users className="w-5 h-5 text-[#2563EB]" />
               <div>
                 <h3 className="text-sm font-bold text-slate-900 uppercase">
                   Staff Role Allocation & Active Accounts
@@ -206,7 +206,7 @@ export const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
                       {item.role === 'RECEPTION' && '• Patient Registration & Cashier'}
                     </span>
                   </div>
-                  <span className="px-2.5 py-0.5 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-full text-xs font-bold font-mono">
+                  <span className="px-2.5 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-full text-xs font-bold font-mono">
                     {item.count} accounts
                   </span>
                 </div>
@@ -218,7 +218,7 @@ export const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
         {/* Audit Trail & Session Security */}
         <div className="p-6 bg-white border border-slate-200 rounded-lg shadow-sm space-y-4">
           <div className="flex items-center gap-2 pb-3 border-b border-slate-200">
-            <Server className="w-5 h-5 text-indigo-600" />
+            <Server className="w-5 h-5 text-[#2563EB]" />
             <div>
               <h3 className="text-sm font-bold text-slate-900 uppercase">
                 Audit Trail Telemetry & Session Policy

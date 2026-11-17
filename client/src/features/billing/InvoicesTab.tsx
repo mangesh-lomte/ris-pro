@@ -120,7 +120,7 @@ export function InvoicesTab({ invoices, prices, loading, onRefresh }: InvoicesTa
             onClick={() => setChargesAccession('')}
             className="text-xs gap-1.5 border-slate-300"
           >
-            <Layers className="w-4 h-4 text-indigo-600" />
+            <Layers className="w-4 h-4 text-[#2563EB]" />
             Attach Contrast / Film
           </Button>
           <Button
@@ -134,7 +134,7 @@ export function InvoicesTab({ invoices, prices, loading, onRefresh }: InvoicesTa
         </div>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+      <div className="rounded border border-slate-200 bg-white overflow-hidden shadow-sm">
         <Table>
           <TableHeader>
             <TableRow className="bg-slate-50/80">
@@ -186,7 +186,7 @@ export function InvoicesTab({ invoices, prices, loading, onRefresh }: InvoicesTa
                       <TableCell className="font-mono font-bold text-cyan-900 text-xs">
                         {inv.invoiceNumber}
                       </TableCell>
-                      <TableCell className="font-mono font-bold text-indigo-700 text-xs">
+                      <TableCell className="font-mono font-bold text-blue-700 text-xs">
                         {inv.patientId}
                       </TableCell>
                       <TableCell className="font-mono text-slate-800 text-xs">
@@ -254,7 +254,7 @@ export function InvoicesTab({ invoices, prices, loading, onRefresh }: InvoicesTa
                         <TableCell colSpan={10} className="p-4 space-y-4 text-xs">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {/* Left: Line Items */}
-                            <div className="bg-white p-3.5 rounded-xl border border-slate-200 space-y-2">
+                            <div className="bg-white p-3.5 rounded border border-slate-200 space-y-2">
                               <span className="font-bold text-slate-800 text-2xs uppercase tracking-wide block">
                                 Itemized Procedures & Fees ({inv.items?.length || 0})
                               </span>
@@ -282,7 +282,7 @@ export function InvoicesTab({ invoices, prices, loading, onRefresh }: InvoicesTa
                             </div>
 
                             {/* Right: Payment Ledger & Receipts */}
-                            <div className="bg-white p-3.5 rounded-xl border border-slate-200 space-y-2">
+                            <div className="bg-white p-3.5 rounded border border-slate-200 space-y-2">
                               <span className="font-bold text-slate-800 text-2xs uppercase tracking-wide block">
                                 Payment Ledger ({inv.payments?.length || 0} transactions)
                               </span>

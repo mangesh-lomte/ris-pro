@@ -73,7 +73,7 @@ export const QcChecklistTab: React.FC<QcChecklistTabProps> = ({
   return (
     <div className="space-y-4">
       {/* Controls Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded shadow-sm border border-slate-200">
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative">
             <Search className="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5" />
@@ -125,7 +125,7 @@ export const QcChecklistTab: React.FC<QcChecklistTabProps> = ({
       </div>
 
       {/* QC Logs Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded shadow-sm border border-slate-200 overflow-hidden">
         {loading ? (
           <div className="p-12 text-center text-slate-500 text-xs">Loading daily and weekly QC logs...</div>
         ) : filtered.length === 0 ? (

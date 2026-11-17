@@ -215,7 +215,7 @@ export const measurementReferenceSchema = z.object({
   sopInstanceUid: z.string().trim().min(1),
   frameNumber: z.number().int().min(1).optional(),
   instanceNumber: z.number().int().optional(),
-  sliceLocation: z.number().optional(),
+  sliceLocation: z.union([z.number(), z.string().transform((v) => parseFloat(v))]).optional(),
   findingText: z.string().trim().max(500).optional(),
   createdAt: z.string().optional(),
 });
@@ -227,7 +227,7 @@ export const keyImageReferenceSchema = z.object({
   sopInstanceUid: z.string().trim().min(1),
   frameNumber: z.number().int().min(1).optional(),
   instanceNumber: z.number().int().optional(),
-  sliceLocation: z.number().optional(),
+  sliceLocation: z.union([z.number(), z.string().transform((v) => parseFloat(v))]).optional(),
   label: z.string().trim().min(1).max(100),
   description: z.string().trim().max(500).optional(),
   createdAt: z.string().optional(),

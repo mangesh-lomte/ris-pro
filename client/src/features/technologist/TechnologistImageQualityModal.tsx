@@ -68,6 +68,12 @@ export function TechnologistImageQualityModal({
   const [selectedReason, setSelectedReason] = useState<ImageQualityReason>('PATIENT_MOTION');
   const [notes, setNotes] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
+  const [qaChecks, setQaChecks] = useState({
+    completenessConfirmed: false,
+    coverageConfirmed: false,
+    orientationConfirmed: false,
+    artifactReviewConfirmed: false,
+  });
 
   // Fetch Image Quality Context
   const {
@@ -131,6 +137,12 @@ export function TechnologistImageQualityModal({
     onSuccess: () => {
       setDecisionMode('view');
       setNotes('');
+      setQaChecks({
+        completenessConfirmed: false,
+        coverageConfirmed: false,
+        orientationConfirmed: false,
+        artifactReviewConfirmed: false,
+      });
       setFormError(null);
       invalidateAll();
     },
@@ -288,7 +300,15 @@ export function TechnologistImageQualityModal({
         notes: notes.trim() || undefined,
       });
     } else if (decisionMode === 'accept') {
+      if (!Object.values(qaChecks).every(Boolean)) {
+        setFormError('Confirm all four technical quality checks before accepting the images.');
+        return;
+      }
       acceptMutation.mutate({
+        completenessConfirmed: true,
+        coverageConfirmed: true,
+        orientationConfirmed: true,
+        artifactReviewConfirmed: true,
         notes: notes.trim() || undefined,
       });
     }
@@ -311,7 +331,7 @@ export function TechnologistImageQualityModal({
         <DialogHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-indigo-50 border border-indigo-200 rounded-lg text-indigo-700">
+              <div className="p-2 bg-blue-50 border border-blue-200 rounded text-blue-700">
                 <FileCheck className="w-5 h-5" />
               </div>
               <div>
@@ -345,7 +365,7 @@ export function TechnologistImageQualityModal({
         ) : (
           <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
             {/* Prominent Verified Identifiers Banner */}
-            <div className="p-4 bg-slate-900 text-white rounded-xl shadow-sm border border-slate-800 space-y-3">
+            <div className="p-4 bg-slate-900 text-white rounded shadow-sm border border-slate-800 space-y-3">
               <div className="text-[11px] font-bold tracking-wider text-slate-400 uppercase flex items-center justify-between">
                 <span>Patient & Examination Context (Authoritative)</span>
                 <span className="text-emerald-400 font-mono text-[10px]">VERIFIED IDENTIFIERS</span>
@@ -383,15 +403,15 @@ export function TechnologistImageQualityModal({
             </div>
 
             {/* Workflow Scope Notice */}
-            <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-[11px] text-slate-600 flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-indigo-600 shrink-0" />
+            <div className="p-3 bg-slate-50 border border-[#E2E8F0] rounded text-[11px] text-slate-600 flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-[#2563EB] shrink-0" />
               <span>
                 <strong>Clinical Notice:</strong> This workstation performs RIS-side technologist acquisition verification (artifact check, patient motion check, field-of-view completeness). It does NOT perform radiologist diagnostic interpretation.
               </span>
             </div>
 
             {formError && (
-              <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700 flex items-center gap-2">
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded text-xs text-rose-700 flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
                 <span>{formError}</span>
               </div>
@@ -399,17 +419,17 @@ export function TechnologistImageQualityModal({
 
             {/* Current Acquisition Attempt Details Bar */}
             {context.currentScan && (
-              <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-lg text-xs space-y-2">
+              <div className="p-3.5 bg-slate-50 border border-[#E2E8F0] rounded text-xs space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-slate-800 flex items-center gap-1.5 uppercase text-[11px] tracking-wide">
-                    <Layers className="w-3.5 h-3.5 text-indigo-600" />
+                    <Layers className="w-3.5 h-3.5 text-[#2563EB]" />
                     Acquisition Attempt #{context.currentScan.attemptNumber}
                   </span>
                   <Badge variant={context.currentScan.state === 'COMPLETED' ? 'success' : 'outline'} className="text-[10px]">
                     Scan {context.currentScan.state}
                   </Badge>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-[11px] text-slate-600 pt-1 border-t border-slate-200/60">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-[11px] text-slate-600 pt-1 border-t border-[#E2E8F0]/60">
                   <div>
                     <span className="text-slate-400 text-[10px] block uppercase">Scanner / Suite</span>
                     <span className="font-medium text-slate-800">{context.equipment?.name || 'Assigned Gantry'}</span>
@@ -440,8 +460,8 @@ export function TechnologistImageQualityModal({
 
             {/* STEP 1: Not started yet (Order is SCAN_COMPLETED and QA not started) */}
             {context.flags.canStartQA && (
-              <div className="p-5 border border-dashed border-indigo-300 rounded-xl bg-indigo-50/40 text-center space-y-3">
-                <FileCheck className="w-8 h-8 text-indigo-600 mx-auto" />
+              <div className="p-5 border border-dashed border-indigo-300 rounded bg-blue-50/40 text-center space-y-3">
+                <FileCheck className="w-8 h-8 text-[#2563EB] mx-auto" />
                 <div>
                   <h4 className="text-sm font-bold text-indigo-950">Scan Acquisition Completed</h4>
                   <p className="text-xs text-slate-600 max-w-md mx-auto mt-1 leading-relaxed">
@@ -451,7 +471,7 @@ export function TechnologistImageQualityModal({
                 <Button
                   onClick={() => startMutation.mutate()}
                   disabled={startMutation.isPending}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs gap-2"
+                  className="bg-[#2563EB] hover:bg-blue-700 text-white font-bold text-xs gap-2"
                 >
                   {startMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileCheck className="w-4 h-4" />}
                   BEGIN IMAGE QUALITY REVIEW
@@ -461,7 +481,7 @@ export function TechnologistImageQualityModal({
 
             {/* STEP 2: QA Pending Decision (Order is IMAGE_QA_PENDING) */}
             {context.imageQualityReview?.status === 'PENDING' && decisionMode === 'view' && (
-              <div className="p-5 border border-indigo-200 rounded-xl bg-white shadow-xs space-y-4">
+              <div className="p-5 border border-blue-200 rounded bg-white shadow-xs space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                   <span className="text-xs font-bold text-slate-800 uppercase tracking-wide flex items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5 text-amber-500" />
@@ -484,7 +504,7 @@ export function TechnologistImageQualityModal({
                       setDecisionMode('accept');
                       setFormError(null);
                     }}
-                    className="p-4 border-2 border-emerald-200 hover:border-emerald-500 bg-emerald-50/40 rounded-xl text-left transition-all group"
+                    className="p-4 border-2 border-emerald-200 hover:border-emerald-500 bg-emerald-50/40 rounded text-left transition-all group"
                   >
                     <div className="flex items-center gap-2 text-emerald-800 font-bold text-xs mb-1">
                       <CheckCircle2 className="w-4 h-4 text-emerald-600 group-hover:scale-110 transition-transform" />
@@ -502,7 +522,7 @@ export function TechnologistImageQualityModal({
                       setDecisionMode('repeat');
                       setFormError(null);
                     }}
-                    className="p-4 border-2 border-amber-200 hover:border-amber-500 bg-amber-50/40 rounded-xl text-left transition-all group"
+                    className="p-4 border-2 border-amber-200 hover:border-amber-500 bg-amber-50/40 rounded text-left transition-all group"
                   >
                     <div className="flex items-center gap-2 text-amber-800 font-bold text-xs mb-1">
                       <RotateCcw className="w-4 h-4 text-amber-600 group-hover:scale-110 transition-transform" />
@@ -520,7 +540,7 @@ export function TechnologistImageQualityModal({
                       setDecisionMode('reject');
                       setFormError(null);
                     }}
-                    className="p-4 border-2 border-rose-200 hover:border-rose-500 bg-rose-50/40 rounded-xl text-left transition-all group"
+                    className="p-4 border-2 border-rose-200 hover:border-rose-500 bg-rose-50/40 rounded text-left transition-all group"
                   >
                     <div className="flex items-center gap-2 text-rose-800 font-bold text-xs mb-1">
                       <XCircle className="w-4 h-4 text-rose-600 group-hover:scale-110 transition-transform" />
@@ -536,8 +556,8 @@ export function TechnologistImageQualityModal({
 
             {/* Decision Confirmation Forms (Repeat / Reject / Accept) */}
             {decisionMode !== 'view' && (
-              <form onSubmit={handleDecisionSubmit} className="p-5 border border-slate-300 rounded-xl bg-slate-50 space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+              <form onSubmit={handleDecisionSubmit} className="p-5 border border-slate-300 rounded bg-slate-50 space-y-4">
+                <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-2">
                   <span className="text-xs font-bold text-slate-900 uppercase tracking-wide">
                     {decisionMode === 'accept' && 'Confirm Image Acceptance'}
                     {decisionMode === 'repeat' && 'Document Repeat Requirement'}
@@ -562,7 +582,7 @@ export function TechnologistImageQualityModal({
                     <select
                       value={selectedReason}
                       onChange={(e) => setSelectedReason(e.target.value as ImageQualityReason)}
-                      className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                      className="w-full text-xs px-3 py-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
                       disabled={isAnyActionPending}
                     >
                       {QA_REASONS_LIST.map((r) => (
@@ -572,6 +592,34 @@ export function TechnologistImageQualityModal({
                       ))}
                     </select>
                   </div>
+                )}
+
+                {decisionMode === 'accept' && (
+                  <fieldset className="space-y-2.5 rounded border border-[#E2E8F0] bg-white p-4">
+                    <legend className="px-1 text-xs font-bold text-slate-900">
+                      Required technical quality checks
+                    </legend>
+                    {[
+                      ['completenessConfirmed', 'Series completeness', 'All expected series and sequences are present.'],
+                      ['coverageConfirmed', 'Anatomical coverage', 'The prescribed anatomy and field of view are complete.'],
+                      ['orientationConfirmed', 'Orientation and laterality', 'Orientation markers, laterality, and positioning are correct.'],
+                      ['artifactReviewConfirmed', 'Motion and artifact review', 'No unacceptable motion or technical artifact remains.'],
+                    ].map(([key, label, description]) => (
+                      <label key={key} className="flex cursor-pointer items-start gap-3 rounded border border-[#E2E8F0] p-3 hover:bg-slate-50">
+                        <input
+                          type="checkbox"
+                          checked={qaChecks[key as keyof typeof qaChecks]}
+                          onChange={(event) => setQaChecks((current) => ({ ...current, [key]: event.target.checked }))}
+                          disabled={isAnyActionPending}
+                          className="mt-0.5 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                        />
+                        <span className="min-w-0">
+                          <span className="block text-xs font-semibold text-slate-800">{label}</span>
+                          <span className="block text-[11px] leading-relaxed text-slate-500">{description}</span>
+                        </span>
+                      </label>
+                    ))}
+                  </fieldset>
                 )}
 
                 <div>
@@ -587,7 +635,7 @@ export function TechnologistImageQualityModal({
                         ? 'Optional technical verification notes (e.g. Sharp diagnostic detail, full coverage).'
                         : 'Explain the technical inadequacy, artifact location, or reason for repeat/rejection.'
                     }
-                    className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                    className="w-full text-xs px-3 py-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
                     disabled={isAnyActionPending}
                   />
                 </div>
@@ -636,7 +684,7 @@ export function TechnologistImageQualityModal({
 
             {/* STEP 3A: REPEAT_REQUIRED Banner & Action */}
             {context.imageQualityReview?.status === 'REPEAT_REQUIRED' && (
-              <div className="p-4 bg-amber-50 border border-amber-300 rounded-xl space-y-3">
+              <div className="p-4 bg-amber-50 border border-amber-300 rounded space-y-3">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2 text-amber-900 font-bold text-xs">
                     <RotateCcw className="w-4 h-4 text-amber-600" />
@@ -683,7 +731,7 @@ export function TechnologistImageQualityModal({
 
             {/* STEP 3B: REJECTED Banner & Action */}
             {context.imageQualityReview?.status === 'REJECTED' && (
-              <div className="p-4 bg-rose-50 border border-rose-300 rounded-xl space-y-3">
+              <div className="p-4 bg-rose-50 border border-rose-300 rounded space-y-3">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2 text-rose-900 font-bold text-xs">
                     <XCircle className="w-4 h-4 text-rose-600" />
@@ -732,7 +780,7 @@ export function TechnologistImageQualityModal({
             {context.imageQualityReview?.status === 'ACCEPTED' && (
               <div className="space-y-4">
                 {/* Accepted Confirmation Banner */}
-                <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between">
+                <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded flex items-center justify-between">
                   <div className="flex items-center gap-2 text-emerald-900 text-xs">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                     <div>
@@ -750,10 +798,10 @@ export function TechnologistImageQualityModal({
 
                 {/* Real Orthanc PACS Integration Card vs Simulated Mock Card */}
                 {isOrthanc || isPacsLoading || pacsStatus?.adapter === 'orthanc' ? (
-                  <div className="border border-sky-300 rounded-xl p-5 bg-gradient-to-b from-sky-50/60 via-white to-slate-50 space-y-4 shadow-xs">
+                  <div className="border border-sky-300 rounded p-5 bg-gradient-to-b from-sky-50/60 via-white to-slate-50 space-y-4 shadow-xs">
                     <div className="flex items-center justify-between border-b border-sky-100 pb-3">
                       <div className="flex items-center gap-2.5">
-                        <div className="p-2 bg-sky-600 text-white rounded-lg shadow-xs">
+                        <div className="p-2 bg-sky-600 text-white rounded shadow-xs">
                           <Database className="w-4 h-4" />
                         </div>
                         <div>
@@ -778,7 +826,7 @@ export function TechnologistImageQualityModal({
 
                     {/* PACS Outage State Banner */}
                     {isPacsOffline && (
-                      <div className="p-4 bg-amber-50 border border-amber-300 rounded-lg space-y-2">
+                      <div className="p-4 bg-amber-50 border border-amber-300 rounded space-y-2">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
@@ -805,7 +853,7 @@ export function TechnologistImageQualityModal({
                     )}
 
                     {/* Infrastructure Capabilities Matrix */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 text-xs bg-white p-3 rounded-lg border border-sky-100">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 text-xs bg-white p-3 rounded border border-sky-100">
                       <div>
                         <span className="text-[10px] text-slate-400 block uppercase font-semibold">PACS Server</span>
                         <span className="font-bold text-slate-800">{pacsStatus?.serverName || 'RadAxis PACS Gateway'}</span>
@@ -829,12 +877,12 @@ export function TechnologistImageQualityModal({
                     </div>
 
                     {/* Honesty Notice */}
-                    <div className="p-3 bg-amber-50/70 border border-amber-200 rounded-lg text-[11px] text-amber-900 leading-relaxed">
+                    <div className="p-3 bg-amber-50/70 border border-amber-200 rounded text-[11px] text-amber-900 leading-relaxed">
                       <strong>Honesty Notice:</strong> Real Orthanc connectivity, capability discovery, and accession reconciliation are active. However, this RIS does not generate or transfer DICOM pixel objects. Modalities acquire and store images directly to Orthanc.
                     </div>
 
                     {/* Study Lookup Section */}
-                    <div className="p-4 bg-white border border-slate-200 rounded-lg space-y-3">
+                    <div className="p-4 bg-white border border-[#E2E8F0] rounded space-y-3">
                       <div className="flex items-center justify-between">
                         <div>
                           <span className="text-xs font-bold text-slate-900 block">Orthanc PACS Study Lookup</span>
@@ -863,7 +911,7 @@ export function TechnologistImageQualityModal({
                       {lookupResult && (
                         <div className="pt-2 border-t border-slate-100">
                           {lookupResult.outcome === 'MATCHED' && lookupResult.metadata && (
-                            <div className="p-3.5 bg-emerald-50 border border-emerald-300 rounded-lg space-y-2.5">
+                            <div className="p-3.5 bg-emerald-50 border border-emerald-300 rounded space-y-2.5">
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-1.5 text-emerald-900 font-bold text-xs">
                                   <CheckCheck className="w-4 h-4 text-emerald-600" />
@@ -904,7 +952,7 @@ export function TechnologistImageQualityModal({
                           )}
 
                           {lookupResult.outcome === 'NOT_FOUND' && (
-                            <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs space-y-1">
+                            <div className="p-3 bg-slate-50 border border-[#E2E8F0] rounded text-xs space-y-1">
                               <strong className="text-slate-800 block">NO MATCHING STUDY IN ORTHANC</strong>
                               <p className="text-[11px] text-slate-600 leading-relaxed">
                                 Orthanc is connected, but no PACS study currently matches this RIS accession number ({context.accessionNumber}). This is expected until a real DICOM study exists in the PACS.
@@ -913,7 +961,7 @@ export function TechnologistImageQualityModal({
                           )}
 
                           {lookupResult.outcome === 'AMBIGUOUS_MATCH' && (
-                            <div className="p-3 bg-amber-50 border border-amber-300 rounded-lg text-xs space-y-1">
+                            <div className="p-3 bg-amber-50 border border-amber-300 rounded text-xs space-y-1">
                               <strong className="text-amber-900 block flex items-center gap-1.5">
                                 <AlertTriangle className="w-4 h-4 text-amber-600" /> PACS RECONCILIATION REQUIRED: AMBIGUOUS MATCH
                               </strong>
@@ -924,7 +972,7 @@ export function TechnologistImageQualityModal({
                           )}
 
                           {lookupResult.outcome === 'PATIENT_ID_MISMATCH' && (
-                            <div className="p-3 bg-rose-50 border border-rose-300 rounded-lg text-xs space-y-1">
+                            <div className="p-3 bg-rose-50 border border-rose-300 rounded text-xs space-y-1">
                               <strong className="text-rose-900 block flex items-center gap-1.5">
                                 <AlertTriangle className="w-4 h-4 text-rose-600" /> PACS RECONCILIATION REQUIRED: PATIENT ID MISMATCH
                               </strong>
@@ -935,7 +983,7 @@ export function TechnologistImageQualityModal({
                           )}
 
                           {lookupResult.outcome === 'ACCESSION_MISMATCH' && (
-                            <div className="p-3 bg-rose-50 border border-rose-300 rounded-lg text-xs space-y-1">
+                            <div className="p-3 bg-rose-50 border border-rose-300 rounded text-xs space-y-1">
                               <strong className="text-rose-900 block flex items-center gap-1.5">
                                 <AlertTriangle className="w-4 h-4 text-rose-600" /> PACS RECONCILIATION REQUIRED: ACCESSION MISMATCH
                               </strong>
@@ -946,7 +994,7 @@ export function TechnologistImageQualityModal({
                           )}
 
                           {lookupResult.outcome === 'PACS_UNAVAILABLE' && (
-                            <div className="p-3 bg-amber-50 border border-amber-300 rounded-lg text-xs space-y-1">
+                            <div className="p-3 bg-amber-50 border border-amber-300 rounded text-xs space-y-1">
                               <strong className="text-amber-950 block flex items-center gap-1.5">
                                 <AlertTriangle className="w-4 h-4 text-amber-600" />
                                 PACS UNAVAILABLE
@@ -962,7 +1010,7 @@ export function TechnologistImageQualityModal({
 
                     {/* Transfer Status Banner in Orthanc Mode */}
                     {context.orderStatus === 'PACS_READY' && (
-                      <div className="p-3 bg-slate-100 border border-slate-200 rounded-lg flex items-center justify-between text-xs">
+                      <div className="p-3 bg-slate-100 border border-[#E2E8F0] rounded flex items-center justify-between text-xs">
                         <span className="text-slate-600 text-[11px]">
                           Real Orthanc mode: Direct RIS DICOM upload is not implemented. Handoff is simulated only in mock mode.
                         </span>
@@ -974,10 +1022,10 @@ export function TechnologistImageQualityModal({
                   </div>
                 ) : (
                 /* Simulated PACS Integration Card */
-                <div className="border border-indigo-200 rounded-xl p-5 bg-gradient-to-b from-indigo-50/50 to-white space-y-4 shadow-xs">
+                <div className="border border-blue-200 rounded p-5 bg-gradient-to-b from-indigo-50/50 to-white space-y-4 shadow-xs">
                   <div className="flex items-center justify-between border-b border-indigo-100 pb-3">
                     <div className="flex items-center gap-2.5">
-                      <div className="p-2 bg-indigo-600 text-white rounded-lg shadow-xs">
+                      <div className="p-2 bg-[#2563EB] text-white rounded shadow-xs">
                         <Server className="w-4 h-4" />
                       </div>
                       <div>
@@ -1011,13 +1059,13 @@ export function TechnologistImageQualityModal({
                   </div>
 
                   {/* Informational Callout */}
-                  <p className="text-[11px] text-slate-600 bg-white p-3 rounded-lg border border-indigo-100/70 leading-relaxed">
+                  <p className="text-[11px] text-slate-600 bg-white p-3 rounded border border-indigo-100/70 leading-relaxed">
                     <strong>Interoperability Notice:</strong> This project simulates RIS-side handoff orchestration. Real DICOM C-STORE and PACS storage networks are not connected. Server-side accession reconciliation validates study context before acknowledgment.
                   </p>
 
                   {/* Case A: PACS_READY - Needs Initiation */}
                   {context.orderStatus === 'PACS_READY' && (
-                    <div className="flex items-center justify-between p-3.5 bg-sky-50 border border-sky-200 rounded-lg">
+                    <div className="flex items-center justify-between p-3.5 bg-sky-50 border border-sky-200 rounded">
                       <div>
                         <strong className="text-xs text-sky-950 block">Ready for Downstream Dispatch</strong>
                         <span className="text-[11px] text-sky-800">
@@ -1028,7 +1076,7 @@ export function TechnologistImageQualityModal({
                         size="sm"
                         onClick={() => initiatePacsMutation.mutate()}
                         disabled={initiatePacsMutation.isPending}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs gap-1.5 shadow-xs"
+                        className="bg-[#2563EB] hover:bg-blue-700 text-white font-bold text-xs gap-1.5 shadow-xs"
                       >
                         {initiatePacsMutation.isPending ? (
                           <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -1042,7 +1090,7 @@ export function TechnologistImageQualityModal({
 
                   {/* Case B: PACS_HANDOFF_PENDING */}
                   {context.orderStatus === 'PACS_HANDOFF_PENDING' && (
-                    <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg text-center space-y-2">
+                    <div className="p-4 bg-amber-50 border border-amber-200 rounded text-center space-y-2">
                       <Loader2 className="w-5 h-5 text-amber-600 animate-spin mx-auto" />
                       <strong className="text-xs text-amber-950 block">PACS HANDOFF PENDING</strong>
                       <p className="text-[11px] text-amber-800 max-w-md mx-auto">
@@ -1053,7 +1101,7 @@ export function TechnologistImageQualityModal({
 
                   {/* Case C: PACS_HANDOFF_FAILED */}
                   {context.orderStatus === 'PACS_HANDOFF_FAILED' && (
-                    <div className="p-4 bg-rose-50 border border-rose-300 rounded-lg space-y-3">
+                    <div className="p-4 bg-rose-50 border border-rose-300 rounded space-y-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 text-rose-900 font-bold text-xs">
                           <AlertTriangle className="w-4 h-4 text-rose-600" />
@@ -1089,7 +1137,7 @@ export function TechnologistImageQualityModal({
 
                   {/* Case D: PACS_HANDOFF_COMPLETE */}
                   {context.orderStatus === 'PACS_HANDOFF_COMPLETE' && (
-                    <div className="p-4 bg-emerald-50 border border-emerald-300 rounded-lg space-y-2">
+                    <div className="p-4 bg-emerald-50 border border-emerald-300 rounded space-y-2">
                       <div className="flex items-center gap-2 text-emerald-900 font-bold text-xs">
                         <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                         <span>PACS HANDOFF COMPLETE</span>
@@ -1115,7 +1163,7 @@ export function TechnologistImageQualityModal({
                         {context.pacsHandoff.attempts.map((att) => (
                           <div
                             key={att.id}
-                            className="flex items-center justify-between p-2 bg-white rounded border border-slate-200 text-[11px]"
+                            className="flex items-center justify-between p-2 bg-white rounded border border-[#E2E8F0] text-[11px]"
                           >
                             <div className="flex items-center gap-2">
                               <Badge
@@ -1143,7 +1191,7 @@ export function TechnologistImageQualityModal({
 
             {/* AUDITABLE ACQUISITION ATTEMPT HISTORY SECTION */}
             {context.attemptHistory && context.attemptHistory.length > 0 && (
-              <div className="pt-3 border-t border-slate-200 space-y-2">
+              <div className="pt-3 border-t border-[#E2E8F0] space-y-2">
                 <span className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
                   <Clock className="w-3.5 h-3.5 text-slate-500" />
                   Acquisition Attempt History ({context.attemptHistory.length})
@@ -1152,7 +1200,7 @@ export function TechnologistImageQualityModal({
                   {context.attemptHistory.map((item) => (
                     <div
                       key={item.scanLifecycleId}
-                      className="p-3 bg-white border border-slate-200 rounded-lg text-xs flex items-center justify-between"
+                      className="p-3 bg-white border border-[#E2E8F0] rounded text-xs flex items-center justify-between"
                     >
                       <div className="space-y-0.5">
                         <div className="flex items-center gap-2">

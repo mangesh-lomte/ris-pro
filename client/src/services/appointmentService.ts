@@ -32,6 +32,9 @@ export interface CreateAppointmentData {
   scheduledStart: string;
   scheduledEnd?: string;
   durationMinutes?: number;
+  allowConflictOverride?: boolean;
+  overrideReason?: string;
+  assignedTechnologistId?: string;
   notes?: string;
   priority?: Priority;
 }
@@ -113,12 +116,20 @@ export async function markNoShowAppointment(id: string, reason?: string): Promis
 
 export async function checkInAppointment(
   id: string,
-  payload: { identityConfirmed: boolean; insuranceVerified?: boolean; preScanInstructionsConfirmed?: boolean } | boolean
+  payload: {
+    identityConfirmed: boolean;
+    identityVerificationMethod: 'GOVERNMENT_PHOTO_ID' | 'HOSPITAL_PHOTO_ID' | 'HOSPITAL_WRISTBAND';
+    primaryIdentifier: 'MRN' | 'FULL_NAME';
+    secondaryIdentifier: 'DATE_OF_BIRTH' | 'PHONE_NUMBER';
+    identityEvidenceReference?: string;
+    insuranceDisposition: 'SELF_PAY' | 'NOT_REQUIRED' | 'VERIFIED';
+    insuranceAuthorizationReference?: string;
+    preScanInstructionsConfirmed: true;
+  }
 ): Promise<CheckInResponse> {
-  const body = typeof payload === 'boolean' ? { identityConfirmed: payload } : payload;
   const res = await apiClient<CheckInResponse>(`/appointments/${id}/check-in`, {
     method: 'POST',
-    body: JSON.stringify(body),
+    body: JSON.stringify(payload),
   });
   return res.data;
 }
@@ -159,8 +170,7 @@ export async function allocateStaffMachine(
   data: {
     equipmentId?: string;
     location?: string;
-    radiographer?: string;
-    nurse?: string;
+    assignedTechnologistId?: string;
     notes?: string;
   }
 ): Promise<any> {
@@ -168,6 +178,11 @@ export async function allocateStaffMachine(
     method: 'PATCH',
     body: JSON.stringify(data),
   });
+  return res.data;
+}
+
+export async function fetchSchedulingStaff(): Promise<Array<{ id: string; firstName: string; lastName: string; email: string }>> {
+  const res = await apiClient<Array<{ id: string; firstName: string; lastName: string; email: string }>>('/appointments/scheduling-staff');
   return res.data;
 }
 

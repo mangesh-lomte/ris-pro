@@ -72,8 +72,8 @@ export const EquipmentRegisterTab: React.FC<EquipmentRegisterTabProps> = ({
         );
       case 'UNDER_PM':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-indigo-50 text-indigo-800 border border-indigo-200">
-            <Clock className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-50 text-indigo-800 border border-blue-200">
+            <Clock className="w-3.5 h-3.5 text-[#2563EB] shrink-0" />
             <span>Under PM Protocol</span>
           </span>
         );
@@ -103,7 +103,7 @@ export const EquipmentRegisterTab: React.FC<EquipmentRegisterTabProps> = ({
     <div className="space-y-4">
       {/* Top Equipment Status Summary Strip */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-2xs flex items-center justify-between">
+        <div className="bg-white p-3.5 rounded border border-slate-200/90 shadow-2xs flex items-center justify-between">
           <div>
             <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Fleet Available</p>
             <p className="text-xl font-bold text-slate-900 mt-0.5">{operationalCount}</p>
@@ -114,7 +114,7 @@ export const EquipmentRegisterTab: React.FC<EquipmentRegisterTabProps> = ({
           </div>
         </div>
 
-        <div className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-2xs flex items-center justify-between">
+        <div className="bg-white p-3.5 rounded border border-slate-200/90 shadow-2xs flex items-center justify-between">
           <div>
             <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">In Scan / Busy</p>
             <p className="text-xl font-bold text-slate-900 mt-0.5">{inScanCount}</p>
@@ -125,7 +125,7 @@ export const EquipmentRegisterTab: React.FC<EquipmentRegisterTabProps> = ({
           </div>
         </div>
 
-        <div className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-2xs flex items-center justify-between">
+        <div className="bg-white p-3.5 rounded border border-slate-200/90 shadow-2xs flex items-center justify-between">
           <div>
             <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Maintenance / PM</p>
             <p className="text-xl font-bold text-slate-900 mt-0.5">{maintenanceCount}</p>
@@ -136,7 +136,7 @@ export const EquipmentRegisterTab: React.FC<EquipmentRegisterTabProps> = ({
           </div>
         </div>
 
-        <div className="bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-2xs flex items-center justify-between">
+        <div className="bg-white p-3.5 rounded border border-slate-200/90 shadow-2xs flex items-center justify-between">
           <div>
             <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Fleet Down / Offline</p>
             <p className="text-xl font-bold text-slate-900 mt-0.5">{downCount}</p>
@@ -149,7 +149,7 @@ export const EquipmentRegisterTab: React.FC<EquipmentRegisterTabProps> = ({
       </div>
 
       {/* Controls Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded shadow-sm border border-slate-200">
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative">
             <Search className="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5" />
@@ -206,7 +206,7 @@ export const EquipmentRegisterTab: React.FC<EquipmentRegisterTabProps> = ({
       </div>
 
       {/* Asset Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded shadow-sm border border-slate-200 overflow-hidden">
         {loading ? (
           <div className="p-12 text-center text-slate-500 text-xs">Loading equipment asset register...</div>
         ) : filtered.length === 0 ? (

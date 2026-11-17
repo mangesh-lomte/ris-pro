@@ -35,6 +35,7 @@ import {
   AlertTriangle,
   Syringe,
   RefreshCw,
+  History,
 } from 'lucide-react';
 import { TechnologistScanLifecycleModal } from './TechnologistScanLifecycleModal';
 import { TechnologistContrastModal } from './TechnologistContrastModal';
@@ -95,7 +96,7 @@ export function TechnologistExamDetailModal({
           <DialogHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-indigo-50 border border-indigo-200 rounded-lg text-indigo-700">
+                <div className="p-2 bg-blue-50 border border-blue-200 rounded text-blue-700">
                   <HardDrive className="w-5 h-5" />
                 </div>
                 <div>
@@ -126,7 +127,7 @@ export function TechnologistExamDetailModal({
         ) : (
           <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
             {/* Clinical Sequence Progression Stepper */}
-            <div className="grid grid-cols-4 gap-2 p-2 bg-slate-100 rounded-xl border border-slate-200 text-center text-xs">
+            <div className="grid grid-cols-4 gap-2 p-2 bg-slate-100 rounded border border-[#E2E8F0] text-center text-xs">
               {[
                 { step: 1, label: '1. READY', desc: 'Safety & Prep' },
                 { step: 2, label: '2. SCANNING', desc: 'Acquisition' },
@@ -138,9 +139,9 @@ export function TechnologistExamDetailModal({
                 return (
                   <div
                     key={s.step}
-                    className={`p-2 rounded-lg transition-all ${
+                    className={`p-2 rounded transition-all ${
                       isCurrent
-                        ? 'bg-indigo-600 text-white shadow-xs font-bold'
+                        ? 'bg-[#2563EB] text-white shadow-xs font-bold'
                         : isPast
                         ? 'bg-emerald-50 text-emerald-900 border border-emerald-200 font-semibold'
                         : 'bg-white/60 text-slate-400 font-medium'
@@ -152,7 +153,7 @@ export function TechnologistExamDetailModal({
                     </div>
                     <div
                       className={`text-[10px] truncate mt-0.5 ${
-                        isCurrent ? 'text-indigo-100' : isPast ? 'text-emerald-700' : 'text-slate-400'
+                        isCurrent ? 'text-blue-100' : isPast ? 'text-emerald-700' : 'text-slate-400'
                       }`}
                     >
                       {s.desc}
@@ -163,7 +164,7 @@ export function TechnologistExamDetailModal({
             </div>
 
             {/* Prominent Identifiers Banner: Single Source of Truth */}
-            <div className="p-4 bg-slate-900 text-white rounded-xl shadow-sm border border-slate-800 space-y-3">
+            <div className="p-4 bg-slate-900 text-white rounded shadow-sm border border-slate-800 space-y-3">
               <div className="text-[11px] font-bold tracking-wider text-slate-400 uppercase flex items-center justify-between">
                 <span>Core Clinical Identifiers (Immutable)</span>
                 <span className="text-emerald-400 flex items-center gap-1 font-mono text-[10px]">
@@ -171,7 +172,7 @@ export function TechnologistExamDetailModal({
                 </span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-slate-800/80 p-3 rounded-lg border border-slate-700/60">
+                <div className="bg-slate-800/80 p-3 rounded border border-slate-700/60">
                   <span className="text-[10px] text-slate-400 uppercase font-semibold block mb-1">
                     Patient Identification (MRN)
                   </span>
@@ -183,7 +184,7 @@ export function TechnologistExamDetailModal({
                   </div>
                 </div>
 
-                <div className="bg-slate-800/80 p-3 rounded-lg border border-slate-700/60">
+                <div className="bg-slate-800/80 p-3 rounded border border-slate-700/60">
                   <span className="text-[10px] text-slate-400 uppercase font-semibold block mb-1">
                     Order Accession Number
                   </span>
@@ -200,7 +201,7 @@ export function TechnologistExamDetailModal({
             {/* Grid Layout: Patient Details & Examination Details */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Patient Demographics */}
-              <div className="border border-slate-200 rounded-lg p-4 bg-white shadow-xs space-y-3">
+              <div className="border border-[#E2E8F0] rounded p-4 bg-white shadow-xs space-y-3">
                 <div className="flex items-center gap-2 border-b border-slate-100 pb-2 text-slate-800 font-semibold text-xs">
                   <User className="w-4 h-4 text-slate-500" />
                   <span>Patient Demographics</span>
@@ -239,7 +240,7 @@ export function TechnologistExamDetailModal({
               </div>
 
               {/* Examination Context */}
-              <div className="border border-slate-200 rounded-lg p-4 bg-white shadow-xs space-y-3">
+              <div className="border border-[#E2E8F0] rounded p-4 bg-white shadow-xs space-y-3">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-2 text-slate-800 font-semibold text-xs">
                   <div className="flex items-center gap-2">
                     <FileText className="w-4 h-4 text-slate-500" />
@@ -283,7 +284,7 @@ export function TechnologistExamDetailModal({
             {/* Appointment & Machine Logistics */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Appointment Schedule & Arrival */}
-              <div className="border border-slate-200 rounded-lg p-4 bg-white shadow-xs space-y-3">
+              <div className="border border-[#E2E8F0] rounded p-4 bg-white shadow-xs space-y-3">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-2 text-slate-800 font-semibold text-xs">
                   <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-slate-500" />
@@ -333,7 +334,7 @@ export function TechnologistExamDetailModal({
               </div>
 
               {/* Equipment Context */}
-              <div className="border border-slate-200 rounded-lg p-4 bg-white shadow-xs space-y-3">
+              <div className="border border-[#E2E8F0] rounded p-4 bg-white shadow-xs space-y-3">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-2 text-slate-800 font-semibold text-xs">
                   <div className="flex items-center gap-2">
                     <Building className="w-4 h-4 text-slate-500" />
@@ -369,7 +370,7 @@ export function TechnologistExamDetailModal({
             </div>
 
             {/* Clinical Indication */}
-            <div className="p-4 bg-amber-50/70 border border-amber-200/80 rounded-lg space-y-1.5">
+            <div className="p-4 bg-amber-50/70 border border-amber-200/80 rounded space-y-1.5">
               <span className="text-[10px] uppercase font-bold tracking-wider text-amber-900 flex items-center gap-1.5">
                 <AlertCircle className="w-3.5 h-3.5 text-amber-700" />
                 Clinical Indication & Ordering Notes
@@ -379,9 +380,47 @@ export function TechnologistExamDetailModal({
               </p>
             </div>
 
+            <section className="rounded border border-[#E2E8F0] bg-white p-4" aria-labelledby="prior-history-heading">
+              <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-2.5">
+                <div className="flex items-center gap-2">
+                  <History className="h-4 w-4 text-slate-600" />
+                  <h3 id="prior-history-heading" className="text-xs font-bold text-slate-900">
+                    Relevant prior imaging history
+                  </h3>
+                </div>
+                <Badge variant="outline" className="text-[10px]">
+                  {detail.priorStudies.length} prior {detail.priorStudies.length === 1 ? 'study' : 'studies'}
+                </Badge>
+              </div>
+              {detail.priorStudies.length === 0 ? (
+                <p className="pt-3 text-xs text-slate-500">No previous imaging orders are recorded for this patient.</p>
+              ) : (
+                <div className="divide-y divide-slate-100">
+                  {detail.priorStudies.map((prior) => (
+                    <article key={prior.orderId} className="grid gap-2 py-3 text-xs md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+                      <div className="min-w-0">
+                        <strong className="block truncate text-slate-900">{prior.examinationName}</strong>
+                        <span className="text-[11px] text-slate-500">
+                          {prior.modality} · {prior.bodyPart} · {formatDate(prior.performedAt)}
+                        </span>
+                        <span className="mt-1 block text-[10px] text-slate-400">Accession {prior.accessionNumber}</span>
+                      </div>
+                      <div className="min-w-0 space-y-1 text-slate-600">
+                        <p><span className="font-semibold text-slate-700">Indication:</span> {prior.clinicalIndication}</p>
+                        <p>
+                          <span className="font-semibold text-slate-700">Final impression:</span>{' '}
+                          {prior.reportImpression || 'No finalized prior impression available.'}
+                        </p>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </section>
+
             {/* Safety & Preparation Gate Cards */}
             {detail.order.orderStatus === 'SCAN_IN_PROGRESS' ? (
-              <div className="p-4 bg-sky-50 border border-sky-300 rounded-xl flex items-start justify-between gap-4">
+              <div className="p-4 bg-sky-50 border border-sky-300 rounded flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">
                   <span className="relative flex h-3 w-3 mt-1">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
@@ -401,7 +440,7 @@ export function TechnologistExamDetailModal({
                     <Button
                       size="sm"
                       onClick={() => setContrastModalOpen(true)}
-                      className="text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white gap-1.5 shadow-xs"
+                      className="text-xs font-semibold bg-[#2563EB] hover:bg-blue-700 text-white gap-1.5 shadow-xs"
                     >
                       <Syringe className="w-3.5 h-3.5" />
                       Record Contrast
@@ -426,7 +465,7 @@ export function TechnologistExamDetailModal({
                 </div>
               </div>
             ) : detail.order.orderStatus === 'SCAN_INTERRUPTED' ? (
-              <div className="p-4 bg-amber-50 border border-amber-300 rounded-xl flex items-start justify-between gap-4">
+              <div className="p-4 bg-amber-50 border border-amber-300 rounded flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">
                   <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                   <div>
@@ -458,7 +497,7 @@ export function TechnologistExamDetailModal({
                 </div>
               </div>
             ) : detail.order.orderStatus === 'SCAN_COMPLETED' ? (
-              <div className="p-4 bg-emerald-50 border border-emerald-300 rounded-xl flex items-start justify-between gap-4">
+              <div className="p-4 bg-emerald-50 border border-emerald-300 rounded flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">
                   <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
                   <div>
@@ -489,7 +528,7 @@ export function TechnologistExamDetailModal({
                 </div>
               </div>
             ) : detail.order.orderStatus === 'IMAGE_QA_PENDING' ? (
-              <div className="p-4 bg-amber-50 border border-amber-300 rounded-xl flex items-start justify-between gap-4">
+              <div className="p-4 bg-amber-50 border border-amber-300 rounded flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">
                   <Clock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                   <div>
@@ -510,7 +549,7 @@ export function TechnologistExamDetailModal({
                 </Button>
               </div>
             ) : detail.order.orderStatus === 'REPEAT_REQUIRED' || detail.order.orderStatus === 'IMAGE_REJECTED' ? (
-              <div className="p-4 bg-rose-50 border border-rose-300 rounded-xl flex items-start justify-between gap-4">
+              <div className="p-4 bg-rose-50 border border-rose-300 rounded flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">
                   <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
                   <div>
@@ -532,7 +571,7 @@ export function TechnologistExamDetailModal({
               </div>
             ) : detail.order.orderStatus === 'IMAGE_ACCEPTED' || detail.order.orderStatus === 'PACS_READY' ? (
               pacsStatus?.adapter === 'orthanc' && !pacsStatus?.connected ? (
-                <div className="p-4 bg-amber-50 border border-amber-300 rounded-xl flex items-start justify-between gap-4">
+                <div className="p-4 bg-amber-50 border border-amber-300 rounded flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
                     <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                     <div>
@@ -570,7 +609,7 @@ export function TechnologistExamDetailModal({
                   </div>
                 </div>
               ) : pacsStatus?.adapter === 'orthanc' ? (
-                <div className="p-4 bg-sky-50 border border-sky-300 rounded-xl flex items-start justify-between gap-4">
+                <div className="p-4 bg-sky-50 border border-sky-300 rounded flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
                     <CheckCircle2 className="w-5 h-5 text-sky-600 shrink-0 mt-0.5" />
                     <div>
@@ -591,7 +630,7 @@ export function TechnologistExamDetailModal({
                   </Button>
                 </div>
               ) : (
-                <div className="p-4 bg-sky-50 border border-sky-300 rounded-xl flex items-start justify-between gap-4">
+                <div className="p-4 bg-sky-50 border border-sky-300 rounded flex items-start justify-between gap-4">
                   <div className="flex items-start gap-3">
                     <CheckCircle2 className="w-5 h-5 text-sky-600 shrink-0 mt-0.5" />
                     <div>
@@ -613,9 +652,9 @@ export function TechnologistExamDetailModal({
                 </div>
               )
             ) : detail.order.orderStatus === 'PACS_HANDOFF_PENDING' ? (
-              <div className="p-4 bg-indigo-50 border border-indigo-300 rounded-xl flex items-start justify-between gap-4">
+              <div className="p-4 bg-blue-50 border border-indigo-300 rounded flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">
-                  <Clock className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5 animate-spin" />
+                  <Clock className="w-5 h-5 text-[#2563EB] shrink-0 mt-0.5 animate-spin" />
                   <div>
                     <span className="font-bold text-indigo-950 text-xs block mb-0.5">
                       PACS Handoff: IN PROGRESS
@@ -628,13 +667,13 @@ export function TechnologistExamDetailModal({
                 <Button
                   size="sm"
                   onClick={() => setQaModalOpen(true)}
-                  className="shrink-0 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white"
+                  className="shrink-0 text-xs font-semibold bg-[#2563EB] hover:bg-blue-700 text-white"
                 >
                   View PACS Status
                 </Button>
               </div>
             ) : detail.order.orderStatus === 'PACS_HANDOFF_COMPLETE' ? (
-              <div className="p-4 bg-emerald-50 border border-emerald-300 rounded-xl flex items-start justify-between gap-4">
+              <div className="p-4 bg-emerald-50 border border-emerald-300 rounded flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">
                   <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
                   <div>
@@ -656,7 +695,7 @@ export function TechnologistExamDetailModal({
                 </Button>
               </div>
             ) : detail.order.orderStatus === 'PACS_HANDOFF_FAILED' ? (
-              <div className="p-4 bg-rose-50 border border-rose-300 rounded-xl flex items-start justify-between gap-4">
+              <div className="p-4 bg-rose-50 border border-rose-300 rounded flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">
                   <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
                   <div>
@@ -677,7 +716,7 @@ export function TechnologistExamDetailModal({
                 </Button>
               </div>
             ) : detail.order.orderStatus === 'SCAN_CANCELLED' ? (
-              <div className="p-4 bg-rose-50 border border-rose-300 rounded-xl flex items-start justify-between gap-4">
+              <div className="p-4 bg-rose-50 border border-rose-300 rounded flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">
                   <XCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
                   <div>
@@ -699,7 +738,7 @@ export function TechnologistExamDetailModal({
                 </Button>
               </div>
             ) : detail.order.orderStatus === 'READY_FOR_SCAN' ? (
-              <div className="p-4 bg-emerald-50 border border-emerald-300 rounded-xl flex items-start justify-between gap-4">
+              <div className="p-4 bg-emerald-50 border border-emerald-300 rounded flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">
                   <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
                   <div>
@@ -732,7 +771,7 @@ export function TechnologistExamDetailModal({
                 </div>
               </div>
             ) : detail.order.orderStatus === 'PREPARED' ? (
-              <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-start justify-between gap-4">
+              <div className="p-4 bg-emerald-50 border border-emerald-200 rounded flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">
                   <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
                   <div>
@@ -753,14 +792,14 @@ export function TechnologistExamDetailModal({
                 </Button>
               </div>
             ) : detail.order.orderStatus === 'PREPARATION_IN_PROGRESS' ? (
-              <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-xl flex items-start justify-between gap-4">
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">
-                  <Clock className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
+                  <Clock className="w-5 h-5 text-[#2563EB] shrink-0 mt-0.5" />
                   <div>
                     <span className="font-bold text-indigo-950 text-xs block mb-0.5">
                       Patient Preparation: IN PROGRESS
                     </span>
-                    <p className="text-[11px] leading-relaxed text-indigo-700">
+                    <p className="text-[11px] leading-relaxed text-blue-700">
                       Checklist preparation items are currently being fulfilled by the technologist.
                     </p>
                   </div>
@@ -768,13 +807,13 @@ export function TechnologistExamDetailModal({
                 <Button
                   size="sm"
                   onClick={() => setPreparationModalOpen(true)}
-                  className="shrink-0 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white"
+                  className="shrink-0 text-xs font-semibold bg-[#2563EB] hover:bg-blue-700 text-white"
                 >
                   Continue Preparation
                 </Button>
               </div>
             ) : detail.order.orderStatus === 'SAFETY_CLEARED' ? (
-              <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-start justify-between gap-4">
+              <div className="p-4 bg-emerald-50 border border-emerald-200 rounded flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">
                   <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
                   <div>
@@ -806,7 +845,7 @@ export function TechnologistExamDetailModal({
                 </div>
               </div>
             ) : detail.order.orderStatus === 'SAFETY_REVIEW' ? (
-              <div className="p-4 bg-amber-50 border border-amber-300 rounded-xl flex items-start justify-between gap-4">
+              <div className="p-4 bg-amber-50 border border-amber-300 rounded flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">
                   <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                   <div>
@@ -828,14 +867,14 @@ export function TechnologistExamDetailModal({
                 </Button>
               </div>
             ) : (
-              <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-xl flex items-start justify-between gap-4">
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">
-                  <ShieldAlert className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
+                  <ShieldAlert className="w-5 h-5 text-[#2563EB] shrink-0 mt-0.5" />
                   <div>
                     <span className="font-bold text-indigo-950 text-xs block mb-0.5">
                       Safety Screening Required Prior to Acquisition
                     </span>
-                    <p className="text-[11px] leading-relaxed text-indigo-700">
+                    <p className="text-[11px] leading-relaxed text-blue-700">
                       Technologist must verify patient identity (min. 2 identifiers) and complete modality safety questionnaire.
                     </p>
                   </div>
@@ -843,7 +882,7 @@ export function TechnologistExamDetailModal({
                 <Button
                   size="sm"
                   onClick={() => setSafetyModalOpen(true)}
-                  className="shrink-0 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white"
+                  className="shrink-0 text-xs font-semibold bg-[#2563EB] hover:bg-blue-700 text-white"
                 >
                   Begin Safety Screening
                 </Button>
@@ -959,7 +998,7 @@ export function TechnologistExamDetailModal({
             ) : detail.order.orderStatus === 'PACS_HANDOFF_PENDING' ? (
               <Button
                 onClick={() => setQaModalOpen(true)}
-                className="text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white gap-1.5 shadow-sm"
+                className="text-xs font-semibold bg-[#2563EB] hover:bg-blue-700 text-white gap-1.5 shadow-sm"
               >
                 View PACS Status
               </Button>
@@ -1003,7 +1042,7 @@ export function TechnologistExamDetailModal({
             ) : detail.order.orderStatus === 'PREPARATION_IN_PROGRESS' ? (
               <Button
                 onClick={() => setPreparationModalOpen(true)}
-                className="text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white"
+                className="text-xs font-semibold bg-[#2563EB] hover:bg-blue-700 text-white"
               >
                 Continue Preparation
               </Button>
@@ -1024,7 +1063,7 @@ export function TechnologistExamDetailModal({
             ) : (
               <Button
                 onClick={() => setSafetyModalOpen(true)}
-                className="text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white"
+                className="text-xs font-semibold bg-[#2563EB] hover:bg-blue-700 text-white"
               >
                 Safety Screening
               </Button>

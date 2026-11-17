@@ -40,7 +40,7 @@ export function TatDashboardView() {
   if (isLoading) {
     return (
       <div className="py-16 flex flex-col items-center justify-center text-muted-foreground text-sm">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-600 mb-2" />
+        <Loader2 className="h-8 w-8 animate-spin text-[#2563EB] mb-2" />
         <span>Loading Turnaround Time (TAT) analytics...</span>
       </div>
     );
@@ -64,7 +64,7 @@ export function TatDashboardView() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-base font-bold text-foreground flex items-center gap-2">
-            <Clock className="h-5 w-5 text-indigo-600" />
+            <Clock className="h-5 w-5 text-[#2563EB]" />
             <span>Turnaround Time (TAT) Performance Dashboard</span>
           </h2>
           <p className="text-xs text-muted-foreground">
@@ -87,7 +87,7 @@ export function TatDashboardView() {
         <Card className="border shadow-xs bg-card">
           <CardHeader className="pb-2 text-xs font-semibold uppercase text-muted-foreground flex flex-row items-center justify-between">
             <span>Avg Reporting TAT</span>
-            <Activity className="h-4 w-4 text-indigo-600" />
+            <Activity className="h-4 w-4 text-[#2563EB]" />
           </CardHeader>
           <CardContent className="space-y-1">
             <div className="text-2xl font-black text-foreground">

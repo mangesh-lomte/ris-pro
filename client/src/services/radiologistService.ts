@@ -36,6 +36,7 @@ export const radiologistService = {
     if (filters.assignmentStatus && filters.assignmentStatus !== 'ALL') {
       query.append('assignmentStatus', filters.assignmentStatus);
     }
+    if (filters.reportStatus) query.append('reportStatus', filters.reportStatus);
     if (filters.assignedTo) query.append('assignedTo', filters.assignedTo);
     if (filters.search && filters.search.trim().length > 0) {
       query.append('search', filters.search.trim());
@@ -79,7 +80,7 @@ export const radiologistService = {
   /**
    * Admin assigns a study to a specific active radiologist.
    */
-  async assignStudy(identifier: string, radiologistUserId: string) {
+  async assignStudy(identifier: string, radiologistUserId: string, reason?: string) {
     const response = await apiClient<{
       orderId: string;
       accessionNumber: string;
@@ -93,7 +94,7 @@ export const radiologistService = {
       };
     }>(`/radiologist/worklist/${encodeURIComponent(identifier)}/assign`, {
       method: 'POST',
-      body: JSON.stringify({ radiologistUserId }),
+      body: JSON.stringify({ radiologistUserId, reason }),
     });
     return response.data;
   },

@@ -58,6 +58,7 @@ export function RadiologistStudyDetailModal({
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedAdminRadiologist, setSelectedAdminRadiologist] = useState<string>('');
+  const [reassignmentReason, setReassignmentReason] = useState<string>('');
   const [actionError, setActionError] = useState<string | null>(null);
 
   const {
@@ -111,10 +112,11 @@ export function RadiologistStudyDetailModal({
 
   const assignMutation = useMutation({
     mutationFn: (targetUserId: string) =>
-      radiologistService.assignStudy(orderId!, targetUserId),
+      radiologistService.assignStudy(orderId!, targetUserId, studyContext?.activeAssignment ? reassignmentReason : undefined),
     onSuccess: () => {
       setActionError(null);
       setSelectedAdminRadiologist('');
+      setReassignmentReason('');
       queryClient.invalidateQueries({ queryKey: ['radiologistWorklist'] });
       queryClient.invalidateQueries({ queryKey: ['radiologistStudyContext', orderId] });
     },
@@ -146,7 +148,7 @@ export function RadiologistStudyDetailModal({
     onSuccess: (data) => {
       setViewerError(null);
       if (data?.viewerUrl) {
-        window.open(data.viewerUrl, 'manrad-pacs-viewer');
+        window.open(data.viewerUrl, 'radaxis-pacs-viewer');
       }
     },
     onError: (err: any) => {
@@ -167,7 +169,7 @@ export function RadiologistStudyDetailModal({
       setComparisonError(null);
       setLaunchingPriorId(null);
       if (data?.viewerUrl) {
-        window.open(data.viewerUrl, 'manrad-pacs-viewer');
+        window.open(data.viewerUrl, 'radaxis-pacs-viewer');
       }
     },
     onError: (err: any) => {
@@ -214,7 +216,7 @@ export function RadiologistStudyDetailModal({
         <DialogHeader className="border-b pb-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2.5 min-w-0">
-              <Badge variant="default" className="bg-[#174A70] text-white font-semibold text-xs tracking-wider shrink-0">
+              <Badge variant="default" className="bg-[#2563EB] text-white font-semibold text-xs tracking-wider shrink-0">
                 CURRENT STUDY
               </Badge>
               <DialogTitle className="text-lg sm:text-xl font-bold tracking-tight text-[#152B42]">
@@ -234,7 +236,7 @@ export function RadiologistStudyDetailModal({
             )}
           </div>
           <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5">
-            <span className="font-semibold text-[#174A70]">Diagnostic Scope:</span> Current study image viewing, prior study discovery & comparative review.
+            <span className="font-semibold text-[#2563EB]">Diagnostic Scope:</span> Current study image viewing, prior study discovery & comparative review.
           </p>
         </DialogHeader>
 
@@ -457,10 +459,10 @@ export function RadiologistStudyDetailModal({
                       type="button"
                       size="sm"
                       variant="outline"
-                      className="font-semibold flex items-center gap-1.5 border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:hover:bg-indigo-950/30"
+                      className="font-semibold flex items-center gap-1.5 border-blue-200 text-blue-700 hover:bg-blue-50 dark:hover:bg-indigo-950/30"
                       onClick={() => setIsPeerReviewRequestOpen(true)}
                     >
-                      <Users className="h-4 w-4 text-indigo-600" />
+                      <Users className="h-4 w-4 text-[#2563EB]" />
                       Request Peer Review
                     </Button>
                   )}
@@ -703,7 +705,7 @@ export function RadiologistStudyDetailModal({
 
                         <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-muted/50">
                           <div className="flex items-center gap-2">
-                            {ps.pacsStatus === 'LINKED' ? (
+                            {ps.pacsStatus === 'LINKED' && ps.isImageComparisonEligible ? (
                               <Badge variant="outline" className="border-emerald-500 text-emerald-700 dark:text-emerald-300 text-[10px] flex items-center gap-1">
                                 <CheckCircle2 className="h-3 w-3" /> Images Available
                               </Badge>
@@ -712,8 +714,8 @@ export function RadiologistStudyDetailModal({
                                 <AlertTriangle className="h-3 w-3" /> PACS Unavailable
                               </Badge>
                             ) : (
-                              <Badge variant="outline" className="text-muted-foreground text-[10px]">
-                                Images Not Reconciled
+                              <Badge variant="outline" className="border-slate-300 dark:border-slate-700 text-muted-foreground text-[10px] flex items-center gap-1">
+                                <AlertCircle className="h-3 w-3 text-muted-foreground" /> Images Not Available for Verified Viewing
                               </Badge>
                             )}
 
@@ -743,10 +745,17 @@ export function RadiologistStudyDetailModal({
 
                             <Button
                               size="sm"
-                              variant="default"
-                              className="h-7 text-xs flex items-center gap-1 font-semibold"
+                              variant={canCompareThisPrior ? "default" : "outline"}
+                              className={`h-7 text-xs flex items-center gap-1 font-semibold ${
+                                !canCompareThisPrior ? 'text-muted-foreground opacity-60 cursor-not-allowed' : ''
+                              }`}
                               disabled={!canCompareThisPrior || compareImagesMutation.isPending}
-                              onClick={() => compareImagesMutation.mutate(ps.imagingOrderId)}
+                              onClick={() => canCompareThisPrior && compareImagesMutation.mutate(ps.imagingOrderId)}
+                              title={
+                                !canCompareThisPrior
+                                  ? 'Prior study images are not available for verified viewing.'
+                                  : 'Compare current and prior examinations in multi-study viewer'
+                              }
                             >
                               <ExternalLink className="h-3.5 w-3.5" />
                               {compareImagesMutation.isPending && launchingPriorId === ps.imagingOrderId
@@ -757,8 +766,9 @@ export function RadiologistStudyDetailModal({
                         </div>
 
                         {ps.pacsMessage && !ps.isImageComparisonEligible && (
-                          <div className="text-[11px] text-muted-foreground italic">
-                            {ps.pacsMessage}
+                          <div className="text-[11px] text-muted-foreground italic flex items-center gap-1">
+                            <AlertCircle className="h-3 w-3 text-amber-600 shrink-0" />
+                            <span>{ps.pacsMessage}</span>
                           </div>
                         )}
                       </div>
@@ -837,10 +847,12 @@ export function RadiologistStudyDetailModal({
                   )}
 
                   {/* Admin Assignment Dropdown */}
-                  {isAdmin && !isAssigned && (
-                    <div className="flex items-center gap-2">
+                  {isAdmin && (
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                      <label className="text-xs font-semibold text-muted-foreground">
+                        {isAssigned ? 'Reassign to' : 'Assign to'}
                       <select
-                        className="text-xs border rounded h-9 px-2 bg-background"
+                        className="mt-1 block text-xs border rounded min-h-11 px-2 bg-background"
                         value={selectedAdminRadiologist}
                         onChange={(e) => setSelectedAdminRadiologist(e.target.value)}
                       >
@@ -851,12 +863,26 @@ export function RadiologistStudyDetailModal({
                           </option>
                         ))}
                       </select>
+                      </label>
+                      {isAssigned && (
+                        <label className="text-xs font-semibold text-muted-foreground">
+                          Reassignment reason
+                          <input
+                            value={reassignmentReason}
+                            onChange={(event) => setReassignmentReason(event.target.value)}
+                            maxLength={500}
+                            placeholder="Shift change or workload balancing"
+                            className="mt-1 block min-h-11 min-w-64 rounded border bg-background px-3 text-sm text-foreground"
+                          />
+                        </label>
+                      )}
                       <Button
                         size="sm"
-                        disabled={!selectedAdminRadiologist || assignMutation.isPending}
+                        className="min-h-11"
+                        disabled={!selectedAdminRadiologist || assignMutation.isPending || (isAssigned && reassignmentReason.trim().length < 5)}
                         onClick={() => assignMutation.mutate(selectedAdminRadiologist)}
                       >
-                        {assignMutation.isPending ? 'Assigning...' : 'Assign'}
+                        {assignMutation.isPending ? 'Saving...' : isAssigned ? 'Reassign' : 'Assign'}
                       </Button>
                     </div>
                   )}
@@ -879,7 +905,7 @@ export function RadiologistStudyDetailModal({
             <Button
               size="sm"
               variant="default"
-              className="bg-[#174A70] hover:bg-[#123855] text-white font-semibold flex items-center gap-1.5 shadow-xs"
+              className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold flex items-center gap-1.5 shadow-xs"
               onClick={() => {
                 onOpenChange(false);
                 navigate(`/reporting/${orderId}`);
@@ -893,7 +919,7 @@ export function RadiologistStudyDetailModal({
                 size="sm"
                 onClick={() => openImagesMutation.mutate()}
                 disabled={openImagesMutation.isPending}
-                className="bg-[#227DA5] hover:bg-[#1b6485] text-white font-semibold flex items-center gap-1.5 shadow-xs"
+                className="bg-[#2563EB] hover:bg-[#1b6485] text-white font-semibold flex items-center gap-1.5 shadow-xs"
               >
                 <ExternalLink className="h-4 w-4" />
                 {openImagesMutation.isPending ? 'Launching...' : 'Open Images'}
