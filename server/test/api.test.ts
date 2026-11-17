@@ -700,17 +700,16 @@ describe('Healthcare API Integration Tests (Phase 2)', () => {
       });
       const listBody = await listRes.json();
       assert.ok(listBody.data.items.length > 0);
-      const targetItem =
-        listBody.data.items.find((item: any) =>
-          [
-            'READY_FOR_TECH',
-            'SAFETY_REVIEW',
-            'SAFETY_CLEARED',
-            'PREPARATION_IN_PROGRESS',
-            'PREPARED',
-            'READY_FOR_SCAN',
-          ].includes(item.order?.orderStatus)
-        ) || listBody.data.items[0];
+      const targetItem = listBody.data.items.find((i: any) =>
+        [
+          'READY_FOR_TECH',
+          'SAFETY_REVIEW',
+          'SAFETY_CLEARED',
+          'PREPARATION_IN_PROGRESS',
+          'PREPARED',
+          'READY_FOR_SCAN',
+        ].includes(i.orderStatus)
+      ) || listBody.data.items[0];
       const targetApptId = targetItem.appointmentId;
 
       const detailRes = await fetch(`${baseUrl}/technologist/worklist/${targetApptId}`, {
@@ -730,6 +729,9 @@ describe('Healthcare API Integration Tests (Phase 2)', () => {
           'PREPARATION_IN_PROGRESS',
           'PREPARED',
           'READY_FOR_SCAN',
+          'PACS_READY',
+          'PACS_HANDOFF_PENDING',
+          'PACS_HANDOFF_COMPLETE',
         ].includes(detailBody.data.order.orderStatus)
       );
     });

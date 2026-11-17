@@ -50,40 +50,83 @@
   window.config.extensions = [];
   window.config.modes = [];
 
-  // Helper to extract measurement values safely
+  // Helper to extract measurement values safely with strict clinical unit fidelity
   function extractNumericAndUnit(m) {
     var numVal = null;
-    var unit = 'mm';
+    var unit = (m && m.unit) ? m.unit : 'mm';
 
+    // 1. Direct tool properties from OHIF measurement service
     if (typeof m.length === 'number') {
       numVal = m.length;
+      unit = m.unit || 'mm';
+    } else if (typeof m.shortestDiameter === 'number' && typeof m.longestDiameter === 'number') {
+      // Bidirectional tool
+      numVal = m.longestDiameter;
+      unit = m.unit || 'mm';
+    } else if (typeof m.angle === 'number') {
+      // Angle / CobbAngle tool
+      numVal = m.angle;
+      unit = m.unit || 'deg';
     } else if (typeof m.area === 'number') {
+      // ROI tools (Circle, Ellipse, Rectangle, Freehand)
       numVal = m.area;
-      unit = 'mm\xB2';
+      unit = m.unit || 'mm\xB2';
+    } else if (typeof m.mean === 'number') {
+      // Probe / ROI mean HU value
+      numVal = m.mean;
+      unit = m.unit || 'HU';
+    } else if (typeof m.value === 'number') {
+      numVal = m.value;
+      if (m.unit) unit = m.unit;
     }
 
+    // 2. Check inner stats object from Cornerstone annotation data
     if (numVal == null && m.data) {
       if (typeof m.data.length === 'number') {
         numVal = m.data.length;
+        unit = m.data.unit || 'mm';
+      } else if (typeof m.data.angle === 'number') {
+        numVal = m.data.angle;
+        unit = m.data.unit || 'deg';
       } else if (typeof m.data.area === 'number') {
         numVal = m.data.area;
-        unit = 'mm\xB2';
+        unit = m.data.unit || 'mm\xB2';
       } else if (typeof m.data === 'object') {
         for (var k in m.data) {
           var stat = m.data[k];
-          if (stat && typeof stat.length === 'number') {
+          if (!stat || typeof stat !== 'object') continue;
+          if (typeof stat.length === 'number') {
             numVal = stat.length;
             if (stat.unit) unit = stat.unit;
             break;
-          } else if (stat && typeof stat.area === 'number') {
+          } else if (typeof stat.angle === 'number') {
+            numVal = stat.angle;
+            unit = stat.unit || 'deg';
+            break;
+          } else if (typeof stat.area === 'number') {
             numVal = stat.area;
             unit = stat.unit || 'mm\xB2';
             break;
+          } else if (typeof stat.mean === 'number') {
+            numVal = stat.mean;
+            unit = stat.unit || 'HU';
+            break;
+          } else if (Array.isArray(stat.statsArray)) {
+            for (var sIdx = 0; sIdx < stat.statsArray.length; sIdx++) {
+              var sItem = stat.statsArray[sIdx];
+              if (sItem && typeof sItem.value === 'number') {
+                numVal = sItem.value;
+                if (sItem.unit) unit = sItem.unit;
+                break;
+              }
+            }
+            if (numVal != null) break;
           }
         }
       }
     }
 
+    // 3. Extract display string from OHIF UI representation
     var displayStr = '';
     if (typeof m.displayText === 'string') {
       displayStr = m.displayText;
@@ -93,12 +136,33 @@
       displayStr = (prim + ' ' + sec).trim();
     }
 
-    if (numVal == null && displayStr) {
-      var match = displayStr.match(/([\d.]+)\s*([a-zA-Z\xB2\xB3]+)?/);
+    // 4. If displayStr exists, check if it specifies exact displayed number and unit
+    if (displayStr) {
+      var match = displayStr.match(/([\d.]+)\s*([a-zA-Z\xB2\xB3\u00B0]+)?/);
       if (match) {
-        numVal = parseFloat(match[1]);
-        if (match[2]) unit = match[2];
+        var parsedVal = parseFloat(match[1]);
+        if (!isNaN(parsedVal)) {
+          if (numVal == null) numVal = parsedVal;
+          if (match[2]) {
+            var parsedUnit = match[2];
+            if (parsedUnit === '\u00B0' || parsedUnit === 'deg') unit = 'deg';
+            else if (parsedUnit === 'mm2' || parsedUnit === 'mm\xB2') unit = 'mm\xB2';
+            else if (parsedUnit.toLowerCase() === 'hu') unit = 'HU';
+            else if (parsedUnit.toLowerCase() === 'mm') unit = 'mm';
+            else unit = parsedUnit;
+          }
+        }
       }
+    }
+
+    // 5. Ensure tool-type specific unit safety: Angle/ROI tools never get incorrectly labeled as mm
+    var toolName = String(m.toolName || m.type || '').toLowerCase();
+    if (toolName.includes('angle') && unit === 'mm') {
+      unit = 'deg';
+    } else if ((toolName.includes('roi') || toolName.includes('area')) && unit === 'mm') {
+      unit = 'mm\xB2';
+    } else if (toolName.includes('probe') && unit === 'mm') {
+      unit = 'HU';
     }
 
     if (numVal != null && typeof numVal === 'number' && !isNaN(numVal)) {
