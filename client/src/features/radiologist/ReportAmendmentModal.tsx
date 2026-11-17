@@ -6,6 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from '../../components/ui/dialog';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
@@ -98,13 +99,13 @@ export const ReportAmendmentModal: React.FC<ReportAmendmentModalProps> = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="border-b pb-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+    <Dialog open={open} onOpenChange={onOpenChange} maxWidth="2xl">
+      <form onSubmit={handleSubmit} className="flex flex-col max-h-[85vh] min-w-0">
+        <DialogHeader onClose={() => onOpenChange(false)}>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0 pr-8">
+            <div className="flex items-start gap-2.5 min-w-0">
               <div
-                className={`p-2 rounded-full ${
+                className={`p-2 rounded-full shrink-0 ${
                   amendmentType === 'CORRECTION'
                     ? 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400'
                     : 'bg-indigo-100 text-blue-700 dark:bg-indigo-950 dark:text-indigo-400'
@@ -116,23 +117,25 @@ export const ReportAmendmentModal: React.FC<ReportAmendmentModalProps> = ({
                   <PlusCircle className="h-5 w-5" />
                 )}
               </div>
-              <div>
-                <DialogTitle className="text-base font-bold flex items-center gap-2">
-                  {amendmentType === 'CORRECTION'
-                    ? 'CREATE REPORT CORRECTION'
-                    : 'CREATE REPORT ADDENDUM'}
-                  <Badge variant="outline" className="text-xs font-mono">
+              <div className="min-w-0">
+                <DialogTitle className="text-base font-bold flex flex-wrap items-center gap-2 break-words">
+                  <span>
+                    {amendmentType === 'CORRECTION'
+                      ? 'CREATE REPORT CORRECTION'
+                      : 'CREATE REPORT ADDENDUM'}
+                  </span>
+                  <Badge variant="outline" className="text-xs font-mono shrink-0">
                     v{currentVersion} → v{nextVersion}
                   </Badge>
                 </DialogTitle>
-                <DialogDescription className="text-xs text-muted-foreground">
+                <DialogDescription className="text-xs text-muted-foreground mt-0.5 break-words [overflow-wrap:anywhere]">
                   {amendmentType === 'CORRECTION'
                     ? 'Correct an error in an existing finalized report without destroying original findings.'
                     : 'Append supplemental findings or clinical clarifications to an existing finalized report.'}
                 </DialogDescription>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 flex-wrap shrink-0">
               <IdentifierPill
                 type="patient"
                 value={patientId || 'UNKNOWN'}
@@ -145,23 +148,23 @@ export const ReportAmendmentModal: React.FC<ReportAmendmentModalProps> = ({
           </div>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 py-2">
+        <DialogContent className="p-5 space-y-4 overflow-y-auto overflow-x-hidden flex-1 min-w-0 max-h-none">
           {errorMsg && (
-            <div className="p-3 text-xs bg-destructive/10 border border-destructive/20 text-destructive rounded-md flex items-center gap-2">
+            <div className="p-3 text-xs bg-destructive/10 border border-destructive/20 text-destructive rounded-md flex items-center gap-2 min-w-0">
               <AlertTriangle className="h-4 w-4 shrink-0" />
-              <span>{errorMsg}</span>
+              <span className="break-words [overflow-wrap:anywhere]">{errorMsg}</span>
             </div>
           )}
 
           {/* Amendment Type Selector */}
-          <div>
+          <div className="min-w-0">
             <label className="text-xs font-semibold block mb-1.5 text-foreground">
               Amendment Type
             </label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-0">
               <button
                 type="button"
-                className={`p-3 text-left border rounded-lg transition-all flex items-start gap-2.5 ${
+                className={`p-3 text-left border rounded-lg transition-all flex items-start gap-2.5 min-w-0 ${
                   amendmentType === 'CORRECTION'
                     ? 'border-amber-500 bg-amber-50/40 dark:bg-amber-950/30 ring-1 ring-amber-400'
                     : 'border-border hover:bg-muted/50'
@@ -169,13 +172,13 @@ export const ReportAmendmentModal: React.FC<ReportAmendmentModalProps> = ({
                 onClick={() => setAmendmentType('CORRECTION')}
               >
                 <AlertTriangle
-                  className={`h-4 w-4 mt-0.5 ${
+                  className={`h-4 w-4 mt-0.5 shrink-0 ${
                     amendmentType === 'CORRECTION' ? 'text-amber-600' : 'text-muted-foreground'
                   }`}
                 />
-                <div>
+                <div className="min-w-0">
                   <div className="font-semibold text-xs text-foreground">Correction</div>
-                  <div className="text-[11px] text-muted-foreground">
+                  <div className="text-[11px] text-muted-foreground break-words [overflow-wrap:anywhere]">
                     Fix an error, typo, or inaccurate measurement in findings.
                   </div>
                 </div>
@@ -183,7 +186,7 @@ export const ReportAmendmentModal: React.FC<ReportAmendmentModalProps> = ({
 
               <button
                 type="button"
-                className={`p-3 text-left border rounded-lg transition-all flex items-start gap-2.5 ${
+                className={`p-3 text-left border rounded-lg transition-all flex items-start gap-2.5 min-w-0 ${
                   amendmentType === 'ADDENDUM'
                     ? 'border-indigo-500 bg-blue-50/40 dark:bg-indigo-950/30 ring-1 ring-indigo-400'
                     : 'border-border hover:bg-muted/50'
@@ -191,13 +194,13 @@ export const ReportAmendmentModal: React.FC<ReportAmendmentModalProps> = ({
                 onClick={() => setAmendmentType('ADDENDUM')}
               >
                 <PlusCircle
-                  className={`h-4 w-4 mt-0.5 ${
+                  className={`h-4 w-4 mt-0.5 shrink-0 ${
                     amendmentType === 'ADDENDUM' ? 'text-[#2563EB]' : 'text-muted-foreground'
                   }`}
                 />
-                <div>
+                <div className="min-w-0">
                   <div className="font-semibold text-xs text-foreground">Addendum</div>
-                  <div className="text-[11px] text-muted-foreground">
+                  <div className="text-[11px] text-muted-foreground break-words [overflow-wrap:anywhere]">
                     Append additional clinical findings or later clarifications.
                   </div>
                 </div>
@@ -206,13 +209,13 @@ export const ReportAmendmentModal: React.FC<ReportAmendmentModalProps> = ({
           </div>
 
           {/* Reason Input */}
-          <div>
+          <div className="min-w-0">
             <label className="text-xs font-semibold block mb-1 text-foreground">
               Reason / Clinical Context <span className="text-destructive">*</span>
             </label>
             <input
               type="text"
-              className="w-full px-3 py-2 border rounded-md text-xs bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full px-3 py-2 border rounded-md text-xs bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary min-w-0 box-border break-words"
               placeholder={
                 amendmentType === 'CORRECTION'
                   ? 'e.g. Corrected measurement description; slice coordinate typo resolved'
@@ -225,14 +228,14 @@ export const ReportAmendmentModal: React.FC<ReportAmendmentModalProps> = ({
           </div>
 
           {/* Content Input */}
-          <div>
+          <div className="min-w-0">
             <label className="text-xs font-semibold block mb-1 text-foreground">
               {amendmentType === 'CORRECTION' ? 'Corrected Report Content' : 'Addendum Content'}{' '}
               <span className="text-destructive">*</span>
             </label>
             <textarea
               rows={5}
-              className="w-full px-3 py-2 border rounded-md text-xs font-mono bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full px-3 py-2 border rounded-md text-xs font-mono bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-primary min-w-0 box-border resize-y break-words [overflow-wrap:anywhere]"
               placeholder={
                 amendmentType === 'CORRECTION'
                   ? 'Enter corrected findings / description...'
@@ -246,57 +249,57 @@ export const ReportAmendmentModal: React.FC<ReportAmendmentModalProps> = ({
 
           {/* Live Preview Card */}
           {(reason || content) && (
-            <div className="border border-border/80 rounded-lg p-3 bg-muted/30">
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground mb-1.5">
-                <Eye className="h-3.5 w-3.5 text-primary" />
-                <span>Amendment Preview (Will be logged as Version {nextVersion})</span>
+            <div className="border border-border/80 rounded-lg p-3 bg-muted/30 min-w-0 overflow-hidden">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground mb-1.5 min-w-0">
+                <Eye className="h-3.5 w-3.5 text-primary shrink-0" />
+                <span className="truncate">Amendment Preview (Will be logged as Version {nextVersion})</span>
               </div>
-              <div className="text-xs font-mono space-y-1 bg-background p-2.5 rounded border border-border/40">
-                <div className="text-[11px] text-muted-foreground font-sans">
+              <div className="text-xs font-mono space-y-1 bg-background p-2.5 rounded border border-border/40 min-w-0 overflow-hidden">
+                <div className="text-[11px] text-muted-foreground font-sans break-words [overflow-wrap:anywhere]">
                   <strong>Type:</strong> {amendmentType} | <strong>Reason:</strong> {reason || '(None)'}
                 </div>
-                <div className="whitespace-pre-wrap text-foreground/90 pt-1 border-t border-border/30 mt-1">
+                <div className="whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-foreground/90 pt-1 border-t border-border/30 mt-1 max-h-48 overflow-y-auto">
                   {content || '(No content entered)'}
                 </div>
               </div>
             </div>
           )}
+        </DialogContent>
 
-          <div className="border-t pt-3 flex items-center justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => onOpenChange(false)}
-              disabled={mutation.isPending}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              size="sm"
-              className={
-                amendmentType === 'CORRECTION'
-                  ? 'bg-amber-600 hover:bg-amber-700 text-white'
-                  : 'bg-[#2563EB] hover:bg-blue-700 text-white'
-              }
-              disabled={mutation.isPending || !reason.trim() || !content.trim()}
-            >
-              {mutation.isPending ? (
-                <>
-                  <Clock className="h-3.5 w-3.5 animate-spin mr-1" />
-                  Submitting Amendment...
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
-                  Submit {amendmentType === 'CORRECTION' ? 'Correction' : 'Addendum'} (v{nextVersion})
-                </>
-              )}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
+        <DialogFooter className="p-4 border-t flex flex-wrap items-center justify-end gap-2 bg-[#f8faf9] shrink-0">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => onOpenChange(false)}
+            disabled={mutation.isPending}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            size="sm"
+            className={
+              amendmentType === 'CORRECTION'
+                ? 'bg-amber-600 hover:bg-amber-700 text-white shrink-0'
+                : 'bg-[#2563EB] hover:bg-blue-700 text-white shrink-0'
+            }
+            disabled={mutation.isPending || !reason.trim() || !content.trim()}
+          >
+            {mutation.isPending ? (
+              <>
+                <Clock className="h-3.5 w-3.5 animate-spin mr-1 shrink-0" />
+                Submitting Amendment...
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="h-3.5 w-3.5 mr-1 shrink-0" />
+                Submit {amendmentType === 'CORRECTION' ? 'Correction' : 'Addendum'} (v{nextVersion})
+              </>
+            )}
+          </Button>
+        </DialogFooter>
+      </form>
     </Dialog>
   );
 };
