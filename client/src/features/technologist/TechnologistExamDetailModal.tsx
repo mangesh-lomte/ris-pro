@@ -389,14 +389,14 @@ export function TechnologistExamDetailModal({
                   </h3>
                 </div>
                 <Badge variant="outline" className="text-[10px]">
-                  {detail.priorStudies.length} prior {detail.priorStudies.length === 1 ? 'study' : 'studies'}
+                  {(detail.priorStudies || []).length} prior {(detail.priorStudies || []).length === 1 ? 'study' : 'studies'}
                 </Badge>
               </div>
-              {detail.priorStudies.length === 0 ? (
+              {(!detail.priorStudies || detail.priorStudies.length === 0) ? (
                 <p className="pt-3 text-xs text-slate-500">No previous imaging orders are recorded for this patient.</p>
               ) : (
                 <div className="divide-y divide-slate-100">
-                  {detail.priorStudies.map((prior) => (
+                  {(detail.priorStudies || []).map((prior) => (
                     <article key={prior.orderId} className="grid gap-2 py-3 text-xs md:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
                       <div className="min-w-0">
                         <strong className="block truncate text-slate-900">{prior.examinationName}</strong>

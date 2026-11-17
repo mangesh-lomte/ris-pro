@@ -327,6 +327,37 @@ export async function getTechnologistWorklist(
 }
 
 /**
+ * Retrieves past completed or imaging orders for the patient to satisfy prior history display.
+ */
+async function getPriorStudiesForPatient(patientId: string, currentOrderId: string) {
+  const previousOrders = await prisma.imagingOrder.findMany({
+    where: {
+      patientId,
+      id: { not: currentOrderId },
+    },
+    include: {
+      report: true,
+    },
+    orderBy: { createdAt: 'desc' },
+    take: 10,
+  });
+
+  return previousOrders.map((p) => ({
+    orderId: p.id,
+    accessionNumber: p.accessionNumber,
+    examinationName: p.examinationName,
+    modality: p.modality,
+    bodyPart: p.bodyPart,
+    clinicalIndication: p.clinicalIndication,
+    orderStatus: p.orderStatus,
+    performedAt: p.updatedAt.toISOString(),
+    reportStatus: p.report?.status || null,
+    reportImpression: p.report?.impression || null,
+    reportFinalizedAt: p.report?.finalizedAt ? p.report.finalizedAt.toISOString() : null,
+  }));
+}
+
+/**
  * Retrieves complete technologist context for a specific exam by appointment ID, order ID, or accession number.
  */
 export async function getTechnologistWorklistItem(identifier: string) {
@@ -420,6 +451,7 @@ export async function getTechnologistWorklistItem(identifier: string) {
 
     const appt = order.appointment;
     const waitingMinutes = appt ? calculateWaitingMinutes(appt.checkedInAt) : 0;
+    const priorStudies = await getPriorStudiesForPatient(order.patient.id, order.id);
 
     return {
       appointmentId: appt?.id || order.id,
@@ -431,6 +463,7 @@ export async function getTechnologistWorklistItem(identifier: string) {
       status: appt?.status || AppointmentStatus.CHECKED_IN,
       notes: appt?.notes || null,
       waitingMinutes,
+      priorStudies,
       patient: {
         id: order.patient.id,
         patientId: order.patient.patientId,
@@ -492,6 +525,10 @@ export async function getTechnologistWorklistItem(identifier: string) {
   }
 
   const waitingMinutes = calculateWaitingMinutes(appointment.checkedInAt);
+  const priorStudies = await getPriorStudiesForPatient(
+    appointment.patient.id,
+    appointment.imagingOrder.id
+  );
 
   return {
     appointmentId: appointment.id,
@@ -503,6 +540,7 @@ export async function getTechnologistWorklistItem(identifier: string) {
     status: appointment.status,
     notes: appointment.notes || null,
     waitingMinutes,
+    priorStudies,
     patient: {
       id: appointment.patient.id,
       patientId: appointment.patient.patientId,
