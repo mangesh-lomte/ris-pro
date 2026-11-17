@@ -287,6 +287,8 @@ export interface SystemHealthData {
   status: 'healthy' | 'degraded';
   timestamp: string;
   environment: string;
+  appEnv?: string;
+  commit?: string;
   version: string;
   uptimeSeconds: number;
   database: {

@@ -9,6 +9,7 @@ dotenv.config();
 export const envSchema = z.object({
   PORT: z.string().default('5000').transform((val) => parseInt(val, 10)),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  APP_ENV: z.string().default('demo'),
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required for PostgreSQL connection'),
   JWT_SECRET: z.string().min(16, 'JWT_SECRET must be at least 16 characters for healthcare security'),
   JWT_EXPIRES_IN: z.string().default('8h'),

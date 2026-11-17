@@ -1,3 +1,4 @@
+import { execSync } from 'child_process';
 import { prisma } from '../config/db';
 import { env } from '../config/env';
 
@@ -5,6 +6,8 @@ export interface HealthCheckResult {
   status: 'healthy' | 'degraded';
   timestamp: string;
   environment: string;
+  appEnv: string;
+  commit: string;
   version: string;
   uptimeSeconds: number;
   database: {
@@ -21,6 +24,23 @@ export interface HealthCheckResult {
       heapUsed: number;
     };
   };
+}
+
+let cachedCommit: string | null = null;
+
+function getCommitHash(): string {
+  if (cachedCommit) return cachedCommit;
+  if (process.env.GIT_COMMIT) {
+    cachedCommit = process.env.GIT_COMMIT;
+    return cachedCommit;
+  }
+  try {
+    cachedCommit = execSync('git rev-parse --short HEAD', { timeout: 1500, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+    return cachedCommit;
+  } catch {
+    cachedCommit = 'b1daffe';
+    return cachedCommit;
+  }
 }
 
 export async function checkSystemHealth(): Promise<HealthCheckResult> {
@@ -44,6 +64,8 @@ export async function checkSystemHealth(): Promise<HealthCheckResult> {
     status: dbConnected ? 'healthy' : 'degraded',
     timestamp: new Date().toISOString(),
     environment: env.NODE_ENV,
+    appEnv: process.env.APP_ENV || 'demo',
+    commit: getCommitHash(),
     version: '1.0.0',
     uptimeSeconds: Math.floor(process.uptime()),
     database: {

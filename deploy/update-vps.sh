@@ -16,6 +16,21 @@ git reset --hard origin/main
 CURRENT_COMMIT=$(git rev-parse --short HEAD)
 echo "Current VPS Commit: $CURRENT_COMMIT"
 
+# Ensure production demo runtime configuration in .env
+if [ -f .env ]; then
+  sed -i 's/^NODE_ENV=.*/NODE_ENV=production/' .env || echo "NODE_ENV=production" >> .env
+  if ! grep -q "^APP_ENV=" .env; then
+    echo "APP_ENV=demo" >> .env
+  else
+    sed -i 's/^APP_ENV=.*/APP_ENV=demo/' .env
+  fi
+  if ! grep -q "^GIT_COMMIT=" .env; then
+    echo "GIT_COMMIT=$CURRENT_COMMIT" >> .env
+  else
+    sed -i "s/^GIT_COMMIT=.*/GIT_COMMIT=$CURRENT_COMMIT/" .env
+  fi
+fi
+
 echo "==> [3/6] Installing dependencies..."
 npm install
 

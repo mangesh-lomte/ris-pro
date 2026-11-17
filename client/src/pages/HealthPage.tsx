@@ -161,8 +161,14 @@ export function HealthPage() {
                   <p className="text-xl font-extrabold text-slate-900 mt-0.5 font-mono tabular-nums">
                     {formatUptime(health.uptimeSeconds)}
                   </p>
-                  <p className="text-[11px] text-slate-500 mt-1 font-semibold">
-                    Env: <span className="font-bold text-slate-700 uppercase">{health.environment}</span>
+                  <p className="text-[11px] text-slate-500 mt-1 font-semibold flex items-center gap-1.5">
+                    <span>Env:</span>
+                    <span className="font-bold text-slate-700 uppercase">{health.environment}</span>
+                    {health.appEnv && (
+                      <span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                        {health.appEnv.toUpperCase()} DEMO
+                      </span>
+                    )}
                   </p>
                 </div>
               </div>
@@ -202,6 +208,14 @@ export function HealthPage() {
                   <span className="text-slate-500 font-medium">RIS Release Version</span>
                   <span className="font-bold text-slate-800">{health.version}</span>
                 </div>
+                {health.commit && (
+                  <div className="flex justify-between py-1.5 border-b border-slate-100">
+                    <span className="text-slate-500 font-medium">Deployed Commit</span>
+                    <span className="font-mono font-bold text-slate-800 text-[11px] bg-slate-100 px-1.5 py-0.5 rounded">
+                      {health.commit}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between py-1.5">
                   <span className="text-slate-500 font-medium">Diagnostic Timestamp</span>
                   <span className="font-mono text-slate-600 tabular-nums">
