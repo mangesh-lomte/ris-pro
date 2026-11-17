@@ -137,32 +137,24 @@ export function Sidebar({ mobileOpen = false, onCloseMobile }: SidebarProps) {
                       to={item.to}
                       onClick={isMobile ? onCloseMobile : undefined}
                       className={({ isActive }) =>
-                        `group flex items-center justify-between px-3.5 py-2.5 rounded-2xl transition-all duration-150 ${
+                        `flex items-center justify-between px-3.5 py-2.5 rounded-2xl transition ${
                           isActive
-                            ? 'bg-[#0d172a] text-white shadow-[0_4px_12px_rgba(15,23,42,0.10)] border border-[#0d172a] font-bold'
-                            : 'text-slate-600 hover:text-slate-900 hover:bg-[#eaf5ee] border border-transparent font-semibold'
+                            ? 'bg-gradient-to-r from-[#a2e4e0] via-[#ace3cb] to-[#d6ecb4] text-slate-900 shadow-xs border border-[#00afa8]/40 font-extrabold'
+                            : 'text-slate-500 hover:text-slate-900 hover:bg-white/70 font-semibold'
                         }`
                       }
                     >
                       {({ isActive }) => (
                         <>
                           <div className="flex items-center gap-3">
-                            <Icon
-                              className={`w-4 h-4 transition-colors shrink-0 ${
-                                isActive
-                                  ? 'text-[#45d6a8]'
-                                  : 'text-slate-400 group-hover:text-slate-700'
-                              }`}
-                            />
-                            <span className={isActive ? 'text-white' : ''}>{item.label}</span>
+                            <Icon className={`w-4 h-4 ${isActive ? 'text-[#007d77]' : 'text-slate-400'}`} />
+                            <span>{item.label}</span>
                           </div>
                           {item.badge && (
                             <span
                               className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                                 isActive
-                                  ? item.badge === 'STAT'
-                                    ? 'bg-rose-500 text-white'
-                                    : 'bg-emerald-400/20 text-[#45d6a8] border border-emerald-400/30'
+                                  ? 'bg-slate-900 text-white shadow-2xs'
                                   : item.badgeClass || 'bg-slate-900 text-white'
                               }`}
                             >
