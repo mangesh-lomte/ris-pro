@@ -917,12 +917,12 @@ export function TechnologistPreparationModal({
 
               {/* Protocol Catalog List */}
               <div className="space-y-2">
-                {context.eligibleProtocols.length === 0 ? (
+                {(!context.eligibleProtocols || context.eligibleProtocols.length === 0) ? (
                   <p className="text-xs text-slate-400 py-3 text-center">
                     No active protocols cataloged for modality {context.modality}.
                   </p>
                 ) : (
-                  context.eligibleProtocols.map((proto: ImagingProtocol) => {
+                  (context.eligibleProtocols || []).map((proto: ImagingProtocol) => {
                     const isSelected = selectedProtocolId === proto.id;
                     const isConfirmed = context.confirmedProtocol?.id === proto.id;
 

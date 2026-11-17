@@ -410,19 +410,19 @@ export function TechnologistIncidentModal({
             <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-2">
               <span className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5 text-slate-500" />
-                Chronological Incident History ({incidents.length})
+                Chronological Incident History ({(incidents || []).length})
               </span>
             </div>
 
             {isLoading ? (
               <div className="p-4 text-center text-xs text-slate-400">Loading incident records...</div>
-            ) : incidents.length === 0 ? (
+            ) : (!incidents || incidents.length === 0) ? (
               <div className="p-4 bg-slate-50 border border-dashed border-[#E2E8F0] rounded text-center text-xs text-slate-500">
                 No clinical incidents or adverse events documented for this examination.
               </div>
             ) : (
               <div className="space-y-3">
-                {incidents.map((inc) => (
+                {(incidents || []).map((inc) => (
                   <div
                     key={inc.id}
                     className="p-3.5 bg-white border border-[#E2E8F0] rounded shadow-xs space-y-2 text-xs"

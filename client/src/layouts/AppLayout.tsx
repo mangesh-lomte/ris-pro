@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Header } from '../components/shared/Header';
 import { Sidebar } from '../components/shared/Sidebar';
+import { ErrorBoundary } from '../components/shared/ErrorBoundary';
 
 export function AppLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -46,7 +47,9 @@ export function AppLayout() {
           className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden outline-none custom-scroll flex flex-col justify-between"
         >
           <div>
-            <Outlet />
+            <ErrorBoundary>
+              <Outlet />
+            </ErrorBoundary>
           </div>
 
           {/* Application Footer (Clean & Rounded) */}

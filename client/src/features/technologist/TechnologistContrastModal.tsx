@@ -483,7 +483,7 @@ export function TechnologistContrastModal({
               <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-2">
                 <span className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
                   <Clock className="w-3.5 h-3.5 text-slate-500" />
-                  Documented Contrast Administrations ({context.administrations.length})
+                  Documented Contrast Administrations ({(context.administrations || []).length})
                 </span>
                 {isEligibleToRecord && onOpenIncidentModal && (
                   <Button
@@ -499,13 +499,13 @@ export function TechnologistContrastModal({
                 )}
               </div>
 
-              {context.administrations.length === 0 ? (
+              {(!context.administrations || context.administrations.length === 0) ? (
                 <div className="p-4 bg-slate-50 border border-dashed border-[#E2E8F0] rounded text-center text-xs text-slate-500">
                   No contrast media has been recorded for this examination yet.
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {context.administrations.map((adm) => (
+                  {(context.administrations || []).map((adm) => (
                     <div
                       key={adm.id}
                       className="p-3.5 bg-white border border-[#E2E8F0] rounded shadow-xs space-y-2 text-xs"

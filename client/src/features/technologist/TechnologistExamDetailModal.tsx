@@ -41,6 +41,7 @@ import { TechnologistScanLifecycleModal } from './TechnologistScanLifecycleModal
 import { TechnologistContrastModal } from './TechnologistContrastModal';
 import { TechnologistIncidentModal } from './TechnologistIncidentModal';
 import { TechnologistImageQualityModal } from './TechnologistImageQualityModal';
+import { ErrorBoundary } from '../../components/shared/ErrorBoundary';
 
 interface TechnologistExamDetailModalProps {
   open: boolean;
@@ -110,22 +111,23 @@ export function TechnologistExamDetailModal({
             </div>
           </DialogHeader>
 
-        {isLoading ? (
-          <div className="p-8 space-y-4">
-            <div className="h-6 bg-slate-100 rounded animate-pulse w-1/3" />
-            <div className="h-20 bg-slate-100 rounded animate-pulse" />
-            <div className="h-24 bg-slate-100 rounded animate-pulse" />
-          </div>
-        ) : error || !detail ? (
-          <div className="p-6 text-center text-rose-600 space-y-2">
-            <AlertCircle className="w-8 h-8 mx-auto" />
-            <p className="font-semibold">Unable to load exam details</p>
-            <p className="text-xs text-slate-500">
-              {formatSafeErrorMessage(error, 'Record may have moved or expired.')}
-            </p>
-          </div>
-        ) : (
-          <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
+        <ErrorBoundary fallbackTitle="Exam Clinical Context">
+          {isLoading ? (
+            <div className="p-8 space-y-4">
+              <div className="h-6 bg-slate-100 rounded animate-pulse w-1/3" />
+              <div className="h-20 bg-slate-100 rounded animate-pulse" />
+              <div className="h-24 bg-slate-100 rounded animate-pulse" />
+            </div>
+          ) : error || !detail ? (
+            <div className="p-6 text-center text-rose-600 space-y-2">
+              <AlertCircle className="w-8 h-8 mx-auto" />
+              <p className="font-semibold">Unable to load exam details</p>
+              <p className="text-xs text-slate-500">
+                {formatSafeErrorMessage(error, 'Record may have moved or expired.')}
+              </p>
+            </div>
+          ) : (
+            <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
             {/* Clinical Sequence Progression Stepper */}
             <div className="grid grid-cols-4 gap-2 p-2 bg-slate-100 rounded border border-[#E2E8F0] text-center text-xs">
               {[
@@ -890,6 +892,7 @@ export function TechnologistExamDetailModal({
             )}
           </div>
         )}
+        </ErrorBoundary>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
