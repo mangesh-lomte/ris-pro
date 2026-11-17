@@ -378,7 +378,7 @@ export function RadiologistWorklistPage() {
                     <th className="py-3 px-4 min-w-[180px] whitespace-nowrap">Waiting</th>
                     <th className="py-3 px-4 min-w-[150px] whitespace-nowrap">Assignment</th>
                     <th className="py-3 px-4 min-w-[140px] whitespace-nowrap">PACS State</th>
-                    <th className="py-3 px-4 min-w-[230px] whitespace-nowrap text-right sticky right-0 z-20 bg-[#f8faf8] shadow-[-6px_0_10px_-4px_rgba(0,0,0,0.06)]">Actions</th>
+                    <th className="py-3 px-4 min-w-[230px] whitespace-nowrap text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#f0f4f1]">
@@ -501,11 +501,7 @@ export function RadiologistWorklistPage() {
                         </td>
 
                         {/* Actions */}
-                        <td className={`py-2.5 px-4 min-w-[230px] whitespace-nowrap text-right align-middle sticky right-0 z-10 transition-colors shadow-[-6px_0_10px_-4px_rgba(0,0,0,0.06)] ${
-                          item.priority === 'STAT'
-                            ? 'bg-rose-50/95 group-hover:bg-rose-100/90'
-                            : 'bg-white group-hover:bg-[#f8faf8]'
-                        }`}>
+                        <td className="py-2.5 px-4 min-w-[230px] whitespace-nowrap text-right align-middle">
                           <div className="flex items-center justify-end gap-1.5">
                             {/* Claim button if Radiologist & unassigned */}
                             {isRadiologist && !isAssigned && (
@@ -665,7 +661,7 @@ export function RadiologistWorklistPage() {
                         <th className="py-1.5 px-3">Assigned Reviewer</th>
                         <th className="py-1.5 px-3">Status</th>
                         <th className="py-1.5 px-3">Requested At</th>
-                        <th className="py-1.5 px-3 text-right sticky right-0 z-20 bg-muted/95 backdrop-blur-xs shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.06)]">Action</th>
+                        <th className="py-1.5 px-3 text-right min-w-[130px] whitespace-nowrap">Action</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
@@ -719,7 +715,7 @@ export function RadiologistWorklistPage() {
                             {new Date(item.requestedAt).toLocaleDateString()}{' '}
                             {new Date(item.requestedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </td>
-                          <td className="py-2 px-3 whitespace-nowrap text-right sticky right-0 z-10 bg-background/95 backdrop-blur-xs group-hover:bg-muted/40 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.06)] transition-colors">
+                          <td className="py-2 px-3 whitespace-nowrap text-right align-middle min-w-[130px]">
                             <Button
                               size="sm"
                               className="h-7 px-2.5 text-xs bg-[#2563EB] hover:bg-blue-700 text-white font-semibold flex items-center gap-1 shadow-xs"
@@ -827,7 +823,7 @@ export function RadiologistWorklistPage() {
                         <th className="py-1.5 px-3">Reporting Radiologist</th>
                         <th className="py-1.5 px-3">Responsible Clinician</th>
                         <th className="py-1.5 px-3">Sent At</th>
-                        <th className="py-1.5 px-3 text-right sticky right-0 z-20 bg-muted/95 backdrop-blur-xs shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.06)]">Action</th>
+                        <th className="py-1.5 px-3 text-right min-w-[130px] whitespace-nowrap">Action</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
@@ -877,7 +873,7 @@ export function RadiologistWorklistPage() {
                             {new Date(item.sentAt).toLocaleDateString()}{' '}
                             {new Date(item.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </td>
-                          <td className="py-2 px-3 whitespace-nowrap text-right sticky right-0 z-10 bg-background/95 backdrop-blur-xs group-hover:bg-muted/40 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.06)] transition-colors">
+                          <td className="py-2 px-3 whitespace-nowrap text-right align-middle min-w-[130px]">
                             <Button
                               size="sm"
                               className={`h-7 px-2.5 text-xs font-semibold flex items-center gap-1 shadow-xs ${
