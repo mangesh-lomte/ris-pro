@@ -34,6 +34,7 @@ import {
   Download,
 } from 'lucide-react';
 import { formatINR } from '../../utils/formatters';
+import { safeRandomUUID } from '../../utils/uuid';
 
 interface Props {
   open: boolean;
@@ -93,7 +94,7 @@ export function PatientAppointmentPortalModal({ open, onOpenChange }: Props) {
   // Deposit
   const [paymentMethod, setPaymentMethod] = useState('UPI');
   const [paymentReceipt, setPaymentReceipt] = useState<any>(null);
-  const [paymentIdempotencyKey] = useState(() => crypto.randomUUID());
+  const [paymentIdempotencyKey] = useState(() => safeRandomUUID());
 
   // My Appointments list
   const [myAppointments, setMyAppointments] = useState<PortalAppointmentSummary[]>([]);

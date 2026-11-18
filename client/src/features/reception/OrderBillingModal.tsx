@@ -4,6 +4,7 @@ import { Button } from '../../components/ui/button';
 import { receptionDeliveryService } from '../../services/receptionDeliveryService';
 import { CreditCard, CheckCircle2, Receipt, Plus } from 'lucide-react';
 import { formatINR } from '../../utils/formatters';
+import { safeRandomUUID } from '../../utils/uuid';
 
 interface BillingModalProps {
   open: boolean;
@@ -32,7 +33,7 @@ export function OrderBillingModal({
   const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'ONLINE'>('CASH');
   const [reference, setReference] = useState('');
   const [authorizationConfirmed, setAuthorizationConfirmed] = useState(false);
-  const [paymentAttemptKey, setPaymentAttemptKey] = useState(() => crypto.randomUUID());
+  const [paymentAttemptKey, setPaymentAttemptKey] = useState(() => safeRandomUUID());
 
   useEffect(() => {
     if (open && orderId) {
@@ -72,7 +73,7 @@ export function OrderBillingModal({
       setSuccessMsg(`Payment of ${formatINR(res.amountPaid)} recorded successfully. Receipt: ${res.receiptNumber}`);
       setReference('');
       setAuthorizationConfirmed(false);
-      setPaymentAttemptKey(crypto.randomUUID());
+      setPaymentAttemptKey(safeRandomUUID());
       loadBilling();
       if (onPaymentSuccess) onPaymentSuccess();
     } catch (err: any) {

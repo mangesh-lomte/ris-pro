@@ -5,6 +5,7 @@ import { Input } from '../../components/ui/input';
 import { InvoiceRecord, billingService, PaymentRecord, ReceiptRecord } from '../../services/billingService';
 import { CreditCard, IndianRupee, AlertCircle, Smartphone } from 'lucide-react';
 import { formatINR } from '../../utils/formatters';
+import { safeRandomUUID } from '../../utils/uuid';
 
 interface RecordPaymentModalProps {
   open: boolean;
@@ -66,7 +67,7 @@ export function RecordPaymentModal({
     setError(null);
 
     try {
-      const idempotencyKey = crypto.randomUUID();
+      const idempotencyKey = safeRandomUUID();
       const res = await billingService.recordPayment(invoice.id, {
         amount,
         method,

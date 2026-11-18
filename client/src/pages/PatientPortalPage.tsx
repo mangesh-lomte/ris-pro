@@ -28,6 +28,7 @@ import {
   Stethoscope,
 } from 'lucide-react';
 import { formatINR } from '../utils/formatters';
+import { safeRandomUUID } from '../utils/uuid';
 
 type TabType = 'BOOKING' | 'MY_APPOINTMENTS';
 
@@ -84,7 +85,7 @@ export function PatientPortalPage() {
   // Post-booking: Deposit
   const [paymentMethod, setPaymentMethod] = useState('UPI');
   const [paymentReceipt, setPaymentReceipt] = useState<any>(null);
-  const [paymentIdempotencyKey] = useState(() => crypto.randomUUID());
+  const [paymentIdempotencyKey] = useState(() => safeRandomUUID());
 
   // My Appointments list
   const [myAppointments, setMyAppointments] = useState<PortalAppointmentSummary[]>([]);
