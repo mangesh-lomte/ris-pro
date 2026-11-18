@@ -1,5 +1,5 @@
 import { prisma } from '../config/db';
-import { env } from '../config/env';
+import { buildStudyViewerUrl } from '../utils/viewerUrl';
 import { AppError } from '../utils/appError';
 import { logAuditEvent } from './audit.service';
 import { getCurrentPacsAdapter, getPacsGateway } from '../integrations/pacs';
@@ -1345,8 +1345,6 @@ export async function getViewerLaunchContext(
     }
   }
 
-  const viewerBaseUrl = (process.env.OHIF_BASE_URL || env.OHIF_BASE_URL || process.env.OHIF_VIEWER_URL || 'http://localhost:3002').replace(/\/+$/, '');
-
   // Multi-study comparison launch
   if (priorIdentifier && priorIdentifier.trim().length > 0) {
     const priorOrder = await prisma.imagingOrder.findFirst({
@@ -1406,7 +1404,7 @@ export async function getViewerLaunchContext(
         }
       }
     }
-    const multiStudyViewerUrl = `${viewerBaseUrl}/viewer?StudyInstanceUIDs=${encodeURIComponent(studyInstanceUid)},${encodeURIComponent(priorStudyInstanceUid)}`;
+    const multiStudyViewerUrl = buildStudyViewerUrl(studyInstanceUid, priorStudyInstanceUid);
 
     // Audit logging: RADIOLOGIST_PRIOR_IMAGES_OPENED
     await logAuditEvent({
@@ -1441,7 +1439,7 @@ export async function getViewerLaunchContext(
   }
 
   // Single study launch (Phase 4.2A)
-  const viewerUrl = `${viewerBaseUrl}/viewer?StudyInstanceUIDs=${encodeURIComponent(studyInstanceUid)}`;
+  const viewerUrl = buildStudyViewerUrl(studyInstanceUid);
 
   // Audit logging: RADIOLOGIST_IMAGES_OPENED
   await logAuditEvent({

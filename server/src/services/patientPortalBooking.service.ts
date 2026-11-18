@@ -17,6 +17,7 @@ import jwt from 'jsonwebtoken';
 import { env } from '../config/env';
 import { AppError } from '../utils/appError';
 import { logAuditEvent } from './audit.service';
+import { buildStudyViewerUrl } from '../utils/viewerUrl';
 import {
   generatePatientId,
   generateAccessionNumber,
@@ -1140,8 +1141,7 @@ export async function getPatientReportViewer(patientId: string, accessionNumber:
     );
   }
 
-  const viewerBaseUrl = env.OHIF_BASE_URL.replace(/\/+$/, '');
-  const viewerUrl = `${viewerBaseUrl}/viewer?StudyInstanceUIDs=${encodeURIComponent(studyInstanceUid)}`;
+  const viewerUrl = buildStudyViewerUrl(studyInstanceUid);
 
   await logAuditEvent({
     action: 'PATIENT_PORTAL_IMAGES_OPENED',

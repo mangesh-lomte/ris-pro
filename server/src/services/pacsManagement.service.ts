@@ -1,8 +1,8 @@
 import { prisma } from '../config/db';
-import { env } from '../config/env';
 import { AppError } from '../utils/appError';
 import { logAuditEvent } from './audit.service';
 import { getPacsGateway } from '../integrations/pacs';
+import { buildStudyViewerUrl } from '../utils/viewerUrl';
 import { ModalityType, OrderStatus, PacsStudyLinkStatus } from '@prisma/client';
 
 export interface UserContext {
@@ -93,7 +93,7 @@ export async function getDicomViewerLaunchContext(studyInstanceUid: string) {
     patientId: study?.patient.patientId || null,
     patientName: study ? `${study.patient.firstName} ${study.patient.lastName}` : null,
     viewerUrl: `/viewer/${studyInstanceUid}`,
-    ohifUrl: `${env.OHIF_BASE_URL.replace(/\/+$/, '')}/viewer?StudyInstanceUIDs=${studyInstanceUid}`,
+    ohifUrl: buildStudyViewerUrl(studyInstanceUid),
     wadoRsRoot: `/dicom-web/studies/${studyInstanceUid}`,
     supportedFormats: ['DICOM', 'WADO-RS', 'QIDO-RS'],
   };

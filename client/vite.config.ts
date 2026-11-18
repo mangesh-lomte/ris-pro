@@ -49,6 +49,26 @@ export default defineConfig({
         target: 'http://localhost:3002',
         changeOrigin: true,
       },
+      '/manifest.json': {
+        target: 'http://localhost:3002',
+        changeOrigin: true,
+      },
+      '/sw.js': {
+        target: 'http://localhost:3002',
+        changeOrigin: true,
+      },
+      '^/([0-9]+\\.css|.*\\.woff2|es6-shim\\.min\\.js|polyfill\\.min\\.js|oidc-client\\.min\\.js)': {
+        target: 'http://localhost:3002',
+        changeOrigin: true,
+      },
+      '/ort': {
+        target: 'http://localhost:3002',
+        changeOrigin: true,
+      },
+      '/dicom-microscopy-viewer': {
+        target: 'http://localhost:3002',
+        changeOrigin: true,
+      },
     },
   },
 });

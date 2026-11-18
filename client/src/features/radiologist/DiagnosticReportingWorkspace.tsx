@@ -691,7 +691,7 @@ export const DiagnosticReportingWorkspace: React.FC<DiagnosticReportingWorkspace
   const handleViewReference = async (seriesUid: string, sopUid: string) => {
     try {
       const launch = await radiologistService.getViewerLaunch(orderId);
-      const url = new URL(launch.viewerUrl);
+      const url = new URL(launch.viewerUrl, window.location.origin);
       url.searchParams.set('initialSeriesInstanceUID', seriesUid);
       url.searchParams.set('initialSOPInstanceUID', sopUid);
       const win = window.open(url.toString(), 'radaxis-pacs-viewer');

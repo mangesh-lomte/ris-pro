@@ -51,7 +51,17 @@ export const router = createBrowserRouter([
   {
     path: '/viewer/:studyInstanceUid',
     loader: ({ params }) => {
-      const ohifBase = (((import.meta as any).env?.VITE_OHIF_BASE_URL as string) || 'http://localhost:3002').replace(/\/+$/, '');
+      const envBase = (import.meta as any).env?.VITE_OHIF_BASE_URL as string | undefined;
+      const getBase = () => {
+        if (envBase && envBase.trim()) {
+          return envBase.trim().replace(/\/+$/, '');
+        }
+        if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+          return window.location.origin;
+        }
+        return 'http://localhost:3002';
+      };
+      const ohifBase = getBase();
       const uid = params.studyInstanceUid || '';
       window.location.replace(`${ohifBase}/viewer?StudyInstanceUIDs=${encodeURIComponent(uid)}`);
       return null;

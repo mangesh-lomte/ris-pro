@@ -1,10 +1,10 @@
 import { prisma } from '../config/db';
-import { env } from '../config/env';
 import { AppError } from '../utils/appError';
 import { logger } from '../utils/logger';
 import { logAuditEvent } from './audit.service';
 import { getReportPdfStream } from './reportPdf.service';
 import { getPacsGateway } from '../integrations/pacs';
+import { buildStudyViewerUrl } from '../utils/viewerUrl';
 import {
   generateShareNumber,
   generateShareToken,
@@ -421,7 +421,7 @@ export class ExternalShareService {
         includeWebViewer: share.includeWebViewer,
       },
       webViewerUrl: share.includeWebViewer && share.studyInstanceUid
-        ? `${(env.OHIF_BASE_URL || 'http://localhost:3002').replace(/\/+$/, '')}/viewer?StudyInstanceUIDs=${encodeURIComponent(share.studyInstanceUid)}`
+        ? buildStudyViewerUrl(share.studyInstanceUid)
         : null,
       reportSummary: share.order.report && share.order.report.status === 'FINAL' && share.order.report.isLocked
         ? {
